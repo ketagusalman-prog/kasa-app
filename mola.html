@@ -95,6 +95,7 @@ button {
 <div id="alan"></div>
 
 <button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
+<button id="kaydirBtn" onclick="kaydir()" style="display:none;">⬅️➡️ Kaydır</button>
 
 </div>
 
@@ -116,6 +117,7 @@ let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase().trim();
 let adminMi = (kullanici === "admin");
 
 document.getElementById("kaydetBtn").style.display = adminMi ? "block" : "none";
+document.getElementById("kaydirBtn").style.display = adminMi ? "block" : "none";
 
 let alan = document.getElementById("alan");
 let state = {};
@@ -260,6 +262,43 @@ function blok(key,sureKey){
     return b;
 }
 
+/* 🔥 YENİ: KAYDIR */
+window.kaydir = function(){
+
+    if(!adminMi){
+        alert("Sadece admin kullanabilir!");
+        return;
+    }
+
+    ["cay","yemek","son"].forEach(grup=>{
+
+        let temp = [
+            state[grup+"1"],
+            state[grup+"2"],
+            state[grup+"3"]
+        ];
+
+        let son = temp.pop();
+        temp.unshift(son);
+
+        for(let i=1;i<=3;i++){
+            state[grup+i] = temp[i-1] || {};
+        }
+    });
+
+    // ekran yenile
+    alan.innerHTML = "";
+
+    alan.appendChild(baslik("caySure","☕ Çay Molası"));
+    alan.appendChild(grid("cay",4,"caySure"));
+
+    alan.appendChild(baslik("yemekSure","🍽️ Yemek Molası"));
+    alan.appendChild(grid("yemek",4,"yemekSure"));
+
+    alan.appendChild(baslik("sonSure","🕓 Son Mola"));
+    alan.appendChild(grid("son",4,"sonSure"));
+}
+
 /* 🔥 KAYDET */
 window.kaydet = async function(){
 
@@ -268,7 +307,6 @@ window.kaydet = async function(){
         return;
     }
 
-    // 🔥 BURAYA EKLENDİ
     for(let i=1;i<=4;i++){
 
         let cayKey = "cay"+i;
