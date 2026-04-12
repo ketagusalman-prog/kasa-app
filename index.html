@@ -6,10 +6,65 @@
 
 <style>
 body { font-family: Arial; background:#1e1e2f; color:white; text-align:center;}
-.container { max-width:400px; margin:auto; }
-input { width:90%; padding:10px; margin:5px; border-radius:8px; border:none;}
-button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4CAF50; color:white;}
-.kasa { display:flex; justify-content:space-between; margin:10px; padding:10px; background:#333; border-radius:10px;}
+.container { max-width:600px; margin:auto; }
+
+/* 🔥 INPUT */
+input {
+    width:45%;
+    padding:10px;
+    margin:5px;
+    border-radius:8px;
+    border:none;
+    background:#fff;
+    color:#000;
+    font-weight:bold;
+}
+
+input:disabled {
+    background:#ddd;
+    color:#000;
+    opacity:1;
+}
+
+button {
+    padding:10px;
+    margin:5px;
+    border-radius:8px;
+    border:none;
+    background:#4CAF50;
+    color:white;
+}
+
+/* 💳 KASA */
+.kasa {
+    display:flex;
+    justify-content:space-between;
+    margin:10px;
+    padding:15px;
+    border-radius:12px;
+    font-weight:bold;
+}
+
+/* 👨 */
+.erkek {
+    background:linear-gradient(135deg,#2196F3,#0d47a1);
+}
+
+/* 👩 */
+.kadin {
+    background:linear-gradient(135deg,#ff6ec7,#c2185b);
+}
+
+/* 🔴 MOLADA */
+.molada {
+    background:#8B0000 !important;
+}
+
+/* 🟢 AKTİF */
+.aktif {
+    box-shadow:0 0 10px lime;
+}
+
 .hidden { display:none; }
 .panel { background:#222; padding:10px; margin:10px; border-radius:10px;}
 </style>
@@ -31,7 +86,6 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 
 <h3 id="info"></h3>
 
-<!-- 🔥 MOLA BUTONU (EKLENDİ) -->
 <button onclick="window.location.href='mola.html'">☕ Mola Sayfası</button>
 
 <div id="panel" class="panel hidden">
@@ -44,7 +98,6 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 
 <div id="alan"></div>
 
-<!-- 🔒 SADECE ADMIN -->
 <button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
 <button id="kaydirBtn" onclick="kaydir()" style="display:none;">⬇️ Kaydır</button>
 <button id="degistirBtn" onclick="degistir()" style="display:none;">↔️ Yer Değiştir</button>
@@ -73,6 +126,53 @@ let adminMi = false;
 let inputs = [];
 let alan = document.getElementById("alan");
 
+// 🔥 MOLA DATA
+let molaData = {};
+const molaRef = doc(db,"kasa","mola");
+onSnapshot(molaRef,(snap)=>{
+    molaData = snap.exists()? snap.data().data : {};
+});
+
+// 👨👩 CİNSİYET
+function cinsiyet(isim){
+    isim = (isim||"").toLowerCase();
+    let kadin = ["ayşe","fatma","zeynep","elif","buse"];
+    return kadin.includes(isim) ? "kadin" : "erkek";
+}
+
+// 🔴 MOLADA MI
+function moladaMi(isim){
+    if(!isim) return false;
+
+    let now = new Date();
+    let gruplar=["cay","yemek","son"];
+
+    for(let g of gruplar){
+        for(let i=1;i<=4;i++){
+
+            let key=g+i;
+            let saat=molaData[key]?.saat;
+            let kisiler=molaData[key]?.kisiler||[];
+
+            if(!saat) continue;
+
+            let [h,m]=saat.split(":");
+            let hedef=new Date();
+            hedef.setHours(h,m,0);
+
+            let sure=(molaData[g+"Sure"]?.sure||15)*60;
+            let fark=Math.floor((hedef-now)/1000);
+
+            if(fark<=0 && fark>-sure){
+                if(kisiler.map(x=>x.toLowerCase()).includes(isim.toLowerCase())){
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
 // 🔐 GİRİŞ
 window.giris = function() {
 
@@ -80,30 +180,24 @@ window.giris = function() {
 
     onSnapshot(ref, (snap) => {
 
-        if (snap.exists()) {
-            personeller = snap.data().liste;
-        }
+        if (snap.exists()) personeller = snap.data().liste;
 
-        let k = document.getElementById("kullanici").value.trim();
-        let s = document.getElementById("sifre").value.trim();
+        let k = kullanici.value.trim();
+        let s = sifre.value.trim();
 
         if (k === admin.k && s === admin.s) {
             adminMi = true;
-            document.getElementById("panel").classList.remove("hidden");
+            panel.classList.remove("hidden");
         } else {
             let bulundu = personeller.find(p => p.k === k && p.s === s);
-            if (!bulundu) {
-                alert("Hatalı giriş");
-                return;
-            }
+            if (!bulundu) return alert("Hatalı giriş");
         }
 
-        // 🔥 MOLA İÇİN KULLANICIYI KAYDET
         localStorage.setItem("kullanici", k);
 
-        document.getElementById("login").classList.add("hidden");
-        document.getElementById("app").classList.remove("hidden");
-        document.getElementById("info").innerText = k;
+        login.classList.add("hidden");
+        app.classList.remove("hidden");
+        info.innerText = k;
 
         olustur();
         listeGoster();
@@ -123,21 +217,30 @@ function olustur() {
 
         for (let i = 0; i < 6; i++) {
 
+            let k = kayit["kasa"+(i+1)] || {};
+
             let div = document.createElement("div");
             div.className = "kasa";
 
             let i1 = document.createElement("input");
             let i2 = document.createElement("input");
 
-            let k = kayit["kasa"+(i+1)];
-            if (k) {
-                i1.value = k.sol;
-                i2.value = k.sag;
-            }
+            i1.value = k.sol || "";
+            i2.value = k.sag || "";
 
             if (!adminMi) {
                 i1.disabled = true;
                 i2.disabled = true;
+            }
+
+            // 🎨 RENK
+            div.classList.add(cinsiyet(i1.value || i2.value));
+
+            // 🔴 MOLA
+            if(moladaMi(i1.value) || moladaMi(i2.value)){
+                div.classList.add("molada");
+            } else {
+                div.classList.add("aktif");
             }
 
             div.appendChild(i1);
@@ -147,15 +250,10 @@ function olustur() {
             inputs.push(i1, i2);
         }
 
-        // 🔒 BUTON YETKİ
         if (adminMi) {
-            document.getElementById("kaydetBtn").style.display = "block";
-            document.getElementById("kaydirBtn").style.display = "block";
-            document.getElementById("degistirBtn").style.display = "block";
-        } else {
-            document.getElementById("kaydetBtn").style.display = "none";
-            document.getElementById("kaydirBtn").style.display = "none";
-            document.getElementById("degistirBtn").style.display = "none";
+            kaydetBtn.style.display = "block";
+            kaydirBtn.style.display = "block";
+            degistirBtn.style.display = "block";
         }
     });
 }
@@ -183,10 +281,7 @@ window.kaydir = async function() {
     let yeni = [];
 
     for (let i = 0; i < inputs.length; i+=2) {
-        yeni.push({
-            sol: inputs[i].value,
-            sag: inputs[i+1].value
-        });
+        yeni.push({sol:inputs[i].value,sag:inputs[i+1].value});
     }
 
     let son = yeni.pop();
@@ -198,31 +293,26 @@ window.kaydir = async function() {
     }
 
     let data = {};
-    for (let i = 0; i < yeni.length; i++) {
-        data["kasa"+(i+1)] = yeni[i];
-    }
+    yeni.forEach((k,i)=> data["kasa"+(i+1)] = k);
 
     await setDoc(doc(db, "kasa", "liste"), {data});
 }
 
-// ↔️ YER DEĞİŞTİR
+// ↔️ DEĞİŞTİR
 window.degistir = async function() {
     if (!adminMi) return;
 
     let yeni = [];
 
     for (let i = 0; i < inputs.length; i+=2) {
-        yeni.push({
-            sol: inputs[i].value,
-            sag: inputs[i+1].value
-        });
+        yeni.push({sol:inputs[i].value,sag:inputs[i+1].value});
     }
 
-    for (let i = 0; i < yeni.length; i++) {
-        let temp = yeni[i].sol;
-        yeni[i].sol = yeni[i].sag;
-        yeni[i].sag = temp;
-    }
+    yeni.forEach(k=>{
+        let t=k.sol;
+        k.sol=k.sag;
+        k.sag=t;
+    });
 
     for (let i = 0; i < yeni.length; i++) {
         inputs[i*2].value = yeni[i].sol;
@@ -230,31 +320,22 @@ window.degistir = async function() {
     }
 
     let data = {};
-    for (let i = 0; i < yeni.length; i++) {
-        data["kasa"+(i+1)] = yeni[i];
-    }
+    yeni.forEach((k,i)=> data["kasa"+(i+1)] = k);
 
     await setDoc(doc(db, "kasa", "liste"), {data});
 }
 
-// 👥 PERSONEL EKLE
+// 👥 EKLE
 window.ekle = async function() {
-    let k = document.getElementById("yeniK").value;
-    let s = document.getElementById("yeniS").value;
-
-    personeller.push({k,s});
+    personeller.push({k:yeniK.value,s:yeniS.value});
     await setDoc(doc(db, "kasa", "personel"), {liste: personeller});
 }
 
 // 📋 LİSTE
 function listeGoster() {
-    let div = document.getElementById("liste");
-    div.innerHTML = "";
-
-    personeller.forEach((p,i) => {
-        let d = document.createElement("div");
-        d.innerHTML = p.k + " <button onclick='sil("+i+")'>❌</button>";
-        div.appendChild(d);
+    liste.innerHTML="";
+    personeller.forEach((p,i)=>{
+        liste.innerHTML += p.k + " <button onclick='sil("+i+")'>❌</button><br>";
     });
 }
 
