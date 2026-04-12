@@ -14,8 +14,6 @@ body {
 
 .container { max-width:1200px; margin:auto; }
 
-.hidden { display:none; }
-
 .baslik {
     margin-top:25px;
     font-size:20px;
@@ -92,23 +90,11 @@ button {
 
 <h2>☕ Mola Sistemi</h2>
 
-<!-- 🔐 LOGIN -->
-<div id="login">
-<input id="kullanici" placeholder="Kullanıcı adı">
-<input id="sifre" type="password" placeholder="Şifre">
-<button onclick="giris()">Giriş</button>
-</div>
-
-<!-- 🔐 APP -->
-<div id="app" class="hidden">
-
 <button onclick="history.back()">⬅️ Kasa</button>
 
 <div id="alan"></div>
 
 <button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
-
-</div>
 
 </div>
 
@@ -126,71 +112,33 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let admin = {k:"admin", s:"1234"};
-let personeller = [];
+/* 🔥 KASA SİSTEMİYLE AYNI MANTIK */
+let kullanici = localStorage.getItem("kullanici") || "";
+let adminMi = (kullanici === "admin");
 
-let adminMi = false;
 let alan = document.getElementById("alan");
 let state = {};
 
-/* 🔐 GİRİŞ SİSTEMİ */
-window.giris = function(){
+const ref = doc(db, "kasa", "mola");
 
-    const refP = doc(db, "kasa", "personel");
+onSnapshot(ref, (snap) => {
 
-    onSnapshot(refP, (snap)=>{
+    state = snap.exists() ? snap.data().data : {};
 
-        if(snap.exists()){
-            personeller = snap.data().liste;
-        }
+    alan.innerHTML = "";
 
-        let k = document.getElementById("kullanici").value.trim();
-        let s = document.getElementById("sifre").value.trim();
+    alan.appendChild(baslik("caySure","☕ Çay Molası"));
+    alan.appendChild(grid("cay",4,"caySure"));
 
-        if(k === admin.k && s === admin.s){
-            adminMi = true;
-            localStorage.setItem("kullanici", k);
-        } else {
-            let bulundu = personeller.find(p => p.k === k && p.s === s);
-            if(!bulundu){
-                alert("Hatalı giriş");
-                return;
-            }
-            localStorage.setItem("kullanici", k);
-        }
+    alan.appendChild(baslik("yemekSure","🍽️ Yemek Molası"));
+    alan.appendChild(grid("yemek",4,"yemekSure"));
 
-        document.getElementById("login").classList.add("hidden");
-        document.getElementById("app").classList.remove("hidden");
+    alan.appendChild(baslik("sonSure","🕓 Son Mola"));
+    alan.appendChild(grid("son",4,"sonSure"));
 
-        sistemiBaslat();
-    });
-}
-
-/* 🔥 ANA SİSTEM */
-function sistemiBaslat(){
-
-    const ref = doc(db, "kasa", "mola");
-
-    onSnapshot(ref, (snap) => {
-
-        state = snap.exists() ? snap.data().data : {};
-
-        alan.innerHTML = "";
-
-        alan.appendChild(baslik("caySure","☕ Çay Molası"));
-        alan.appendChild(grid("cay",4,"caySure"));
-
-        alan.appendChild(baslik("yemekSure","🍽️ Yemek Molası"));
-        alan.appendChild(grid("yemek",4,"yemekSure"));
-
-        alan.appendChild(baslik("sonSure","🕓 Son Mola"));
-        alan.appendChild(grid("son",4,"sonSure"));
-
-        if (adminMi) {
-            document.getElementById("kaydetBtn").style.display = "block";
-        }
-    });
-}
+    /* 🔥 SADECE ADMIN GÖRÜR */
+    document.getElementById("kaydetBtn").style.display = adminMi ? "block" : "none";
+});
 
 function baslik(key,text){
     let d = document.createElement("div");
@@ -205,9 +153,11 @@ function baslik(key,text){
     inp.className="sureInput";
     inp.value = state[key]?.sure || "";
 
-    if(!adminMi) inp.disabled=true;
+    /* 🔥 PERSONEL SADECE OKUR */
+    inp.disabled = !adminMi;
 
     inp.oninput = () => {
+        if(!adminMi) return;
         state[key] = { sure: inp.value };
     }
 
@@ -239,9 +189,10 @@ function blok(key,sureKey){
     saat.type="time";
     saat.value = state[key]?.saat || "";
 
-    if(!adminMi) saat.disabled=true;
+    saat.disabled = !adminMi;
 
     saat.oninput = () => {
+        if(!adminMi) return;
         state[key] = state[key] || {};
         state[key].saat = saat.value;
     }
@@ -255,9 +206,10 @@ function blok(key,sureKey){
         inp.className="kisiInput";
         inp.value = state[key]?.kisiler?.[i] || "";
 
-        if(!adminMi) inp.disabled=true;
+        inp.disabled = !adminMi;
 
         inp.oninput = () => {
+            if(!adminMi) return;
             state[key] = state[key] || {};
             state[key].kisiler = state[key].kisiler || [];
             state[key].kisiler[i] = inp.value;
@@ -302,7 +254,7 @@ function blok(key,sureKey){
             if(!b.basladi){
                 if(benim){
                     alert("Molan başladı!");
-                    navigator.vibrate?.([300,200,300]);
+                    navigator.vibrate?.([300,200,300,200,500]);
                 }
                 b.basladi=true;
             }
@@ -312,10 +264,20 @@ function blok(key,sureKey){
             b.classList.remove("aktif");
 
             sayac.innerText="Mola bitti";
+
+            if(!b.bitti){
+                if(benim){
+                    alert("Molan bitti!");
+                    navigator.vibrate?.([500,200,500]);
+                }
+                b.bitti=true;
+            }
         }
         else{
             b.classList.remove("aktif","bitti");
             sayac.innerText="";
+            b.basladi=false;
+            b.bitti=false;
         }
 
     },1000);
@@ -323,6 +285,7 @@ function blok(key,sureKey){
     return b;
 }
 
+/* 🔥 SADECE ADMIN KAYDEDER */
 window.kaydet = async function(){
     if(!adminMi){
         alert("Sadece admin kaydedebilir!");
