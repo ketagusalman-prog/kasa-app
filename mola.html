@@ -90,11 +90,11 @@ button {
 
 <h2>☕ Mola Sistemi</h2>
 
-<!-- ✅ SADECE BURASI DEĞİŞTİ -->
 <button onclick="history.back()">⬅️ Kasa</button>
 
 <div id="alan"></div>
 
+<!-- 🔥 BUTON SADECE ADMIN -->
 <button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
 
 </div>
@@ -113,7 +113,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let kullanici = localStorage.getItem("kullanici");
+/* 🔥 ADMIN KONTROLÜ GÜÇLENDİRİLDİ */
+let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase();
 let adminMi = (kullanici === "admin");
 
 let alan = document.getElementById("alan");
@@ -136,8 +137,11 @@ onSnapshot(ref, (snap) => {
     alan.appendChild(baslik("sonSure","🕓 Son Mola"));
     alan.appendChild(grid("son",4,"sonSure"));
 
+    /* 🔥 SADECE ADMIN GÖRÜR */
     if (adminMi) {
         document.getElementById("kaydetBtn").style.display = "block";
+    } else {
+        document.getElementById("kaydetBtn").style.display = "none";
     }
 });
 
@@ -282,8 +286,12 @@ function blok(key,sureKey){
     return b;
 }
 
+/* 🔥 ADMIN DIŞI KAYDEDEMEZ */
 window.kaydet = async function(){
-    if(!adminMi) return;
+    if(!adminMi){
+        alert("Sadece admin kaydedebilir!");
+        return;
+    }
     await setDoc(doc(db,"kasa","mola"),{data:state});
     alert("Kaydedildi");
 }
