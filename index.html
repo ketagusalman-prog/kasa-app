@@ -6,11 +6,11 @@
 
 <style>
 body { font-family: Arial; background:#1e1e2f; color:white; text-align:center;}
-.container { max-width:600px; margin:auto; }
+.container { max-width:400px; margin:auto; }
 
-/* 🔥 INPUT */
+/* 🔥 GÖRÜNÜRLÜK DÜZELTME */
 input {
-    width:45%;
+    width:90%;
     padding:10px;
     margin:5px;
     border-radius:8px;
@@ -26,38 +26,28 @@ input:disabled {
     opacity:1;
 }
 
-button {
-    padding:10px;
-    margin:5px;
-    border-radius:8px;
-    border:none;
-    background:#4CAF50;
-    color:white;
-}
+button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4CAF50; color:white;}
 
-/* 💳 KASA */
+/* 💳 KASA GÖRÜNÜM */
 .kasa {
     display:flex;
     justify-content:space-between;
     margin:10px;
-    padding:15px;
+    padding:12px;
     border-radius:12px;
     font-weight:bold;
 }
 
 /* 👨 */
-.erkek {
-    background:linear-gradient(135deg,#2196F3,#0d47a1);
-}
+.erkek { background:linear-gradient(135deg,#2196F3,#0d47a1); }
 
 /* 👩 */
-.kadin {
-    background:linear-gradient(135deg,#ff6ec7,#c2185b);
-}
+.kadin { background:linear-gradient(135deg,#ff6ec7,#c2185b); }
 
 /* 🔴 MOLADA */
 .molada {
     background:#8B0000 !important;
+    box-shadow:0 0 10px red;
 }
 
 /* 🟢 AKTİF */
@@ -126,42 +116,43 @@ let adminMi = false;
 let inputs = [];
 let alan = document.getElementById("alan");
 
-// 🔥 MOLA DATA
+/* 🔥 EKLENDİ: MOLA DATA */
 let molaData = {};
-const molaRef = doc(db,"kasa","mola");
-onSnapshot(molaRef,(snap)=>{
-    molaData = snap.exists()? snap.data().data : {};
+const molaRef = doc(db, "kasa", "mola");
+onSnapshot(molaRef, (snap)=>{
+    molaData = snap.exists() ? snap.data().data : {};
 });
 
-// 👨👩 CİNSİYET
+/* 🔥 EKLENDİ: CİNSİYET */
 function cinsiyet(isim){
-    isim = (isim||"").toLowerCase();
+    isim = (isim || "").toLowerCase();
     let kadin = ["ayşe","fatma","zeynep","elif","buse"];
     return kadin.includes(isim) ? "kadin" : "erkek";
 }
 
-// 🔴 MOLADA MI
+/* 🔥 EKLENDİ: MOLADA MI */
 function moladaMi(isim){
     if(!isim) return false;
 
     let now = new Date();
-    let gruplar=["cay","yemek","son"];
+    let gruplar = ["cay","yemek","son"];
 
     for(let g of gruplar){
         for(let i=1;i<=4;i++){
 
-            let key=g+i;
-            let saat=molaData[key]?.saat;
-            let kisiler=molaData[key]?.kisiler||[];
+            let key = g+i;
+            let saat = molaData[key]?.saat;
+            let kisiler = molaData[key]?.kisiler || [];
 
             if(!saat) continue;
 
-            let [h,m]=saat.split(":");
-            let hedef=new Date();
+            let [h,m] = saat.split(":");
+
+            let hedef = new Date();
             hedef.setHours(h,m,0);
 
-            let sure=(molaData[g+"Sure"]?.sure||15)*60;
-            let fark=Math.floor((hedef-now)/1000);
+            let sure = (molaData[g+"Sure"]?.sure || 15)*60;
+            let fark = Math.floor((hedef-now)/1000);
 
             if(fark<=0 && fark>-sure){
                 if(kisiler.map(x=>x.toLowerCase()).includes(isim.toLowerCase())){
@@ -173,38 +164,43 @@ function moladaMi(isim){
     return false;
 }
 
-// 🔐 GİRİŞ
+// 🔐 GİRİŞ (AYNI)
 window.giris = function() {
 
     const ref = doc(db, "kasa", "personel");
 
     onSnapshot(ref, (snap) => {
 
-        if (snap.exists()) personeller = snap.data().liste;
+        if (snap.exists()) {
+            personeller = snap.data().liste;
+        }
 
-        let k = kullanici.value.trim();
-        let s = sifre.value.trim();
+        let k = document.getElementById("kullanici").value.trim();
+        let s = document.getElementById("sifre").value.trim();
 
         if (k === admin.k && s === admin.s) {
             adminMi = true;
-            panel.classList.remove("hidden");
+            document.getElementById("panel").classList.remove("hidden");
         } else {
             let bulundu = personeller.find(p => p.k === k && p.s === s);
-            if (!bulundu) return alert("Hatalı giriş");
+            if (!bulundu) {
+                alert("Hatalı giriş");
+                return;
+            }
         }
 
         localStorage.setItem("kullanici", k);
 
-        login.classList.add("hidden");
-        app.classList.remove("hidden");
-        info.innerText = k;
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("app").classList.remove("hidden");
+        document.getElementById("info").innerText = k;
 
         olustur();
         listeGoster();
     });
 }
 
-// 🔥 KASA OLUŞTUR
+// 🔥 SADECE BURAYA EKLENDİ (SENİN KODUN + EK)
 function olustur() {
     const ref = doc(db, "kasa", "liste");
 
@@ -217,31 +213,32 @@ function olustur() {
 
         for (let i = 0; i < 6; i++) {
 
-            let k = kayit["kasa"+(i+1)] || {};
-
             let div = document.createElement("div");
             div.className = "kasa";
 
             let i1 = document.createElement("input");
             let i2 = document.createElement("input");
 
-            i1.value = k.sol || "";
-            i2.value = k.sag || "";
+            let k = kayit["kasa"+(i+1)];
+            if (k) {
+                i1.value = k.sol;
+                i2.value = k.sag;
+            }
 
             if (!adminMi) {
                 i1.disabled = true;
                 i2.disabled = true;
             }
 
-            // 🎨 RENK
+            /* 🔥 EKLENEN KISIM BAŞLANGIÇ */
             div.classList.add(cinsiyet(i1.value || i2.value));
 
-            // 🔴 MOLA
             if(moladaMi(i1.value) || moladaMi(i2.value)){
                 div.classList.add("molada");
             } else {
                 div.classList.add("aktif");
             }
+            /* 🔥 EKLENEN KISIM BİTİŞ */
 
             div.appendChild(i1);
             div.appendChild(i2);
@@ -251,14 +248,14 @@ function olustur() {
         }
 
         if (adminMi) {
-            kaydetBtn.style.display = "block";
-            kaydirBtn.style.display = "block";
-            degistirBtn.style.display = "block";
+            document.getElementById("kaydetBtn").style.display = "block";
+            document.getElementById("kaydirBtn").style.display = "block";
+            document.getElementById("degistirBtn").style.display = "block";
         }
     });
 }
 
-// 💾 KAYDET
+// 💾 KAYDET (AYNI)
 window.kaydet = async function() {
     if (!adminMi) return;
 
@@ -274,14 +271,17 @@ window.kaydet = async function() {
     await setDoc(doc(db, "kasa", "liste"), {data});
 }
 
-// 🔄 KAYDIR
+// 🔄 KAYDIR (AYNI)
 window.kaydir = async function() {
     if (!adminMi) return;
 
     let yeni = [];
 
     for (let i = 0; i < inputs.length; i+=2) {
-        yeni.push({sol:inputs[i].value,sag:inputs[i+1].value});
+        yeni.push({
+            sol: inputs[i].value,
+            sag: inputs[i+1].value
+        });
     }
 
     let son = yeni.pop();
@@ -293,26 +293,31 @@ window.kaydir = async function() {
     }
 
     let data = {};
-    yeni.forEach((k,i)=> data["kasa"+(i+1)] = k);
+    for (let i = 0; i < yeni.length; i++) {
+        data["kasa"+(i+1)] = yeni[i];
+    }
 
     await setDoc(doc(db, "kasa", "liste"), {data});
 }
 
-// ↔️ DEĞİŞTİR
+// ↔️ DEĞİŞTİR (AYNI)
 window.degistir = async function() {
     if (!adminMi) return;
 
     let yeni = [];
 
     for (let i = 0; i < inputs.length; i+=2) {
-        yeni.push({sol:inputs[i].value,sag:inputs[i+1].value});
+        yeni.push({
+            sol: inputs[i].value,
+            sag: inputs[i+1].value
+        });
     }
 
-    yeni.forEach(k=>{
-        let t=k.sol;
-        k.sol=k.sag;
-        k.sag=t;
-    });
+    for (let i = 0; i < yeni.length; i++) {
+        let temp = yeni[i].sol;
+        yeni[i].sol = yeni[i].sag;
+        yeni[i].sag = temp;
+    }
 
     for (let i = 0; i < yeni.length; i++) {
         inputs[i*2].value = yeni[i].sol;
@@ -320,26 +325,35 @@ window.degistir = async function() {
     }
 
     let data = {};
-    yeni.forEach((k,i)=> data["kasa"+(i+1)] = k);
+    for (let i = 0; i < yeni.length; i++) {
+        data["kasa"+(i+1)] = yeni[i];
+    }
 
     await setDoc(doc(db, "kasa", "liste"), {data});
 }
 
-// 👥 EKLE
+// 👥 PERSONEL EKLE (AYNI)
 window.ekle = async function() {
-    personeller.push({k:yeniK.value,s:yeniS.value});
+    let k = document.getElementById("yeniK").value;
+    let s = document.getElementById("yeniS").value;
+
+    personeller.push({k,s});
     await setDoc(doc(db, "kasa", "personel"), {liste: personeller});
 }
 
-// 📋 LİSTE
+// 📋 LİSTE (AYNI)
 function listeGoster() {
-    liste.innerHTML="";
-    personeller.forEach((p,i)=>{
-        liste.innerHTML += p.k + " <button onclick='sil("+i+")'>❌</button><br>";
+    let div = document.getElementById("liste");
+    div.innerHTML = "";
+
+    personeller.forEach((p,i) => {
+        let d = document.createElement("div");
+        d.innerHTML = p.k + " <button onclick='sil("+i+")'>❌</button>";
+        div.appendChild(d);
     });
 }
 
-// ❌ SİL
+// ❌ SİL (AYNI)
 window.sil = async function(i) {
     personeller.splice(i,1);
     await setDoc(doc(db, "kasa", "personel"), {liste: personeller});
