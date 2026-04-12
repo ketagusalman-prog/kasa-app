@@ -43,7 +43,7 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
     box-shadow:0 0 10px lime;
 }
 
-/* 🔥 YENİ: SADECE KİŞİ YANSIN */
+/* 🔥 YANIP SÖNME */
 @keyframes yanipSonme {
     0%   { background:#8B0000; box-shadow:0 0 5px red; }
     50%  { background:#ff0000; box-shadow:0 0 20px red; }
@@ -81,6 +81,18 @@ input.molada {
     display:flex;
     flex-direction:column;
     gap:8px;
+}
+
+/* 🔥 YENİ: EXCEL PANEL */
+.excelPanel{
+    position:fixed;
+    bottom:10px;
+    right:10px;
+    background:#111;
+    padding:10px;
+    border-radius:10px;
+    box-shadow:0 0 10px #000;
+    z-index:999;
 }
 </style>
 </head>
@@ -125,6 +137,15 @@ input.molada {
 
 </div>
 
+<!-- 🔥 EXCEL PANEL -->
+<div id="excelPanel" class="excelPanel" style="display:none;">
+    <div style="font-size:12px; margin-bottom:5px;">📊 Excel Yükle</div>
+    <input type="file" id="excelInput" accept=".xlsx,.xls">
+</div>
+
+<!-- 🔥 XLSX -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -144,6 +165,27 @@ let personeller = [];
 let adminMi = false;
 let inputs = [];
 let alan = document.getElementById("alan");
+
+/* 🔥 EXCEL DATA */
+let excelData = [];
+
+document.getElementById("excelInput").addEventListener("change", function(e){
+
+    let file = e.target.files[0];
+    let reader = new FileReader();
+
+    reader.onload = function(evt){
+        let data = new Uint8Array(evt.target.result);
+        let workbook = XLSX.read(data, {type: 'array'});
+
+        let sheet = workbook.Sheets[workbook.SheetNames[0]];
+        excelData = XLSX.utils.sheet_to_json(sheet);
+
+        alert("Excel yüklendi");
+    }
+
+    reader.readAsArrayBuffer(file);
+});
 
 let molaData = {};
 const molaRef = doc(db, "kasa", "mola");
@@ -206,6 +248,9 @@ window.giris = function() {
         if (k === admin.k && s === admin.s) {
             adminMi = true;
             document.getElementById("panelBtn").style.display = "block";
+
+            /* 🔥 EXCEL PANEL GÖSTER */
+            document.getElementById("excelPanel").style.display = "block";
         } else {
             let bulundu = personeller.find(p => p.k === k && p.s === s);
             if (!bulundu) {
@@ -214,7 +259,6 @@ window.giris = function() {
             }
         }
 
-        // 🔥 EKLENDİ
         localStorage.setItem("kullanici", k);
 
         document.getElementById("login").classList.add("hidden");
@@ -261,7 +305,6 @@ function olustur() {
 
             div.classList.add(cinsiyet(i1.value || i2.value));
 
-            // 🔥 SADECE KİŞİYİ BOYA
             if(moladaMi(i1.value)){
                 i1.classList.add("molada");
             }
