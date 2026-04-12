@@ -34,19 +34,17 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
     padding:12px;
     border-radius:12px;
     font-weight:bold;
-    cursor:pointer; /* 🔥 TIKLANABİLİR */
 }
 
 .erkek { background:linear-gradient(135deg,#2196F3,#0d47a1); }
 .kadin { background:linear-gradient(135deg,#ff6ec7,#c2185b); }
 
-.aktif {
-    box-shadow:0 0 10px lime;
-}
+.aktif { box-shadow:0 0 10px lime; }
 
+/* 🔥 YANIP SÖNME */
 @keyframes yanipSonme {
-    0%   { background:#8B0000; box-shadow:0 0 5px red; }
-    50%  { background:#ff0000; box-shadow:0 0 20px red; }
+    0% { background:#8B0000; box-shadow:0 0 5px red; }
+    50% { background:#ff0000; box-shadow:0 0 20px red; }
     100% { background:#8B0000; box-shadow:0 0 5px red; }
 }
 
@@ -92,17 +90,25 @@ input.molada {
     border-radius:10px;
 }
 
-/* 🔥 POPUP */
-.popup{
+/* 🔥 MODAL KART */
+.modal{
     position:fixed;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%);
+    top:0; left:0;
+    width:100%; height:100%;
+    background:rgba(0,0,0,0.7);
+    display:none;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+}
+
+.card{
     background:#222;
     padding:20px;
-    border-radius:12px;
-    display:none;
-    z-index:9999;
+    border-radius:15px;
+    width:300px;
+    text-align:left;
+    box-shadow:0 0 20px #000;
 }
 </style>
 </head>
@@ -121,35 +127,28 @@ input.molada {
 
 <div id="app" class="hidden">
 
-<button onclick="window.location.href='mola.html'">☕ Mola Sayfası</button>
-
-<button id="panelBtn" onclick="panelToggle()" style="display:none;">👥 Personel Paneli</button>
+<button onclick="window.location.href='mola.html'">☕ Mola</button>
 
 <div class="ustButonlar">
 <button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
 <button id="kaydirBtn" onclick="kaydir()" style="display:none;">⬇️ Kaydır</button>
-<button id="degistirBtn" onclick="degistir()" style="display:none;">↔️ Yer Değiştir</button>
+<button id="degistirBtn" onclick="degistir()" style="display:none;">↔️</button>
 </div>
 
 <div id="alan"></div>
 
-<div id="panel" class="panel">
-<input id="yeniK" placeholder="Kullanıcı">
-<input id="yeniS" placeholder="Şifre">
-<button onclick="ekle()">Ekle</button>
-<div id="liste"></div>
-</div>
-
 </div>
 </div>
 
-<!-- 🔥 EXCEL PANEL -->
+<!-- EXCEL -->
 <div id="excelPanel" class="excelPanel" style="display:none;">
 <input type="file" id="excelInput">
 </div>
 
-<!-- 🔥 POPUP -->
-<div id="popup" class="popup"></div>
+<!-- MODAL -->
+<div id="modal" class="modal" onclick="kapat()">
+<div class="card" id="card"></div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
@@ -158,148 +157,173 @@ input.molada {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSy...",
-  authDomain: "ukasa1.firebaseapp.com",
-  projectId: "ukasa1"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-let admin = {k:"admin", s:"1234"};
-let personeller = [];
-let adminMi = false;
-let aktifKullanici = "";
-let inputs = [];
-let alan = document.getElementById("alan");
-
-let excelData = [];
-
-/* 🔥 EXCEL OKUMA */
-document.getElementById("excelInput").addEventListener("change", function(e){
-    let file = e.target.files[0];
-    let reader = new FileReader();
-
-    reader.onload = function(evt){
-        let data = new Uint8Array(evt.target.result);
-        let wb = XLSX.read(data,{type:'array'});
-        let sheet = wb.Sheets[wb.SheetNames[0]];
-        excelData = XLSX.utils.sheet_to_json(sheet);
-        alert("Excel yüklendi");
-    }
-    reader.readAsArrayBuffer(file);
+const app = initializeApp({
+  apiKey:"AIzaSy...",
+  authDomain:"ukasa1.firebaseapp.com",
+  projectId:"ukasa1"
 });
 
-/* 🔥 PERSONEL BUL */
-function excelBul(isim){
-    return excelData.find(x =>
-        Object.values(x).join(" ").toLowerCase().includes(isim.toLowerCase())
-    );
+const db = getFirestore(app);
+
+let adminMi=false;
+let inputs=[];
+let alan=document.getElementById("alan");
+let excelData=[];
+let aktifKullanici="";
+
+/* EXCEL */
+document.getElementById("excelInput").addEventListener("change",e=>{
+ let reader=new FileReader();
+ reader.onload=evt=>{
+  let wb=XLSX.read(new Uint8Array(evt.target.result),{type:'array'});
+  let sheet=wb.Sheets[wb.SheetNames[0]];
+  excelData=XLSX.utils.sheet_to_json(sheet);
+  alert("Excel yüklendi");
+ }
+ reader.readAsArrayBuffer(e.target.files[0]);
+});
+
+/* GİRİŞ */
+window.giris=function(){
+ let k=document.getElementById("kullanici").value;
+ let s=document.getElementById("sifre").value;
+
+ if(k==="admin" && s==="1234"){
+   adminMi=true;
+   document.getElementById("excelPanel").style.display="block";
+ }
+
+ aktifKullanici=k.toLowerCase();
+
+ document.getElementById("login").classList.add("hidden");
+ document.getElementById("app").classList.remove("hidden");
+
+ olustur();
 }
 
-/* 🔥 POPUP */
-function popupGoster(isim){
-    if(!isim) return;
-
-    if(!adminMi && isim !== aktifKullanici){
-        alert("Sadece kendi bilginizi görebilirsiniz");
-        return;
-    }
-
-    let kisi = excelBul(isim);
-    if(!kisi){
-        alert("Kayıt yok");
-        return;
-    }
-
-    let p = document.getElementById("popup");
-    p.innerHTML = "<b>"+isim+"</b><br><br>";
-
-    for(let k in kisi){
-        p.innerHTML += k + ": " + kisi[k] + "<br>";
-    }
-
-    p.style.display="block";
-
-    setTimeout(()=> p.style.display="none",5000);
-}
-
-/* 🔥 GİRİŞ */
-window.giris = function(){
-
-    const ref = doc(db,"kasa","personel");
-
-    onSnapshot(ref,(snap)=>{
-
-        if(snap.exists()) personeller = snap.data().liste;
-
-        let k = document.getElementById("kullanici").value;
-        let s = document.getElementById("sifre").value;
-
-        aktifKullanici = k;
-
-        if(k===admin.k && s===admin.s){
-            adminMi=true;
-            document.getElementById("excelPanel").style.display="block";
-        } else {
-            let ok = personeller.find(p=>p.k===k && p.s===s);
-            if(!ok){ alert("Hatalı"); return; }
-        }
-
-        document.getElementById("login").classList.add("hidden");
-        document.getElementById("app").classList.remove("hidden");
-
-        olustur();
-    });
-}
-
-/* 🔥 KASA OLUŞTUR */
+/* KASA OLUŞTUR */
 function olustur(){
+ const ref=doc(db,"kasa","liste");
 
-    const ref = doc(db,"kasa","liste");
+ onSnapshot(ref,(snap)=>{
 
-    onSnapshot(ref,(snap)=>{
+  let data=snap.exists()?snap.data().data:{};
 
-        let kayit = snap.exists()?snap.data().data:{};
+  alan.innerHTML="";
+  inputs=[];
 
-        alan.innerHTML="";
-        inputs=[];
+  for(let i=0;i<6;i++){
 
-        for(let i=0;i<6;i++){
+    let div=document.createElement("div");
+    div.className="kasa";
 
-            let div=document.createElement("div");
-            div.className="kasa";
+    let i1=document.createElement("input");
+    let i2=document.createElement("input");
 
-            let i1=document.createElement("input");
-            let i2=document.createElement("input");
+    let k=data["kasa"+(i+1)];
+    if(k){
+      i1.value=k.sol;
+      i2.value=k.sag;
+    }
 
-            let k = kayit["kasa"+(i+1)];
-            if(k){
-                i1.value=k.sol;
-                i2.value=k.sag;
-            }
+    if(!adminMi){
+      i1.disabled=true;
+      i2.disabled=true;
+    }
 
-            if(!adminMi){
-                i1.disabled=true;
-                i2.disabled=true;
-            }
+    /* 🔥 TIKLAMA */
+    i1.onclick=()=>kartAc(i1.value);
+    i2.onclick=()=>kartAc(i2.value);
 
-            /* 🔥 TIKLAMA */
-            div.onclick=()=>{
-                popupGoster(i1.value);
-                popupGoster(i2.value);
-            }
+    div.appendChild(i1);
+    div.appendChild(i2);
+    alan.appendChild(div);
 
-            div.appendChild(i1);
-            div.appendChild(i2);
-            alan.appendChild(div);
+    inputs.push(i1,i2);
+  }
+ });
+}
 
-            inputs.push(i1,i2);
-        }
-    });
+/* 🔥 KART AÇ */
+function kartAc(isim){
+
+ if(!isim) return;
+
+ if(!adminMi && isim.toLowerCase()!==aktifKullanici){
+    return; // personel başkasını göremez
+ }
+
+ let kisi = excelData.find(x=>{
+    return Object.values(x).join(" ").toLowerCase().includes(isim.toLowerCase());
+ });
+
+ let html="<h3>"+isim+"</h3>";
+
+ if(kisi){
+    for(let key in kisi){
+        html+=`<div><b>${key}:</b> ${kisi[key]}</div>`;
+    }
+ }else{
+    html+="<div>Bilgi bulunamadı</div>";
+ }
+
+ document.getElementById("card").innerHTML=html;
+ document.getElementById("modal").style.display="flex";
+}
+
+/* KAPAT */
+window.kapat=function(){
+ document.getElementById("modal").style.display="none";
+}
+
+/* KAYDET */
+window.kaydet=async function(){
+ let data={};
+ for(let i=0;i<inputs.length;i+=2){
+  data["kasa"+(i/2+1)]={sol:inputs[i].value,sag:inputs[i+1].value};
+ }
+ await setDoc(doc(db,"kasa","liste"),{data});
+}
+
+/* KAYDIR */
+window.kaydir=async function(){
+ let arr=[];
+ for(let i=0;i<inputs.length;i+=2){
+  arr.push({sol:inputs[i].value,sag:inputs[i+1].value});
+ }
+ let son=arr.pop();
+ arr.unshift(son);
+
+ arr.forEach((k,i)=>{
+  inputs[i*2].value=k.sol;
+  inputs[i*2+1].value=k.sag;
+ });
+
+ let data={};
+ arr.forEach((k,i)=>data["kasa"+(i+1)]=k);
+ await setDoc(doc(db,"kasa","liste"),{data});
+}
+
+/* DEĞİŞTİR */
+window.degistir=async function(){
+ let arr=[];
+ for(let i=0;i<inputs.length;i+=2){
+  arr.push({sol:inputs[i].value,sag:inputs[i+1].value});
+ }
+
+ arr.forEach(k=>[k.sol,k.sag]=[k.sag,k.sol]);
+
+ arr.forEach((k,i)=>{
+  inputs[i*2].value=k.sol;
+  inputs[i*2+1].value=k.sag;
+ });
+
+ let data={};
+ arr.forEach((k,i)=>data["kasa"+(i+1)]=k);
+ await setDoc(doc(db,"kasa","liste"),{data});
 }
 
 </script>
+
 </body>
 </html>
