@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Kasa Sistem</title>
+
+<!-- 📱 UYGULAMA MODU -->
+<link rel="manifest" href="manifest.json">
+
+<style>
+body { font-family: Arial; background:#1e1e2f; color:white; text-align:center;}
+.container { max-width:400px; margin:auto; }
+input { width:90%; padding:10px; margin:5px; border-radius:8px; border:none;}
+button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4CAF50; color:white;}
+.kasa { display:flex; justify-content:space-between; margin:10px; padding:10px; background:#333; border-radius:10px;}
+.hidden { display:none; }
+.panel { background:#222; padding:10px; margin:10px; border-radius:10px;}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Kasa Sistem</h2>
+
+<div id="login">
+<input id="kullanici" placeholder="Kullanıcı adı">
+<input id="sifre" type="password" placeholder="Şifre">
+<button onclick="giris()">Giriş</button>
+</div>
+
+<div id="app" class="hidden">
+
+<h3 id="info"></h3>
+
+<div id="panel" class="panel hidden">
+<h4>👥 Personel</h4>
+<input id="yeniK" placeholder="Kullanıcı">
+<input id="yeniS" placeholder="Şifre">
+<button onclick="ekle()">Ekle</button>
+<div id="liste"></div>
+</div>
+
+<div id="alan"></div>
+<button id="kaydetBtn" onclick="kaydet()">Kaydet</button>
+
+</div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyChKcwZnw1fe_SFWy2dJA_JZOMiKghF5_o",
+  authDomain: "ukasa1.firebaseapp.com",
+  projectId: "ukasa1"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let admin = {k:"admin", s:"1234"};
+let personeller = [];
+let adminMi = false;
+let inputs = [];
+let alan = document.getElementById("alan");
+
+// 🔐 GİRİŞ
+window.giris = function() {
+
+    const ref = doc(db, "kasa", "personel");
+
+    onSnapshot(ref, (snap) => {
+
+        if (snap.exists()) {
+            personeller = snap.data().liste;
+        }
+
+        let k = document.getElementById("kullanici").value;
+        let s = document.getElementById("sifre").value;
+
+        if (k === admin.k && s === admin.s) {
+            adminMi = true;
+            document.getElementById("panel").classList.remove("hidden");
+        } else {
+            let bulundu = personeller.find(p => p.k === k && p.s === s);
+            if (!bulundu) {
+                alert("Hatalı giriş");
+                return;
+            }
+        }
+
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("app").classList.remove("hidden");
+        document.getElementById("info").innerText = k;
+
+        olustur();
+        listeGoster();
+    });
+}
+
+// 🔥 KASA
+function olustur() {
+    const ref = doc(db, "kasa", "liste");
+
+    onSnapshot(ref, (snap) => {
+        let kayit = snap.exists() ? snap.data().data : {};
+
+        alan.innerHTML = "";
+        inputs = [];
+
+        for (let i = 0; i < 6; i++) {
+
+            let div = document.createElement("div");
+            div.className = "kasa";
+
+            let i1 = document.createElement("input");
+            let i2 = document.createElement("input");
+
+            let k = kayit["kasa"+(i+1)];
+            if (k) {
+                i1.value = k.sol;
+                i2.value = k.sag;
+            }
+
+            if (!adminMi) {
+                i1.disabled = true;
+                i2.disabled = true;
+                document.getElementById("kaydetBtn").style.display = "none";
+            }
+
+            div.appendChild(i1);
+            div.appendChild(i2);
+            alan.appendChild(div);
+
+            inputs.push(i1, i2);
+        }
+    });
+}
+
+// 💾 KAYDET
+window.kaydet = async function() {
+    let data = {};
+
+    for (let i = 0; i < inputs.length; i+=2) {
+        data["kasa"+(i/2+1)] = {
+            sol: inputs[i].value,
+            sag: inputs[i+1].value
+        };
+    }
+
+    await setDoc(doc(db, "kasa", "liste"), {data});
+    alert("Kaydedildi");
+}
+
+// 👥 EKLE
+window.ekle = async function() {
+    let k = document.getElementById("yeniK").value;
+    let s = document.getElementById("yeniS").value;
+
+    personeller.push({k,s});
+    await setDoc(doc(db, "kasa", "personel"), {liste: personeller});
+}
+
+// 📋 LİSTE
+function listeGoster() {
+    let div = document.getElementById("liste");
+    div.innerHTML = "";
+
+    personeller.forEach((p,i) => {
+        let d = document.createElement("div");
+        d.innerHTML = p.k + " <button onclick='sil("+i+")'>❌</button>";
+        div.appendChild(d);
+    });
+}
+
+// ❌ SİL
+window.sil = async function(i) {
+    personeller.splice(i,1);
+    await setDoc(doc(db, "kasa", "personel"), {liste: personeller});
+}
+
+</script>
+
+</body>
+</html>
