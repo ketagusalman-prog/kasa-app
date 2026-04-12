@@ -8,7 +8,6 @@
 body { font-family: Arial; background:#1e1e2f; color:white; text-align:center;}
 .container { max-width:400px; margin:auto; }
 
-/* 🔥 GÖRÜNÜRLÜK DÜZELTME */
 input {
     width:90%;
     padding:10px;
@@ -28,7 +27,6 @@ input:disabled {
 
 button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4CAF50; color:white;}
 
-/* 💳 KASA GÖRÜNÜM */
 .kasa {
     display:flex;
     justify-content:space-between;
@@ -38,19 +36,14 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
     font-weight:bold;
 }
 
-/* 👨 */
 .erkek { background:linear-gradient(135deg,#2196F3,#0d47a1); }
-
-/* 👩 */
 .kadin { background:linear-gradient(135deg,#ff6ec7,#c2185b); }
 
-/* 🔴 MOLADA */
 .molada {
     background:#8B0000 !important;
     box-shadow:0 0 10px red;
 }
 
-/* 🟢 AKTİF */
 .aktif {
     box-shadow:0 0 10px lime;
 }
@@ -78,6 +71,12 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 
 <button onclick="window.location.href='mola.html'">☕ Mola Sayfası</button>
 
+<div id="alan"></div>
+
+<!-- 🔥 YENİ BUTON -->
+<button onclick="panelToggle()" id="panelBtn" style="display:none;">👥 Personel Paneli Aç</button>
+
+<!-- 👇 PANEL ARTIK ALTTA -->
 <div id="panel" class="panel hidden">
 <h4>👥 Personel</h4>
 <input id="yeniK" placeholder="Kullanıcı">
@@ -86,9 +85,6 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 <div id="liste"></div>
 </div>
 
-<div id="alan"></div>
-
-<!-- 🔥 SADECE BURASI EKLENDİ -->
 <button onclick="cikis()" style="background:#e53935;">🚪 Çıkış</button>
 
 <button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
@@ -119,21 +115,21 @@ let adminMi = false;
 let inputs = [];
 let alan = document.getElementById("alan");
 
-/* 🔥 EKLENDİ: MOLA DATA */
+/* 🔥 MOLA DATA */
 let molaData = {};
 const molaRef = doc(db, "kasa", "mola");
 onSnapshot(molaRef, (snap)=>{
     molaData = snap.exists() ? snap.data().data : {};
 });
 
-/* 🔥 EKLENDİ: CİNSİYET */
+/* 🔥 CİNSİYET */
 function cinsiyet(isim){
     isim = (isim || "").toLowerCase();
     let kadin = ["ayşe","fatma","zeynep","elif","buse"];
     return kadin.includes(isim) ? "kadin" : "erkek";
 }
 
-/* 🔥 EKLENDİ: MOLADA MI */
+/* 🔥 MOLADA MI */
 function moladaMi(isim){
     if(!isim) return false;
 
@@ -183,7 +179,7 @@ window.giris = function() {
 
         if (k === admin.k && s === admin.s) {
             adminMi = true;
-            document.getElementById("panel").classList.remove("hidden");
+            document.getElementById("panelBtn").style.display = "block"; // 🔥 buton açıldı
         } else {
             let bulundu = personeller.find(p => p.k === k && p.s === s);
             if (!bulundu) {
@@ -201,6 +197,20 @@ window.giris = function() {
         olustur();
         listeGoster();
     });
+}
+
+// 🔥 PANEL AÇ/KAPA
+window.panelToggle = function(){
+    let panel = document.getElementById("panel");
+    let btn = document.getElementById("panelBtn");
+
+    panel.classList.toggle("hidden");
+
+    if(panel.classList.contains("hidden")){
+        btn.innerText = "👥 Personel Paneli Aç";
+    } else {
+        btn.innerText = "❌ Paneli Kapat";
+    }
 }
 
 // 🔥 KASA OLUŞTUR
@@ -256,7 +266,7 @@ function olustur() {
     });
 }
 
-// 🔥 ÇIKIŞ (EKLENDİ)
+// 🔥 ÇIKIŞ
 window.cikis = function(){
     localStorage.removeItem("kullanici");
 
