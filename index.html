@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>Kasa Sistem</title>
 
-<!-- 📱 UYGULAMA MODU -->
 <link rel="manifest" href="manifest.json">
 
 <style>
@@ -43,7 +42,9 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 </div>
 
 <div id="alan"></div>
+
 <button id="kaydetBtn" onclick="kaydet()">Kaydet</button>
+<button onclick="kaydir()">⬇️ Kaydır</button>
 
 </div>
 
@@ -103,7 +104,7 @@ window.giris = function() {
     });
 }
 
-// 🔥 KASA
+// 🔥 KASA OLUŞTUR
 function olustur() {
     const ref = doc(db, "kasa", "liste");
 
@@ -157,7 +158,37 @@ window.kaydet = async function() {
     alert("Kaydedildi");
 }
 
-// 👥 EKLE
+// 🔄 KAYDIR (SONU BAŞA AL)
+window.kaydir = async function() {
+
+    let yeni = [];
+
+    for (let i = 0; i < inputs.length; i+=2) {
+        yeni.push({
+            sol: inputs[i].value,
+            sag: inputs[i+1].value
+        });
+    }
+
+    let son = yeni.pop(); // sonu al
+    yeni.unshift(son);   // başa koy
+
+    // inputlara yaz
+    for (let i = 0; i < yeni.length; i++) {
+        inputs[i*2].value = yeni[i].sol;
+        inputs[i*2+1].value = yeni[i].sag;
+    }
+
+    // firebase kaydet
+    let data = {};
+    for (let i = 0; i < yeni.length; i++) {
+        data["kasa"+(i+1)] = yeni[i];
+    }
+
+    await setDoc(doc(db, "kasa", "liste"), {data});
+}
+
+// 👥 PERSONEL EKLE
 window.ekle = async function() {
     let k = document.getElementById("yeniK").value;
     let s = document.getElementById("yeniS").value;
