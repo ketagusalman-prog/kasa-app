@@ -27,6 +27,7 @@ body {
     gap:10px;
 }
 
+/* 🔥 BLOK */
 .blok {
     background:#2a2a3d;
     padding:8px;
@@ -35,11 +36,13 @@ body {
     position:relative;
 }
 
+/* ✨ AKTİF PARLAMA */
 .aktif {
     background:#8B0000 !important;
     box-shadow:0 0 15px red, 0 0 25px red;
 }
 
+/* ✅ BİTTİ PARLAMA */
 .bitti {
     background:#2e7d32 !important;
     box-shadow:0 0 15px lime, 0 0 25px lime;
@@ -52,6 +55,7 @@ h4 {
     font-size:14px;
 }
 
+/* 🔥 INPUT DÜZELTME */
 input {
     padding:6px;
     margin:3px;
@@ -59,6 +63,7 @@ input {
     border:none;
     font-size:12px;
     font-weight:bold;
+
     background:#ffffff;
     color:#000000;
 }
@@ -157,7 +162,6 @@ function baslik(key,text){
     if(!adminMi) inp.disabled=true;
 
     inp.oninput = () => {
-        if(!adminMi) return; // 🔥 EKLENDİ
         state[key] = { sure: inp.value };
     }
 
@@ -194,7 +198,6 @@ function blok(key,sureKey){
     if(!adminMi) saat.disabled=true;
 
     saat.oninput = () => {
-        if(!adminMi) return; // 🔥 EKLENDİ
         state[key] = state[key] || {};
         state[key].saat = saat.value;
     }
@@ -212,7 +215,6 @@ function blok(key,sureKey){
         if(!adminMi) inp.disabled=true;
 
         inp.oninput = () => {
-            if(!adminMi) return; // 🔥 EKLENDİ
             state[key] = state[key] || {};
             state[key].kisiler = state[key].kisiler || [];
             state[key].kisiler[i] = inp.value;
@@ -245,6 +247,7 @@ function blok(key,sureKey){
 
         let benim = grup.includes(aktif);
 
+        // 🔴 BAŞLADI
         if(fark<=0 && fark>-sure){
 
             b.classList.add("aktif");
@@ -265,6 +268,7 @@ function blok(key,sureKey){
             }
         }
 
+        // 🟢 BİTTİ
         else if(fark<=-sure){
 
             b.classList.add("bitti");
