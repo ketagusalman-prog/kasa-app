@@ -2,16 +2,69 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Kasa Sistem</title>
+<title>Kasa Sistemi</title>
 
 <style>
-body { font-family: Arial; background:#1e1e2f; color:white; text-align:center;}
-.container { max-width:400px; margin:auto; }
-input { width:90%; padding:10px; margin:5px; border-radius:8px; border:none;}
-button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4CAF50; color:white;}
-.kasa { display:flex; justify-content:space-between; margin:10px; padding:10px; background:#333; border-radius:10px;}
-.hidden { display:none; }
-.panel { background:#222; padding:10px; margin:10px; border-radius:10px;}
+body {
+    font-family: Arial;
+    background:#1e1e2f;
+    color:white;
+    text-align:center;
+}
+
+.container { max-width:1200px; margin:auto; }
+
+/* 🔥 INPUT DÜZELTME */
+input {
+    background:#ffffff;
+    color:#000000;
+    font-weight:bold;
+    padding:6px;
+    margin:4px;
+    border-radius:6px;
+    border:none;
+}
+
+input:disabled {
+    background:#dddddd;
+    color:#000;
+    opacity:1;
+}
+
+/* 🔥 GRID */
+.grid {
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap:10px;
+}
+
+/* 🔥 KASA BLOK */
+.kasa {
+    background:#2a2a3d;
+    padding:10px;
+    border-radius:10px;
+}
+
+/* 🔴 MOLADA */
+.molada {
+    background:#8B0000 !important;
+    box-shadow:0 0 15px red;
+}
+
+/* 🟢 AKTİF */
+.aktifKasa {
+    background:#2e7d32 !important;
+    box-shadow:0 0 15px lime;
+}
+
+button {
+    padding:10px;
+    margin:5px;
+    border:none;
+    border-radius:8px;
+    background:#4CAF50;
+    color:white;
+}
 </style>
 </head>
 
@@ -19,49 +72,22 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 
 <div class="container">
 
-<h2>Kasa Sistem</h2>
+<h2>Kasa Sistemi</h2>
 
-<div id="login">
-<input id="kullanici" placeholder="Kullanıcı adı">
-<input id="sifre" type="password" placeholder="Şifre">
-<button onclick="giris()">Giriş</button>
-</div>
+<button onclick="window.location.href='mola.html'">☕ Mola</button>
+<button onclick="cikis()">🚪 Çıkış</button>
 
-<div id="app" class="hidden">
-
-<h3 id="info"></h3>
-
-<!-- 🚪 ÇIKIŞ BUTONU -->
-<button onclick="cikis()" style="background:red;">🚪 Çıkış</button>
-
-<!-- ☕ MOLA -->
-<button onclick="window.location.href='mola.html'">☕ Mola Sayfası</button>
-
-<div id="panel" class="panel hidden">
-<h4>👥 Personel</h4>
-<input id="yeniK" placeholder="Kullanıcı">
-<input id="yeniS" placeholder="Şifre">
-<button onclick="ekle()">Ekle</button>
-<div id="liste"></div>
-</div>
-
-<div id="alan"></div>
-
-<button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
-<button id="kaydirBtn" onclick="kaydir()" style="display:none;">⬇️ Kaydır</button>
-<button id="degistirBtn" onclick="degistir()" style="display:none;">↔️ Yer Değiştir</button>
-
-</div>
+<div id="alan" class="grid"></div>
 
 </div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyChKcwZnw1fe_SFWy2dJA_JZOMiKghF5_o",
+  apiKey: "AIzaSy...",
   authDomain: "ukasa1.firebaseapp.com",
   projectId: "ukasa1"
 };
@@ -69,192 +95,103 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let admin = {k:"admin", s:"1234"};
-let personeller = [];
-let adminMi = false;
-let inputs = [];
 let alan = document.getElementById("alan");
 
-// 🔥 OTOMATİK GİRİŞ
-window.onload = function() {
-    let k = localStorage.getItem("kullanici");
+const kasaRef = doc(db,"kasa","veriler");
+const molaRef = doc(db,"kasa","mola");
 
-    if (k) {
-        document.getElementById("login").classList.add("hidden");
-        document.getElementById("app").classList.remove("hidden");
-        document.getElementById("info").innerText = k;
+let kasaData = {};
+let molaData = {};
 
-        if (k === "admin") {
-            adminMi = true;
-            document.getElementById("panel").classList.remove("hidden");
+onSnapshot(kasaRef, (snap)=>{
+    kasaData = snap.exists()? snap.data().data : {};
+    render();
+});
+
+onSnapshot(molaRef, (snap)=>{
+    molaData = snap.exists()? snap.data().data : {};
+    render();
+});
+
+// 🔥 MOLA KONTROL
+function moladaMi(isim){
+
+    let now = new Date();
+    let gruplar = ["cay","yemek","son"];
+
+    for(let g of gruplar){
+        for(let i=1;i<=4;i++){
+
+            let key = g+i;
+
+            let saat = molaData[key]?.saat;
+            let kisiler = molaData[key]?.kisiler || [];
+
+            if(!saat) continue;
+
+            let [h,m]=saat.split(":");
+
+            let hedef=new Date();
+            hedef.setHours(h,m,0);
+
+            let sure = (molaData[g+"Sure"]?.sure || 15)*60;
+
+            let fark = Math.floor((hedef-now)/1000);
+
+            let molada = (fark<=0 && fark>-sure);
+
+            if(molada && kisiler.map(x=>x.toLowerCase()).includes(isim.toLowerCase())){
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+// 🔥 EKRAN ÇİZ
+function render(){
+
+    alan.innerHTML="";
+
+    Object.keys(kasaData).forEach(key=>{
+
+        let isim = kasaData[key]?.isim || "";
+
+        let div = document.createElement("div");
+        div.className="kasa";
+
+        let title = document.createElement("h3");
+        title.innerText = key;
+        div.appendChild(title);
+
+        let inp = document.createElement("input");
+        inp.value = isim;
+        inp.disabled = true;
+        div.appendChild(inp);
+
+        let durum = document.createElement("div");
+
+        if(isim && moladaMi(isim)){
+            div.classList.add("molada");
+            durum.innerText="Molada";
+        }
+        else{
+            div.classList.add("aktifKasa");
+            durum.innerText="Aktif";
         }
 
-        olustur();
-    }
+        div.appendChild(durum);
+
+        alan.appendChild(div);
+
+    });
 }
 
 // 🚪 ÇIKIŞ
-window.cikis = function() {
-    if(confirm("Çıkış yapmak istiyor musun?")){
-        localStorage.removeItem("kullanici");
-        location.reload();
-    }
-}
-
-// 🔐 GİRİŞ
-window.giris = function() {
-
-    const ref = doc(db, "kasa", "personel");
-
-    onSnapshot(ref, (snap) => {
-
-        if (snap.exists()) {
-            personeller = snap.data().liste;
-        }
-
-        let k = document.getElementById("kullanici").value.trim();
-        let s = document.getElementById("sifre").value.trim();
-
-        if (k === admin.k && s === admin.s) {
-            adminMi = true;
-            document.getElementById("panel").classList.remove("hidden");
-        } else {
-            let bulundu = personeller.find(p => p.k === k && p.s === s);
-            if (!bulundu) {
-                alert("Hatalı giriş");
-                return;
-            }
-        }
-
-        localStorage.setItem("kullanici", k);
-
-        document.getElementById("login").classList.add("hidden");
-        document.getElementById("app").classList.remove("hidden");
-        document.getElementById("info").innerText = k;
-
-        olustur();
-    });
-}
-
-// 🔥 KASA
-function olustur() {
-    const ref = doc(db, "kasa", "liste");
-
-    onSnapshot(ref, (snap) => {
-
-        let kayit = snap.exists() ? snap.data().data : {};
-
-        alan.innerHTML = "";
-        inputs = [];
-
-        for (let i = 0; i < 6; i++) {
-
-            let div = document.createElement("div");
-            div.className = "kasa";
-
-            let i1 = document.createElement("input");
-            let i2 = document.createElement("input");
-
-            let k = kayit["kasa"+(i+1)];
-            if (k) {
-                i1.value = k.sol;
-                i2.value = k.sag;
-            }
-
-            if (!adminMi) {
-                i1.disabled = true;
-                i2.disabled = true;
-            }
-
-            div.appendChild(i1);
-            div.appendChild(i2);
-            alan.appendChild(div);
-
-            inputs.push(i1, i2);
-        }
-
-        if (adminMi) {
-            document.getElementById("kaydetBtn").style.display = "block";
-            document.getElementById("kaydirBtn").style.display = "block";
-            document.getElementById("degistirBtn").style.display = "block";
-        }
-    });
-}
-
-// 💾 KAYDET
-window.kaydet = async function() {
-    if (!adminMi) return;
-
-    let data = {};
-    for (let i = 0; i < inputs.length; i+=2) {
-        data["kasa"+(i/2+1)] = {
-            sol: inputs[i].value,
-            sag: inputs[i+1].value
-        };
-    }
-
-    await setDoc(doc(db, "kasa", "liste"), {data});
-}
-
-// 🔄 KAYDIR
-window.kaydir = async function() {
-    if (!adminMi) return;
-
-    let yeni = [];
-
-    for (let i = 0; i < inputs.length; i+=2) {
-        yeni.push({
-            sol: inputs[i].value,
-            sag: inputs[i+1].value
-        });
-    }
-
-    let son = yeni.pop();
-    yeni.unshift(son);
-
-    for (let i = 0; i < yeni.length; i++) {
-        inputs[i*2].value = yeni[i].sol;
-        inputs[i*2+1].value = yeni[i].sag;
-    }
-
-    let data = {};
-    for (let i = 0; i < yeni.length; i++) {
-        data["kasa"+(i+1)] = yeni[i];
-    }
-
-    await setDoc(doc(db, "kasa", "liste"), {data});
-}
-
-// ↔️ YER DEĞİŞTİR
-window.degistir = async function() {
-    if (!adminMi) return;
-
-    let yeni = [];
-
-    for (let i = 0; i < inputs.length; i+=2) {
-        yeni.push({
-            sol: inputs[i].value,
-            sag: inputs[i+1].value
-        });
-    }
-
-    for (let i = 0; i < yeni.length; i++) {
-        let temp = yeni[i].sol;
-        yeni[i].sol = yeni[i].sag;
-        yeni[i].sag = temp;
-    }
-
-    for (let i = 0; i < yeni.length; i++) {
-        inputs[i*2].value = yeni[i].sol;
-        inputs[i*2+1].value = yeni[i].sag;
-    }
-
-    let data = {};
-    for (let i = 0; i < yeni.length; i++) {
-        data["kasa"+(i+1)] = yeni[i];
-    }
-
-    await setDoc(doc(db, "kasa", "liste"), {data});
+window.cikis = function(){
+    localStorage.removeItem("kullanici");
+    location.reload();
 }
 
 </script>
