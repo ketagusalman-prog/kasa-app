@@ -21,22 +21,31 @@ body {
     color:#FFD700;
 }
 
-/* 🔥 GRID DÜZELTME */
 .grid {
     display:grid;
     grid-template-columns: repeat(4, 1fr);
     gap:10px;
-    justify-content:center;
-    margin-bottom:10px;
 }
 
-/* 🔥 BLOKLAR KÜÇÜLDÜ */
+/* 🔥 BLOK */
 .blok {
     background:#2a2a3d;
     padding:8px;
     border-radius:10px;
     border:1px solid #555;
-    min-width:0;
+    position:relative;
+}
+
+/* ✨ AKTİF PARLAMA */
+.aktif {
+    background:#8B0000 !important;
+    box-shadow:0 0 15px red, 0 0 25px red;
+}
+
+/* ✅ BİTTİ PARLAMA */
+.bitti {
+    background:#2e7d32 !important;
+    box-shadow:0 0 15px lime, 0 0 25px lime;
 }
 
 h4 {
@@ -46,13 +55,23 @@ h4 {
     font-size:14px;
 }
 
+/* 🔥 INPUT DÜZELTME */
 input {
-    padding:5px;
-    margin:2px;
+    padding:6px;
+    margin:3px;
     border-radius:6px;
     border:none;
-    font-size:11px;
+    font-size:12px;
     font-weight:bold;
+
+    background:#ffffff;
+    color:#000000;
+}
+
+input:disabled {
+    background:#dddddd;
+    color:#000000;
+    opacity:1;
 }
 
 .kisiInput { width:90%; }
@@ -228,9 +247,11 @@ function blok(key,sureKey){
 
         let benim = grup.includes(aktif);
 
+        // 🔴 BAŞLADI
         if(fark<=0 && fark>-sure){
 
-            b.style.background="#8B0000";
+            b.classList.add("aktif");
+            b.classList.remove("bitti");
 
             let kalan=sure+fark;
             let d=Math.floor(kalan/60);
@@ -241,14 +262,18 @@ function blok(key,sureKey){
             if(!b.basladi){
                 if(benim){
                     alert("Molan başladı!");
-                    navigator.vibrate?.([300,200,300]);
+                    navigator.vibrate?.([300,200,300,200,500]);
                 }
                 b.basladi=true;
             }
         }
+
+        // 🟢 BİTTİ
         else if(fark<=-sure){
 
-            b.style.background="#2e7d32";
+            b.classList.add("bitti");
+            b.classList.remove("aktif");
+
             sayac.innerText="Mola bitti";
 
             if(!b.bitti){
@@ -259,8 +284,9 @@ function blok(key,sureKey){
                 b.bitti=true;
             }
         }
+
         else{
-            b.style.background="#2a2a3d";
+            b.classList.remove("aktif","bitti");
             sayac.innerText="";
             b.basladi=false;
             b.bitti=false;
