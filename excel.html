@@ -2,12 +2,12 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Excel Personel Bilgi</title>
+<title>Kişisel Panel</title>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 <style>
-body {
+body {  
     font-family: Arial;
     background:#1e1e2f;
     color:white;
@@ -19,16 +19,21 @@ body {
     margin:auto;
 }
 
-input {
-    padding:10px;
-    margin:10px;
-}
-
 .kart {
     background:#2a2a3d;
+    padding:15px;
+    margin:20px;
+    border-radius:10px;
+    box-shadow:0 0 10px #000;
+}
+
+button {
     padding:10px;
     margin:10px;
-    border-radius:10px;
+    border-radius:8px;
+    border:none;
+    background:#4CAF50;
+    color:white;
 }
 </style>
 </head>
@@ -37,7 +42,9 @@ input {
 
 <div class="container">
 
-<h2>📊 Personel Bilgi Sistemi</h2>
+<h2>👤 Kişisel Panel</h2>
+
+<button onclick="window.location.href='index.html'">⬅️ Geri</button>
 
 <input type="file" id="excelInput">
 
@@ -48,6 +55,9 @@ input {
 <script>
 
 let excelData = [];
+
+/* 🔥 kullanıcı */
+let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase().trim();
 
 /* 📥 EXCEL OKU */
 document.getElementById("excelInput").addEventListener("change", function(e){
@@ -62,7 +72,8 @@ document.getElementById("excelInput").addEventListener("change", function(e){
         let sheet = workbook.Sheets[workbook.SheetNames[0]];
         excelData = XLSX.utils.sheet_to_json(sheet);
 
-        console.log(excelData);
+        /* 🔥 KAYDET */
+        localStorage.setItem("excelData", JSON.stringify(excelData));
 
         goster();
     }
@@ -70,26 +81,44 @@ document.getElementById("excelInput").addEventListener("change", function(e){
     reader.readAsArrayBuffer(file);
 });
 
-/* 📊 GÖSTER */
+/* 🔥 SAYFA AÇILINCA YÜKLE */
+window.onload = function(){
+    let kayit = localStorage.getItem("excelData");
+    if(kayit){
+        excelData = JSON.parse(kayit);
+        goster();
+    }
+}
+
+/* 📊 SADECE KENDİNİ GÖSTER */
 function goster(){
 
     let div = document.getElementById("sonuc");
     div.innerHTML = "";
 
-    excelData.forEach(kisi => {
+    let kisi = excelData.find(x => 
+        (x.isim || "").toLowerCase().trim() === kullanici
+    );
 
-        let d = document.createElement("div");
-        d.className = "kart";
+    if(!kisi){
+        div.innerHTML = "Kayıt bulunamadı";
+        return;
+    }
 
-        d.innerHTML = `
-            <b>${kisi.isim || "-"}</b><br>
-            Departman: ${kisi.departman || "-"}<br>
-            Sicil: ${kisi.sicil || "-"}<br>
-            Telefon: ${kisi.telefon || "-"}
-        `;
+    let d = document.createElement("div");
+    d.className = "kart";
 
-        div.appendChild(d);
-    });
+    d.innerHTML = `
+        <h3>${kisi.isim}</h3>
+        Fiş: ${kisi.fis || "-"}<br>
+        Kasa: ${kisi.kasa || "-"}<br>
+        Prim: ${kisi.prim || "-"}<br>
+        Departman: ${kisi.departman || "-"}<br>
+        Sicil: ${kisi.sicil || "-"}<br>
+        Telefon: ${kisi.telefon || "-"}
+    `;
+
+    div.appendChild(d);
 }
 
 </script>
