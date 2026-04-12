@@ -45,6 +45,7 @@ button {
 
 <div id="alan"></div>
 
+<!-- 🔒 SADECE ADMIN -->
 <button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
 
 </div>
@@ -63,14 +64,14 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 🔐 ADMIN KONTROL
+// 🔐 KULLANICI KONTROL
 let kullanici = localStorage.getItem("kullanici");
 let adminMi = (kullanici === "admin");
 
 let alan = document.getElementById("alan");
 let inputs = [];
 
-// 🔥 VERİYİ ÇEK
+// 🔥 FIRESTORE VERİ
 const ref = doc(db, "kasa", "mola");
 
 onSnapshot(ref, (snap) => {
@@ -118,7 +119,7 @@ onSnapshot(ref, (snap) => {
         alan.appendChild(blok);
     }
 
-    // 🔒 SADECE ADMIN GÖRÜR
+    // 🔒 SADECE ADMIN BUTON GÖRÜR
     if (adminMi) {
         document.getElementById("kaydetBtn").style.display = "block";
     }
