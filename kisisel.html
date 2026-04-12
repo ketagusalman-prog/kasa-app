@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Kişisel Panel</title>
+
+<style>
+body {
+    font-family: Arial;
+    background:#1e1e2f;
+    color:white;
+    text-align:center;
+}
+
+.kart {
+    max-width:300px;
+    margin:50px auto;
+    background:#2a2a3d;
+    padding:20px;
+    border-radius:15px;
+    box-shadow:0 0 15px #000;
+}
+
+h2 { color:#FFD700; }
+
+.bilgi {
+    margin:10px 0;
+    padding:10px;
+    background:#111;
+    border-radius:8px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>👤 Kişisel Bilgiler</h2>
+
+<div id="kart" class="kart"></div>
+
+<script>
+
+let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase();
+let data = JSON.parse(localStorage.getItem("excelData") || "[]");
+
+let kisi = data.find(x => 
+    (x.Ad || "").toLowerCase() === kullanici
+);
+
+let kart = document.getElementById("kart");
+
+if(kisi){
+
+    let html = `<h2>${kisi.Ad}</h2>`;
+
+    Object.keys(kisi).forEach(key=>{
+        if(key !== "Ad"){
+            html += `<div class="bilgi">${key}: ${kisi[key]}</div>`;
+        }
+    });
+
+    kart.innerHTML = html;
+
+}else{
+    kart.innerHTML = "Kayıt bulunamadı";
+}
+
+</script>
+
+</body>
+</html>
