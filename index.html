@@ -88,6 +88,9 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 
 <div id="alan"></div>
 
+<!-- 🔥 SADECE BURASI EKLENDİ -->
+<button onclick="cikis()" style="background:#e53935;">🚪 Çıkış</button>
+
 <button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
 <button id="kaydirBtn" onclick="kaydir()" style="display:none;">⬇️ Kaydır</button>
 <button id="degistirBtn" onclick="degistir()" style="display:none;">↔️ Yer Değiştir</button>
@@ -164,7 +167,7 @@ function moladaMi(isim){
     return false;
 }
 
-// 🔐 GİRİŞ (AYNI)
+// 🔐 GİRİŞ
 window.giris = function() {
 
     const ref = doc(db, "kasa", "personel");
@@ -200,7 +203,7 @@ window.giris = function() {
     });
 }
 
-// 🔥 SADECE BURAYA EKLENDİ (SENİN KODUN + EK)
+// 🔥 KASA OLUŞTUR
 function olustur() {
     const ref = doc(db, "kasa", "liste");
 
@@ -230,7 +233,6 @@ function olustur() {
                 i2.disabled = true;
             }
 
-            /* 🔥 EKLENEN KISIM BAŞLANGIÇ */
             div.classList.add(cinsiyet(i1.value || i2.value));
 
             if(moladaMi(i1.value) || moladaMi(i2.value)){
@@ -238,7 +240,6 @@ function olustur() {
             } else {
                 div.classList.add("aktif");
             }
-            /* 🔥 EKLENEN KISIM BİTİŞ */
 
             div.appendChild(i1);
             div.appendChild(i2);
@@ -255,108 +256,15 @@ function olustur() {
     });
 }
 
-// 💾 KAYDET (AYNI)
-window.kaydet = async function() {
-    if (!adminMi) return;
+// 🔥 ÇIKIŞ (EKLENDİ)
+window.cikis = function(){
+    localStorage.removeItem("kullanici");
 
-    let data = {};
+    document.getElementById("app").classList.add("hidden");
+    document.getElementById("login").classList.remove("hidden");
 
-    for (let i = 0; i < inputs.length; i+=2) {
-        data["kasa"+(i/2+1)] = {
-            sol: inputs[i].value,
-            sag: inputs[i+1].value
-        };
-    }
-
-    await setDoc(doc(db, "kasa", "liste"), {data});
-}
-
-// 🔄 KAYDIR (AYNI)
-window.kaydir = async function() {
-    if (!adminMi) return;
-
-    let yeni = [];
-
-    for (let i = 0; i < inputs.length; i+=2) {
-        yeni.push({
-            sol: inputs[i].value,
-            sag: inputs[i+1].value
-        });
-    }
-
-    let son = yeni.pop();
-    yeni.unshift(son);
-
-    for (let i = 0; i < yeni.length; i++) {
-        inputs[i*2].value = yeni[i].sol;
-        inputs[i*2+1].value = yeni[i].sag;
-    }
-
-    let data = {};
-    for (let i = 0; i < yeni.length; i++) {
-        data["kasa"+(i+1)] = yeni[i];
-    }
-
-    await setDoc(doc(db, "kasa", "liste"), {data});
-}
-
-// ↔️ DEĞİŞTİR (AYNI)
-window.degistir = async function() {
-    if (!adminMi) return;
-
-    let yeni = [];
-
-    for (let i = 0; i < inputs.length; i+=2) {
-        yeni.push({
-            sol: inputs[i].value,
-            sag: inputs[i+1].value
-        });
-    }
-
-    for (let i = 0; i < yeni.length; i++) {
-        let temp = yeni[i].sol;
-        yeni[i].sol = yeni[i].sag;
-        yeni[i].sag = temp;
-    }
-
-    for (let i = 0; i < yeni.length; i++) {
-        inputs[i*2].value = yeni[i].sol;
-        inputs[i*2+1].value = yeni[i].sag;
-    }
-
-    let data = {};
-    for (let i = 0; i < yeni.length; i++) {
-        data["kasa"+(i+1)] = yeni[i];
-    }
-
-    await setDoc(doc(db, "kasa", "liste"), {data});
-}
-
-// 👥 PERSONEL EKLE (AYNI)
-window.ekle = async function() {
-    let k = document.getElementById("yeniK").value;
-    let s = document.getElementById("yeniS").value;
-
-    personeller.push({k,s});
-    await setDoc(doc(db, "kasa", "personel"), {liste: personeller});
-}
-
-// 📋 LİSTE (AYNI)
-function listeGoster() {
-    let div = document.getElementById("liste");
-    div.innerHTML = "";
-
-    personeller.forEach((p,i) => {
-        let d = document.createElement("div");
-        d.innerHTML = p.k + " <button onclick='sil("+i+")'>❌</button>";
-        div.appendChild(d);
-    });
-}
-
-// ❌ SİL (AYNI)
-window.sil = async function(i) {
-    personeller.splice(i,1);
-    await setDoc(doc(db, "kasa", "personel"), {liste: personeller});
+    document.getElementById("kullanici").value = "";
+    document.getElementById("sifre").value = "";
 }
 
 </script>
