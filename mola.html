@@ -29,12 +29,19 @@ body { font-family: Arial; background:#1e1e2f; color:white; text-align:center;}
 }
 
 input {
-    width:90%;
     padding:6px;
     margin:3px;
     border-radius:6px;
     border:none;
     font-size:12px;
+}
+
+.sureInput {
+    width:60px;
+}
+
+.kisiInput {
+    width:90%;
 }
 
 button {
@@ -82,8 +89,6 @@ let adminMi = (kullanici === "admin");
 let alan = document.getElementById("alan");
 let inputs = [];
 
-const molaSuresi = 15 * 60; // 15 dk
-
 const ref = doc(db, "kasa", "mola");
 
 onSnapshot(ref, (snap) => {
@@ -93,40 +98,59 @@ onSnapshot(ref, (snap) => {
     alan.innerHTML = "";
     inputs = [];
 
-    alan.appendChild(baslik("☕ Çay Molası"));
-    alan.appendChild(gridOlustur("cay", 4, data));
+    alan.appendChild(baslik("caySure","☕ Çay Molası", data));
+    alan.appendChild(gridOlustur("cay", 4, data, "caySure"));
 
-    alan.appendChild(baslik("🍽️ Yemek Molası"));
-    alan.appendChild(gridOlustur("yemek", 4, data));
+    alan.appendChild(baslik("yemekSure","🍽️ Yemek Molası", data));
+    alan.appendChild(gridOlustur("yemek", 4, data, "yemekSure"));
 
-    alan.appendChild(baslik("🕓 Son Mola"));
-    alan.appendChild(gridOlustur("son", 4, data));
+    alan.appendChild(baslik("sonSure","🕓 Son Mola", data));
+    alan.appendChild(gridOlustur("son", 4, data, "sonSure"));
 
     if (adminMi) {
         document.getElementById("kaydetBtn").style.display = "block";
     }
 });
 
-function baslik(text) {
+// 🔥 BAŞLIK + SÜRE
+function baslik(key, text, data) {
+
     let d = document.createElement("div");
     d.className = "baslik";
-    d.innerText = text;
+
+    let span = document.createElement("span");
+    span.innerText = text + " ";
+    d.appendChild(span);
+
+    let sureInput = document.createElement("input");
+    sureInput.type = "number";
+    sureInput.className = "sureInput";
+    sureInput.placeholder = "dk";
+    sureInput.value = data[key]?.sure || "";
+
+    if (!adminMi) sureInput.disabled = true;
+
+    d.appendChild(sureInput);
+    inputs.push(sureInput);
+
     return d;
 }
 
-function gridOlustur(prefix, adet, data) {
+// 🔥 GRID
+function gridOlustur(prefix, adet, data, sureKey) {
 
     let grid = document.createElement("div");
     grid.className = "grid";
 
     for (let i = 1; i <= adet; i++) {
-        grid.appendChild(blokOlustur(prefix+i, i + ". Grup", data));
+        grid.appendChild(blokOlustur(prefix+i, i + ". Grup", data, sureKey));
     }
 
     return grid;
 }
 
-function blokOlustur(key, titleText, data) {
+// 🔥 BLOK
+function blokOlustur(key, titleText, data, sureKey) {
 
     let blok = document.createElement("div");
     blok.className = "blok";
@@ -148,6 +172,7 @@ function blokOlustur(key, titleText, data) {
 
     for (let j = 0; j < 6; j++) {
         let inp = document.createElement("input");
+        inp.className = "kisiInput";
         inp.value = data[key]?.kisiler?.[j] || "";
 
         if (!adminMi) inp.disabled = true;
@@ -160,7 +185,6 @@ function blokOlustur(key, titleText, data) {
     let sayac = document.createElement("div");
     blok.appendChild(sayac);
 
-    // 🔥 SAAT TAKİP
     setInterval(() => {
 
         if (!saat.value) return;
@@ -168,6 +192,9 @@ function blokOlustur(key, titleText, data) {
         let aktifKullanici = (localStorage.getItem("kullanici") || "").toLowerCase();
 
         let grupKisiler = kisiler.map(k => k.value.toLowerCase().trim());
+
+        let dk = parseInt(data[sureKey]?.sure || 15);
+        let molaSuresi = dk * 60;
 
         let simdi = new Date();
         let [h, m] = saat.value.split(":");
@@ -185,10 +212,10 @@ function blokOlustur(key, titleText, data) {
             blok.style.background = "#8B0000";
 
             let kalan = molaSuresi + fark;
-            let dk = Math.floor(kalan / 60);
+            let dk2 = Math.floor(kalan / 60);
             let sn = kalan % 60;
 
-            sayac.innerText = "Mola: " + dk + "dk " + sn + "sn";
+            sayac.innerText = "Mola: " + dk2 + "dk " + sn + "sn";
 
             if (!blok.basladi) {
 
@@ -224,7 +251,6 @@ function blokOlustur(key, titleText, data) {
             }
         }
 
-        // ⏳ BEKLİYOR
         else {
             blok.style.background = "#333";
             sayac.innerText = "";
@@ -244,6 +270,11 @@ window.kaydet = async function() {
 
     let data = {};
     let index = 0;
+
+    // süreler
+    data["caySure"] = { sure: inputs[index++].value };
+    data["yemekSure"] = { sure: inputs[index++].value };
+    data["sonSure"] = { sure: inputs[index++].value };
 
     let gruplar = ["cay","yemek","son"];
 
