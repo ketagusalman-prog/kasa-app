@@ -14,6 +14,8 @@ body {
 
 .container { max-width:1200px; margin:auto; }
 
+.hidden { display:none; }
+
 .baslik {
     margin-top:25px;
     font-size:20px;
@@ -90,12 +92,23 @@ button {
 
 <h2>☕ Mola Sistemi</h2>
 
+<!-- 🔐 LOGIN -->
+<div id="login">
+<input id="kullanici" placeholder="Kullanıcı adı">
+<input id="sifre" type="password" placeholder="Şifre">
+<button onclick="giris()">Giriş</button>
+</div>
+
+<!-- 🔐 APP -->
+<div id="app" class="hidden">
+
 <button onclick="history.back()">⬅️ Kasa</button>
 
 <div id="alan"></div>
 
-<!-- 🔥 BUTON SADECE ADMIN -->
 <button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
+
+</div>
 
 </div>
 
@@ -113,37 +126,71 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* 🔥 ADMIN KONTROLÜ GÜÇLENDİRİLDİ */
-let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase();
-let adminMi = (kullanici === "admin");
+let admin = {k:"admin", s:"1234"};
+let personeller = [];
 
+let adminMi = false;
 let alan = document.getElementById("alan");
 let state = {};
 
-const ref = doc(db, "kasa", "mola");
+/* 🔐 GİRİŞ SİSTEMİ */
+window.giris = function(){
 
-onSnapshot(ref, (snap) => {
+    const refP = doc(db, "kasa", "personel");
 
-    state = snap.exists() ? snap.data().data : {};
+    onSnapshot(refP, (snap)=>{
 
-    alan.innerHTML = "";
+        if(snap.exists()){
+            personeller = snap.data().liste;
+        }
 
-    alan.appendChild(baslik("caySure","☕ Çay Molası"));
-    alan.appendChild(grid("cay",4,"caySure"));
+        let k = document.getElementById("kullanici").value.trim();
+        let s = document.getElementById("sifre").value.trim();
 
-    alan.appendChild(baslik("yemekSure","🍽️ Yemek Molası"));
-    alan.appendChild(grid("yemek",4,"yemekSure"));
+        if(k === admin.k && s === admin.s){
+            adminMi = true;
+            localStorage.setItem("kullanici", k);
+        } else {
+            let bulundu = personeller.find(p => p.k === k && p.s === s);
+            if(!bulundu){
+                alert("Hatalı giriş");
+                return;
+            }
+            localStorage.setItem("kullanici", k);
+        }
 
-    alan.appendChild(baslik("sonSure","🕓 Son Mola"));
-    alan.appendChild(grid("son",4,"sonSure"));
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("app").classList.remove("hidden");
 
-    /* 🔥 SADECE ADMIN GÖRÜR */
-    if (adminMi) {
-        document.getElementById("kaydetBtn").style.display = "block";
-    } else {
-        document.getElementById("kaydetBtn").style.display = "none";
-    }
-});
+        sistemiBaslat();
+    });
+}
+
+/* 🔥 ANA SİSTEM */
+function sistemiBaslat(){
+
+    const ref = doc(db, "kasa", "mola");
+
+    onSnapshot(ref, (snap) => {
+
+        state = snap.exists() ? snap.data().data : {};
+
+        alan.innerHTML = "";
+
+        alan.appendChild(baslik("caySure","☕ Çay Molası"));
+        alan.appendChild(grid("cay",4,"caySure"));
+
+        alan.appendChild(baslik("yemekSure","🍽️ Yemek Molası"));
+        alan.appendChild(grid("yemek",4,"yemekSure"));
+
+        alan.appendChild(baslik("sonSure","🕓 Son Mola"));
+        alan.appendChild(grid("son",4,"sonSure"));
+
+        if (adminMi) {
+            document.getElementById("kaydetBtn").style.display = "block";
+        }
+    });
+}
 
 function baslik(key,text){
     let d = document.createElement("div");
@@ -255,7 +302,7 @@ function blok(key,sureKey){
             if(!b.basladi){
                 if(benim){
                     alert("Molan başladı!");
-                    navigator.vibrate?.([300,200,300,200,500]);
+                    navigator.vibrate?.([300,200,300]);
                 }
                 b.basladi=true;
             }
@@ -265,20 +312,10 @@ function blok(key,sureKey){
             b.classList.remove("aktif");
 
             sayac.innerText="Mola bitti";
-
-            if(!b.bitti){
-                if(benim){
-                    alert("Molan bitti!");
-                    navigator.vibrate?.([500,200,500]);
-                }
-                b.bitti=true;
-            }
         }
         else{
             b.classList.remove("aktif","bitti");
             sayac.innerText="";
-            b.basladi=false;
-            b.bitti=false;
         }
 
     },1000);
@@ -286,7 +323,6 @@ function blok(key,sureKey){
     return b;
 }
 
-/* 🔥 ADMIN DIŞI KAYDEDEMEZ */
 window.kaydet = async function(){
     if(!adminMi){
         alert("Sadece admin kaydedebilir!");
