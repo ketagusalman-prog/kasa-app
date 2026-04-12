@@ -34,19 +34,6 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
     padding:12px;
     border-radius:12px;
     font-weight:bold;
-    flex-direction:column;
-}
-
-.kasaRow{
-    display:flex;
-    justify-content:space-between;
-    width:100%;
-}
-
-.kasaNo{
-    font-size:12px;
-    color:#FFD700;
-    margin-bottom:4px;
 }
 
 .erkek { background:linear-gradient(135deg,#2196F3,#0d47a1); }
@@ -88,6 +75,10 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
     gap:8px;
 }
 </style>
+
+<!-- 🔥 EXCEL KÜTÜPHANESİ -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
 </head>
 
 <body>
@@ -123,11 +114,44 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 <input id="yeniK" placeholder="Kullanıcı">
 <input id="yeniS" placeholder="Şifre">
 <button onclick="ekle()">Ekle</button>
+
+<!-- 🔥 EXCEL YÜKLE -->
+<input type="file" id="excelInput">
+
 <div id="liste"></div>
 </div>
 
 </div>
 
+</div>
+
+<!-- 🔥 POPUP -->
+<div id="popup" style="
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.7);
+display:none;
+justify-content:center;
+align-items:center;
+">
+
+<div style="
+background:#2a2a3d;
+padding:20px;
+border-radius:12px;
+width:300px;
+text-align:left;
+">
+
+<h3>👤 Personel Bilgi</h3>
+<div id="popupContent"></div>
+
+<button onclick="kapat()">Kapat</button>
+
+</div>
 </div>
 
 <script type="module">
@@ -144,21 +168,14 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* 🔥 KASA NUMARALARI (SOL / SAĞ) */
-const kasaNo = [
-    ["1-008p","21-028p"],
-    ["20-027p","26-172p"],
-    ["27-182p","29-198p"],
-    ["19-026p","28-197p"],
-    ["25-171p","14-021p"],
-    ["18-025p","15-022p"]
-];
-
 let admin = {k:"admin", s:"1234"};
 let personeller = [];
 let adminMi = false;
 let inputs = [];
 let alan = document.getElementById("alan");
+
+/* 🔥 EXCEL DATA */
+let excelData = [];
 
 let molaData = {};
 const molaRef = doc(db, "kasa", "mola");
@@ -259,26 +276,6 @@ function olustur() {
             let div = document.createElement("div");
             div.className = "kasa";
 
-            /* 🔥 KASA NUMARASI */
-            let noRow = document.createElement("div");
-            noRow.className = "kasaRow";
-
-            let noSol = document.createElement("div");
-            noSol.className = "kasaNo";
-            noSol.innerText = kasaNo[i][0];
-
-            let noSag = document.createElement("div");
-            noSag.className = "kasaNo";
-            noSag.innerText = kasaNo[i][1];
-
-            noRow.appendChild(noSol);
-            noRow.appendChild(noSag);
-
-            div.appendChild(noRow);
-
-            let row = document.createElement("div");
-            row.className = "kasaRow";
-
             let i1 = document.createElement("input");
             let i2 = document.createElement("input");
 
@@ -293,10 +290,6 @@ function olustur() {
                 i2.disabled = true;
             }
 
-            row.appendChild(i1);
-            row.appendChild(i2);
-            div.appendChild(row);
-
             div.classList.add(cinsiyet(i1.value || i2.value));
 
             if(moladaMi(i1.value) || moladaMi(i2.value)){
@@ -305,7 +298,12 @@ function olustur() {
                 div.classList.add("aktif");
             }
 
+            div.appendChild(i1);
+            div.appendChild(i2);
             alan.appendChild(div);
+
+            /* 🔥 KASA TIKLAMA */
+            div.onclick = () => kasaTikla(i1.value, i2.value);
 
             inputs.push(i1, i2);
         }
@@ -318,77 +316,69 @@ function olustur() {
     });
 }
 
-window.kaydet = async function() {
-    let data = {};
-    for (let i = 0; i < inputs.length; i+=2) {
-        data["kasa"+(i/2+1)] = {
-            sol: inputs[i].value,
-            sag: inputs[i+1].value
-        };
-    }
-    await setDoc(doc(db, "kasa", "liste"), {data});
-}
+/* 🔥 EXCEL OKUMA */
+document.getElementById("excelInput").addEventListener("change", function(e){
 
-window.kaydir = async function() {
-    let yeni = [];
-    for (let i = 0; i < inputs.length; i+=2) {
-        yeni.push({sol: inputs[i].value, sag: inputs[i+1].value});
-    }
+    let file = e.target.files[0];
+    let reader = new FileReader();
 
-    let son = yeni.pop();
-    yeni.unshift(son);
+    reader.onload = function(e){
+        let data = new Uint8Array(e.target.result);
+        let workbook = XLSX.read(data, {type: 'array'});
 
-    for (let i = 0; i < yeni.length; i++) {
-        inputs[i*2].value = yeni[i].sol;
-        inputs[i*2+1].value = yeni[i].sag;
+        let sheet = workbook.Sheets[workbook.SheetNames[0]];
+        excelData = XLSX.utils.sheet_to_json(sheet);
+
+        alert("Excel yüklendi");
     }
 
-    let data = {};
-    yeni.forEach((k,i)=> data["kasa"+(i+1)] = k);
-    await setDoc(doc(db, "kasa", "liste"), {data});
-}
+    reader.readAsArrayBuffer(file);
+});
 
-window.degistir = async function() {
-    let yeni = [];
+/* 🔥 KASA TIKLAMA */
+function kasaTikla(sol, sag){
 
-    for (let i = 0; i < inputs.length; i+=2) {
-        yeni.push({sol: inputs[i].value, sag: inputs[i+1].value});
-    }
+    let aktif = (localStorage.getItem("kullanici") || "").toLowerCase();
 
-    yeni.forEach(k => [k.sol, k.sag] = [k.sag, k.sol]);
+    let isimler = [sol, sag];
+    let sonuc = [];
 
-    for (let i = 0; i < yeni.length; i++) {
-        inputs[i*2].value = yeni[i].sol;
-        inputs[i*2+1].value = yeni[i].sag;
-    }
+    isimler.forEach(isim => {
 
-    let data = {};
-    yeni.forEach((k,i)=> data["kasa"+(i+1)] = k);
-    await setDoc(doc(db, "kasa", "liste"), {data});
-}
+        if(!isim) return;
 
-window.ekle = async function() {
-    let k = document.getElementById("yeniK").value;
-    let s = document.getElementById("yeniS").value;
+        if(adminMi || isim.toLowerCase() === aktif){
 
-    personeller.push({k,s});
-    await setDoc(doc(db, "kasa", "personel"), {liste: personeller});
-}
+            let kisi = excelData.find(x =>
+                (x.isim || "").toLowerCase() === isim.toLowerCase()
+            );
 
-function listeGoster() {
-    let div = document.getElementById("liste");
-    div.innerHTML = "";
+            if(kisi) sonuc.push(kisi);
+        }
 
-    personeller.forEach((p,i) => {
-        let d = document.createElement("div");
-        d.innerHTML = p.k + " <button onclick='sil("+i+")'>❌</button>";
-        div.appendChild(d);
     });
+
+    if(sonuc.length === 0){
+        alert("Bilgi yok");
+        return;
+    }
+
+    let html = "";
+
+    sonuc.forEach(k => {
+        html += `
+        <b>${k.isim}</b><br>
+        Departman: ${k.departman || "-"}<br>
+        Sicil: ${k.sicil || "-"}<br>
+        Telefon: ${k.telefon || "-"}<hr>`;
+    });
+
+    document.getElementById("popupContent").innerHTML = html;
+    document.getElementById("popup").style.display = "flex";
 }
 
-window.sil = async function(i) {
-    personeller.splice(i,1);
-    await setDoc(doc(db, "kasa", "personel"), {liste: personeller});
+window.kapat = function(){
+    document.getElementById("popup").style.display = "none";
 }
 
 </script>
