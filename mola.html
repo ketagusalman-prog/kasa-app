@@ -112,8 +112,12 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* 🔥 DAHA SAĞLAM ADMIN KONTROLÜ */
+/* 🔥 KRİTİK DÜZELTME */
 let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase().trim();
+
+/* 🔥 BURASI EKLENDİ (TEST AMAÇLI) */
+console.log("Giriş yapan:", kullanici);
+
 let adminMi = (kullanici === "admin");
 
 let alan = document.getElementById("alan");
@@ -136,7 +140,6 @@ onSnapshot(ref, (snap) => {
     alan.appendChild(baslik("sonSure","🕓 Son Mola"));
     alan.appendChild(grid("son",4,"sonSure"));
 
-    /* 🔥 SADECE ADMIN GÖRÜR */
     document.getElementById("kaydetBtn").style.display = adminMi ? "block" : "none";
 });
 
@@ -154,8 +157,7 @@ function baslik(key,text){
     inp.className="sureInput";
     inp.value = state[key]?.sure || "";
 
-    /* 🔥 PERSONEL TAM KİLİT */
-    if(!adminMi) inp.disabled = true;
+    inp.disabled = !adminMi;
 
     inp.oninput = () => {
         if(!adminMi) return;
@@ -163,19 +165,16 @@ function baslik(key,text){
     }
 
     d.appendChild(inp);
-
     return d;
 }
 
 function grid(prefix,adet,sureKey){
-
     let g = document.createElement("div");
     g.className="grid";
 
     for(let i=1;i<=adet;i++){
         g.appendChild(blok(prefix+i,sureKey));
     }
-
     return g;
 }
 
@@ -191,8 +190,7 @@ function blok(key,sureKey){
     let saat = document.createElement("input");
     saat.type="time";
     saat.value = state[key]?.saat || "";
-
-    if(!adminMi) saat.disabled=true;
+    saat.disabled = !adminMi;
 
     saat.oninput = () => {
         if(!adminMi) return;
@@ -205,12 +203,10 @@ function blok(key,sureKey){
     let kisiler=[];
 
     for(let i=0;i<6;i++){
-
         let inp = document.createElement("input");
         inp.className="kisiInput";
         inp.value = state[key]?.kisiler?.[i] || "";
-
-        if(!adminMi) inp.disabled=true;
+        inp.disabled = !adminMi;
 
         inp.oninput = () => {
             if(!adminMi) return;
@@ -247,7 +243,6 @@ function blok(key,sureKey){
         let benim = grup.includes(aktif);
 
         if(fark<=0 && fark>-sure){
-
             b.classList.add("aktif");
             b.classList.remove("bitti");
 
@@ -260,14 +255,11 @@ function blok(key,sureKey){
             if(!b.basladi){
                 if(benim){
                     alert("Molan başladı!");
-                    navigator.vibrate?.([300,200,300,200,500]);
                 }
                 b.basladi=true;
             }
         }
-
         else if(fark<=-sure){
-
             b.classList.add("bitti");
             b.classList.remove("aktif");
 
@@ -276,12 +268,10 @@ function blok(key,sureKey){
             if(!b.bitti){
                 if(benim){
                     alert("Molan bitti!");
-                    navigator.vibrate?.([500,200,500]);
                 }
                 b.bitti=true;
             }
         }
-
         else{
             b.classList.remove("aktif","bitti");
             sayac.innerText="";
@@ -294,7 +284,6 @@ function blok(key,sureKey){
     return b;
 }
 
-/* 🔥 ADMIN DIŞI KAYDEDEMEZ */
 window.kaydet = async function(){
     if(!adminMi){
         alert("Sadece admin kaydedebilir!");
