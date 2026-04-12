@@ -41,6 +41,7 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 
 <div id="alan"></div>
 
+<!-- BUTONLAR -->
 <button id="kaydetBtn" onclick="kaydet()">Kaydet</button>
 <button id="kaydirBtn" onclick="kaydir()">⬇️ Kaydır</button>
 <button id="degistirBtn" onclick="degistir()">↔️ Yer Değiştir</button>
@@ -80,8 +81,8 @@ window.giris = function() {
             personeller = snap.data().liste;
         }
 
-        let k = document.getElementById("kullanici").value;
-        let s = document.getElementById("sifre").value;
+        let k = document.getElementById("kullanici").value.trim();
+        let s = document.getElementById("sifre").value.trim();
 
         if (k === admin.k && s === admin.s) {
             adminMi = true;
@@ -139,16 +140,10 @@ function olustur() {
             inputs.push(i1, i2);
         }
 
-        // 🔥 BUTON KONTROL (KESİN ÇALIŞIR)
-        if (!adminMi) {
-            document.getElementById("kaydetBtn").style.display = "none";
-            document.getElementById("kaydirBtn").style.display = "none";
-            document.getElementById("degistirBtn").style.display = "none";
-        } else {
-            document.getElementById("kaydetBtn").style.display = "block";
-            document.getElementById("kaydirBtn").style.display = "block";
-            document.getElementById("degistirBtn").style.display = "block";
-        }
+        // 🔥 BUTONLAR HER ZAMAN GÖRÜNSÜN (TEST)
+        document.getElementById("kaydetBtn").style.display = "block";
+        document.getElementById("kaydirBtn").style.display = "block";
+        document.getElementById("degistirBtn").style.display = "block";
     });
 }
 
