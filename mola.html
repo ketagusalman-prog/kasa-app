@@ -15,6 +15,12 @@ body { font-family: Arial; background:#1e1e2f; color:white; text-align:center;}
     border-radius:10px;
 }
 
+.baslik {
+    margin-top:25px;
+    font-size:20px;
+    font-weight:bold;
+}
+
 input {
     width:90%;
     padding:8px;
@@ -38,14 +44,12 @@ button {
 
 <div class="container">
 
-<h2>☕ Mola Grupları</h2>
+<h2>☕ Mola Sistemi</h2>
 
-<!-- 🔥 DİREKT KASA -->
 <button onclick="window.location.href='index.html'">⬅️ Kasa</button>
 
 <div id="alan"></div>
 
-<!-- 🔒 SADECE ADMIN -->
 <button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
 
 </div>
@@ -64,14 +68,14 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 🔐 KULLANICI KONTROL
+// 🔐 USER
 let kullanici = localStorage.getItem("kullanici");
 let adminMi = (kullanici === "admin");
 
 let alan = document.getElementById("alan");
 let inputs = [];
 
-// 🔥 FIRESTORE VERİ
+// 🔥 VERİ
 const ref = doc(db, "kasa", "mola");
 
 onSnapshot(ref, (snap) => {
@@ -81,49 +85,65 @@ onSnapshot(ref, (snap) => {
     alan.innerHTML = "";
     inputs = [];
 
+    // ☕ ÇAY MOLASI
+    let baslik1 = document.createElement("div");
+    baslik1.className = "baslik";
+    baslik1.innerText = "☕ Çay Molası";
+    alan.appendChild(baslik1);
+
     for (let i = 1; i <= 3; i++) {
-
-        let blok = document.createElement("div");
-        blok.className = "blok";
-
-        let title = document.createElement("h3");
-        title.innerText = i + ". Grup";
-        blok.appendChild(title);
-
-        // ⏰ SAAT
-        let saat = document.createElement("input");
-        saat.placeholder = "Mola saati";
-        saat.value = data["grup"+i]?.saat || "";
-
-        if (!adminMi) saat.disabled = true;
-
-        blok.appendChild(saat);
-        inputs.push(saat);
-
-        // 👥 6 KİŞİ
-        for (let j = 0; j < 6; j++) {
-
-            let inp = document.createElement("input");
-            inp.placeholder = "İsim";
-
-            if (data["grup"+i]?.kisiler) {
-                inp.value = data["grup"+i].kisiler[j] || "";
-            }
-
-            if (!adminMi) inp.disabled = true;
-
-            blok.appendChild(inp);
-            inputs.push(inp);
-        }
-
-        alan.appendChild(blok);
+        blokOlustur("cay"+i, i + ". Grup", data);
     }
 
-    // 🔒 SADECE ADMIN BUTON GÖRÜR
+    // 🍽️ YEMEK MOLASI
+    let baslik2 = document.createElement("div");
+    baslik2.className = "baslik";
+    baslik2.innerText = "🍽️ Yemek Molası";
+    alan.appendChild(baslik2);
+
+    for (let i = 1; i <= 4; i++) {
+        blokOlustur("yemek"+i, i + ". Grup", data);
+    }
+
     if (adminMi) {
         document.getElementById("kaydetBtn").style.display = "block";
     }
 });
+
+// 🔧 BLOK OLUŞTUR
+function blokOlustur(key, titleText, data) {
+
+    let blok = document.createElement("div");
+    blok.className = "blok";
+
+    let title = document.createElement("h3");
+    title.innerText = titleText;
+    blok.appendChild(title);
+
+    // ⏰ SAAT
+    let saat = document.createElement("input");
+    saat.placeholder = "Saat";
+    saat.value = data[key]?.saat || "";
+
+    if (!adminMi) saat.disabled = true;
+
+    blok.appendChild(saat);
+    inputs.push(saat);
+
+    // 👥 6 KİŞİ
+    for (let j = 0; j < 6; j++) {
+        let inp = document.createElement("input");
+        inp.placeholder = "İsim";
+        inp.value = data[key]?.kisiler?.[j] || "";
+
+        if (!adminMi) inp.disabled = true;
+
+        blok.appendChild(inp);
+        inputs.push(inp);
+    }
+
+    alan.appendChild(blok);
+}
 
 // 💾 KAYDET
 window.kaydet = async function() {
@@ -133,8 +153,8 @@ window.kaydet = async function() {
     let data = {};
     let index = 0;
 
+    // ☕ ÇAY
     for (let i = 1; i <= 3; i++) {
-
         let saat = inputs[index++].value;
         let kisiler = [];
 
@@ -142,10 +162,19 @@ window.kaydet = async function() {
             kisiler.push(inputs[index++].value);
         }
 
-        data["grup"+i] = {
-            saat: saat,
-            kisiler: kisiler
-        };
+        data["cay"+i] = { saat, kisiler };
+    }
+
+    // 🍽️ YEMEK
+    for (let i = 1; i <= 4; i++) {
+        let saat = inputs[index++].value;
+        let kisiler = [];
+
+        for (let j = 0; j < 6; j++) {
+            kisiler.push(inputs[index++].value);
+        }
+
+        data["yemek"+i] = { saat, kisiler };
     }
 
     await setDoc(doc(db, "kasa", "mola"), {data});
