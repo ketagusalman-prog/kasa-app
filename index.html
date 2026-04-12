@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <title>Kasa Sistem</title>
 
-<link rel="manifest" href="manifest.json">
-
 <style>
 body { font-family: Arial; background:#1e1e2f; color:white; text-align:center;}
 .container { max-width:400px; margin:auto; }
@@ -141,15 +139,15 @@ function olustur() {
             inputs.push(i1, i2);
         }
 
-        // BUTON KONTROL
+        // 🔥 BUTON KONTROL (KESİN ÇALIŞIR)
         if (!adminMi) {
             document.getElementById("kaydetBtn").style.display = "none";
             document.getElementById("kaydirBtn").style.display = "none";
             document.getElementById("degistirBtn").style.display = "none";
         } else {
-            document.getElementById("kaydetBtn").style.display = "inline-block";
-            document.getElementById("kaydirBtn").style.display = "inline-block";
-            document.getElementById("degistirBtn").style.display = "inline-block";
+            document.getElementById("kaydetBtn").style.display = "block";
+            document.getElementById("kaydirBtn").style.display = "block";
+            document.getElementById("degistirBtn").style.display = "block";
         }
     });
 }
@@ -209,7 +207,6 @@ window.degistir = async function() {
         });
     }
 
-    // swap
     for (let i = 0; i < yeni.length; i++) {
         let temp = yeni[i].sol;
         yeni[i].sol = yeni[i].sag;
