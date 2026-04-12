@@ -12,52 +12,51 @@ body {
     text-align:center;
 }
 
-.container { max-width:1000px; margin:auto; }
+.container { max-width:1200px; margin:auto; }
 
 .baslik {
     margin-top:25px;
-    font-size:22px;
+    font-size:20px;
     font-weight:bold;
     color:#FFD700;
 }
 
+/* 🔥 GRID DÜZELTME */
 .grid {
-    display:flex;
-    flex-wrap:wrap;
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap:10px;
     justify-content:center;
+    margin-bottom:10px;
 }
 
+/* 🔥 BLOKLAR KÜÇÜLDÜ */
 .blok {
     background:#2a2a3d;
-    margin:10px;
-    padding:10px;
+    padding:8px;
     border-radius:10px;
-    width:200px;
     border:1px solid #555;
+    min-width:0;
 }
 
 h4 {
     margin:5px 0;
     font-weight:bold;
     color:#00ffff;
+    font-size:14px;
 }
 
 input {
-    padding:6px;
-    margin:3px;
+    padding:5px;
+    margin:2px;
     border-radius:6px;
     border:none;
-    font-size:12px;
+    font-size:11px;
     font-weight:bold;
 }
 
-.kisiInput {
-    width:90%;
-}
-
-.sureInput {
-    width:60px;
-}
+.kisiInput { width:90%; }
+.sureInput { width:50px; }
 
 button {
     padding:10px;
@@ -103,8 +102,7 @@ let kullanici = localStorage.getItem("kullanici");
 let adminMi = (kullanici === "admin");
 
 let alan = document.getElementById("alan");
-
-let state = {}; // 🔥 TÜM VERİYİ BURADA TUTACAĞIZ
+let state = {};
 
 const ref = doc(db, "kasa", "mola");
 
@@ -128,7 +126,6 @@ onSnapshot(ref, (snap) => {
     }
 });
 
-// 🔥 BAŞLIK
 function baslik(key,text){
 
     let d = document.createElement("div");
@@ -154,7 +151,6 @@ function baslik(key,text){
     return d;
 }
 
-// 🔥 GRID
 function grid(prefix,adet,sureKey){
 
     let g = document.createElement("div");
@@ -167,7 +163,6 @@ function grid(prefix,adet,sureKey){
     return g;
 }
 
-// 🔥 BLOK
 function blok(key,sureKey){
 
     let b = document.createElement("div");
@@ -213,7 +208,6 @@ function blok(key,sureKey){
     let sayac=document.createElement("div");
     b.appendChild(sayac);
 
-    // 🔥 SAAT SİSTEMİ
     setInterval(()=>{
 
         if(!saat.value) return;
@@ -277,11 +271,8 @@ function blok(key,sureKey){
     return b;
 }
 
-// 💾 KAYDET
 window.kaydet = async function(){
-
     if(!adminMi) return;
-
     await setDoc(doc(db,"kasa","mola"),{data:state});
     alert("Kaydedildi");
 }
