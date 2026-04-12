@@ -262,7 +262,7 @@ function blok(key,sureKey){
     return b;
 }
 
-/* 🔥 YENİ: KAYDIR */
+/* 🔥 SADECE İSİMLER KAYDIR */
 window.kaydir = function(){
 
     if(!adminMi){
@@ -272,21 +272,22 @@ window.kaydir = function(){
 
     ["cay","yemek","son"].forEach(grup=>{
 
-        let temp = [
-            state[grup+"1"],
-            state[grup+"2"],
-            state[grup+"3"]
+        let kisilerList = [
+            state[grup+"1"]?.kisiler || [],
+            state[grup+"2"]?.kisiler || [],
+            state[grup+"3"]?.kisiler || []
         ];
 
-        let son = temp.pop();
-        temp.unshift(son);
+        let son = kisilerList.pop();
+        kisilerList.unshift(son);
 
         for(let i=1;i<=3;i++){
-            state[grup+i] = temp[i-1] || {};
+            state[grup+i] = state[grup+i] || {};
+            state[grup+i].kisiler = kisilerList[i-1];
+            // 🔥 saat dokunulmuyor
         }
     });
 
-    // ekran yenile
     alan.innerHTML = "";
 
     alan.appendChild(baslik("caySure","☕ Çay Molası"));
