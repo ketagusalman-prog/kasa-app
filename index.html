@@ -6,14 +6,8 @@
 
 <style>
 body { font-family: Arial; background:#1e1e2f; color:white; text-align:center;}
+.container { max-width:400px; margin:auto; position:relative; }
 
-.container {
-    max-width:400px;
-    margin:auto;
-    position:relative;
-}
-
-/* 🔥 INPUT */
 input {
     width:90%;
     padding:10px;
@@ -25,11 +19,8 @@ input {
     font-weight:bold;
 }
 
-input:disabled {
-    background:#ddd;
-}
+input:disabled { background:#ddd; }
 
-/* 🔥 BUTTON */
 button {
     padding:10px;
     margin:5px;
@@ -39,7 +30,6 @@ button {
     color:white;
 }
 
-/* 🔥 KASA */
 .kasa {
     display:flex;
     justify-content:space-between;
@@ -49,26 +39,8 @@ button {
     font-weight:bold;
 }
 
-.erkek { background:linear-gradient(135deg,#2196F3,#0d47a1); }
-.kadin { background:linear-gradient(135deg,#ff6ec7,#c2185b); }
+.aktif { box-shadow:0 0 10px lime; }
 
-.aktif {
-    box-shadow:0 0 10px lime;
-}
-
-/* 🔥 MOLA */
-@keyframes yanipSonme {
-    0% { background:#8B0000; }
-    50% { background:#ff0000; }
-    100% { background:#8B0000; }
-}
-
-input.molada {
-    animation: yanipSonme 1s infinite;
-    color:#fff;
-}
-
-/* 🔥 PANEL */
 .panel {
     background:#222;
     padding:10px;
@@ -79,11 +51,8 @@ input.molada {
     transition:0.4s;
 }
 
-.panel.acik {
-    max-height:400px;
-}
+.panel.acik { max-height:400px; }
 
-/* 🔥 ÜST BUTONLAR */
 .ustButonlar {
     position:absolute;
     top:120px;
@@ -93,7 +62,7 @@ input.molada {
     gap:8px;
 }
 
-/* 🔥 EXCEL PANEL (SADECE KÖŞEDE) */
+/* 🔥 SABİT EXCEL PANEL */
 .excelPanel{
     position:fixed;
     bottom:10px;
@@ -101,13 +70,10 @@ input.molada {
     background:#111;
     padding:10px;
     border-radius:10px;
-    box-shadow:0 0 10px #000;
     z-index:999;
 }
 
-/* 🔥 HIDDEN */
 .hidden { display:none; }
-
 </style>
 </head>
 
@@ -118,8 +84,8 @@ input.molada {
 <h2>Kasa Sistem</h2>
 
 <div id="login">
-<input id="kullanici" placeholder="Kullanıcı adı">
-<input id="sifre" type="password" placeholder="Şifre">
+<input id="kullanici">
+<input id="sifre" type="password">
 <button onclick="giris()">Giriş</button>
 </div>
 
@@ -139,8 +105,8 @@ input.molada {
 <div id="alan"></div>
 
 <div id="panel" class="panel">
-<input id="yeniK" placeholder="Kullanıcı">
-<input id="yeniS" placeholder="Şifre">
+<input id="yeniK">
+<input id="yeniS">
 <button onclick="ekle()">Ekle</button>
 <div id="liste"></div>
 </div>
@@ -148,9 +114,8 @@ input.molada {
 </div>
 </div>
 
-<!-- 🔥 EXCEL PANEL -->
 <div id="excelPanel" class="excelPanel" style="display:none;">
-📊 Excel Yükle
+📊 Excel
 <input type="file" id="excelInput">
 </div>
 
@@ -159,86 +124,75 @@ input.molada {
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const app = initializeApp({
- apiKey: "AIzaSy...",
- authDomain: "ukasa1.firebaseapp.com",
- projectId: "ukasa1"
+ apiKey:"AIzaSy...",
+ authDomain:"ukasa1.firebaseapp.com",
+ projectId:"ukasa1"
 });
 
 const db = getFirestore(app);
 
 let admin = {k:"admin", s:"1234"};
-let personeller = [];
-let adminMi = false;
-let inputs = [];
-let alan = document.getElementById("alan");
+let adminMi=false;
+let personeller=[];
+let inputs=[];
+let alan=document.getElementById("alan");
 
 /* 🔥 EXCEL */
-let excelData = [];
-
-document.getElementById("excelInput").addEventListener("change", e=>{
- let file = e.target.files[0];
- let reader = new FileReader();
-
- reader.onload = evt=>{
-  let wb = XLSX.read(new Uint8Array(evt.target.result), {type:'array'});
-  excelData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-  alert("Excel yüklendi");
+let excelData=[];
+excelInput.onchange=e=>{
+ let reader=new FileReader();
+ reader.onload=evt=>{
+  let wb=XLSX.read(new Uint8Array(evt.target.result),{type:'array'});
+  excelData=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+  alert("Excel OK");
  }
-
- reader.readAsArrayBuffer(file);
-});
+ reader.readAsArrayBuffer(e.target.files[0]);
+}
 
 /* 🔥 GİRİŞ */
-window.giris = function(){
+window.giris=async function(){
 
- const ref = doc(db,"kasa","personel");
+ let k=kullanici.value.trim();
+ let s=sifre.value.trim();
 
- onSnapshot(ref,snap=>{
+ let snap=await getDoc(doc(db,"kasa","personel"));
+ if(snap.exists()) personeller=snap.data().liste;
 
-  if(snap.exists()) personeller = snap.data().liste;
+ if(k===admin.k && s===admin.s){
+  adminMi=true;
+  panelBtn.style.display="block";
+  excelPanel.style.display="block";
+ }else{
+  let ok=personeller.find(p=>p.k===k && p.s===s);
+  if(!ok) return alert("Hatalı giriş");
+ }
 
-  let k = kullanici.value.trim();
-  let s = sifre.value.trim();
+ login.classList.add("hidden");
+ app.classList.remove("hidden");
 
-  if(k===admin.k && s===admin.s){
-   adminMi = true;
-   panelBtn.style.display="block";
-   excelPanel.style.display="block";
-  }else{
-   let ok = personeller.find(p=>p.k===k && p.s===s);
-   if(!ok) return alert("Hatalı giriş");
-  }
-
-  login.classList.add("hidden");
-  app.classList.remove("hidden");
-
-  olustur();
- });
-
+ olustur();
 }
 
 /* 🔥 PANEL */
-window.panelToggle = ()=>panel.classList.toggle("acik");
+window.panelToggle=()=>panel.classList.toggle("acik");
 
-/* 🔥 KASALAR */
+/* 🔥 KASA OLUŞTUR */
 function olustur(){
 
- const ref = doc(db,"kasa","liste");
+ onSnapshot(doc(db,"kasa","liste"),snap=>{
 
- onSnapshot(ref,snap=>{
-
-  let data = snap.exists()?snap.data().data:{};
+  let data=snap.exists()?snap.data().data:{};
 
   alan.innerHTML="";
   inputs=[];
 
   for(let i=0;i<6;i++){
 
-   let d=document.createElement("div");
-   d.className="kasa";
+   let div=document.createElement("div");
+   div.className="kasa aktif";
 
    let a=document.createElement("input");
    let b=document.createElement("input");
@@ -248,9 +202,9 @@ function olustur(){
 
    if(!adminMi){a.disabled=true; b.disabled=true;}
 
-   d.appendChild(a);
-   d.appendChild(b);
-   alan.appendChild(d);
+   div.appendChild(a);
+   div.appendChild(b);
+   alan.appendChild(div);
 
    inputs.push(a,b);
   }
@@ -264,8 +218,8 @@ function olustur(){
  });
 }
 
-/* 🔥 BUTONLAR */
-window.kaydet = async ()=>{
+/* 🔥 KAYDET */
+window.kaydet=async()=>{
  let d={};
  for(let i=0;i<inputs.length;i+=2){
   d["kasa"+(i/2+1)]={sol:inputs[i].value,sag:inputs[i+1].value};
@@ -273,20 +227,36 @@ window.kaydet = async ()=>{
  await setDoc(doc(db,"kasa","liste"),{data:d});
 }
 
-window.kaydir = ()=>{
- let son=inputs.splice(inputs.length-2,2);
- inputs.unshift(...son);
- olustur();
+/* 🔥 KAYDIR (FİREBASE FIX) */
+window.kaydir=async()=>{
+ let yeni=[];
+ for(let i=0;i<inputs.length;i+=2){
+  yeni.push({sol:inputs[i].value,sag:inputs[i+1].value});
+ }
+ let son=yeni.pop();
+ yeni.unshift(son);
+
+ let d={};
+ yeni.forEach((k,i)=>d["kasa"+(i+1)]=k);
+
+ await setDoc(doc(db,"kasa","liste"),{data:d});
 }
 
-window.degistir = ()=>{
+/* 🔥 DEĞİŞTİR (FİREBASE FIX) */
+window.degistir=async()=>{
+ let yeni=[];
  for(let i=0;i<inputs.length;i+=2){
-  [inputs[i].value,inputs[i+1].value]=[inputs[i+1].value,inputs[i].value];
+  yeni.push({sol:inputs[i+1].value,sag:inputs[i].value});
  }
+
+ let d={};
+ yeni.forEach((k,i)=>d["kasa"+(i+1)]=k);
+
+ await setDoc(doc(db,"kasa","liste"),{data:d});
 }
 
 /* 🔥 PERSONEL */
-window.ekle = async ()=>{
+window.ekle=async()=>{
  personeller.push({k:yeniK.value,s:yeniS.value});
  await setDoc(doc(db,"kasa","personel"),{liste:personeller});
 }
