@@ -32,55 +32,22 @@ body {
     padding:8px;
     border-radius:10px;
     border:1px solid #555;
-    position:relative;
 }
 
 .aktif {
     background:#8B0000 !important;
-    box-shadow:0 0 15px red, 0 0 25px red;
+    box-shadow:0 0 15px red;
 }
 
 .bitti {
     background:#2e7d32 !important;
-    box-shadow:0 0 15px lime, 0 0 25px lime;
+    box-shadow:0 0 15px lime;
 }
 
-h4 {
-    margin:5px 0;
-    font-weight:bold;
-    color:#00ffff;
-    font-size:14px;
-}
-
-input {
-    padding:6px;
-    margin:3px;
-    border-radius:6px;
-    border:none;
-    font-size:12px;
-    font-weight:bold;
-    background:#ffffff;
-    color:#000000;
-}
-
-input:disabled {
-    background:#dddddd;
-    color:#000000;
-    opacity:1;
-}
-
+input { margin:3px; }
 .kisiInput { width:90%; }
 .sureInput { width:50px; }
 
-button {
-    padding:10px;
-    margin:5px;
-    border-radius:8px;
-    border:none;
-    background:#4CAF50;
-    color:white;
-    font-weight:bold;
-}
 </style>
 </head>
 
@@ -90,12 +57,7 @@ button {
 
 <h2>☕ Mola Sistemi</h2>
 
-<button onclick="window.location.href='index.html'">⬅️ Kasa</button>
-
 <div id="alan"></div>
-
-<button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
-<button id="kaydirBtn" onclick="kaydir()" style="display:none;">⬅️➡️ Kaydır</button>
 
 </div>
 
@@ -104,20 +66,13 @@ button {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSy...",
-  authDomain: "ukasa1.firebaseapp.com",
-  projectId: "ukasa1"
-};
+const app = initializeApp({
+  apiKey:"AIzaSy...",
+  authDomain:"ukasa1.firebaseapp.com",
+  projectId:"ukasa1"
+});
 
-const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-
-let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase().trim();
-let adminMi = (kullanici === "admin");
-
-document.getElementById("kaydetBtn").style.display = adminMi ? "block" : "none";
-document.getElementById("kaydirBtn").style.display = adminMi ? "block" : "none";
 
 let alan = document.getElementById("alan");
 let state = {};
@@ -130,41 +85,10 @@ onSnapshot(ref, (snap) => {
 
     alan.innerHTML = "";
 
-    alan.appendChild(baslik("caySure","☕ Çay Molası"));
     alan.appendChild(grid("cay",4,"caySure"));
-
-    alan.appendChild(baslik("yemekSure","🍽️ Yemek Molası"));
     alan.appendChild(grid("yemek",4,"yemekSure"));
-
-    alan.appendChild(baslik("sonSure","🕓 Son Mola"));
     alan.appendChild(grid("son",4,"sonSure"));
 });
-
-function baslik(key,text){
-
-    let d = document.createElement("div");
-    d.className = "baslik";
-
-    let span = document.createElement("span");
-    span.innerText = text;
-    d.appendChild(span);
-
-    let inp = document.createElement("input");
-    inp.type="number";
-    inp.className="sureInput";
-    inp.value = state[key]?.sure || "";
-
-    inp.disabled = !adminMi;
-
-    inp.oninput = () => {
-        if(!adminMi) return;
-        state[key] = { sure: inp.value };
-    }
-
-    d.appendChild(inp);
-
-    return d;
-}
 
 function grid(prefix,adet,sureKey){
     let g = document.createElement("div");
@@ -182,40 +106,17 @@ function blok(key,sureKey){
     let b = document.createElement("div");
     b.className="blok";
 
-    let t = document.createElement("h4");
-    t.innerText=key;
-    b.appendChild(t);
-
     let saat = document.createElement("input");
     saat.type="time";
     saat.value = state[key]?.saat || "";
-    saat.disabled = !adminMi;
-
-    saat.oninput = () => {
-        if(!adminMi) return;
-        state[key] = state[key] || {};
-        state[key].saat = saat.value;
-    }
 
     b.appendChild(saat);
 
-    let kisiler=[];
-
-    for(let i=0;i<6;i++){
+    for(let i=0;i<3;i++){
         let inp = document.createElement("input");
         inp.className="kisiInput";
         inp.value = state[key]?.kisiler?.[i] || "";
-        inp.disabled = !adminMi;
-
-        inp.oninput = () => {
-            if(!adminMi) return;
-            state[key] = state[key] || {};
-            state[key].kisiler = state[key].kisiler || [];
-            state[key].kisiler[i] = inp.value;
-        }
-
         b.appendChild(inp);
-        kisiler.push(inp);
     }
 
     let sayac=document.createElement("div");
@@ -233,6 +134,11 @@ function blok(key,sureKey){
 
         let hedef=new Date();
         hedef.setHours(h,m,0);
+
+        /* 🔥 GECE FIX */
+        if(hedef < now){
+            hedef.setDate(hedef.getDate() + 1);
+        }
 
         let fark=Math.floor((hedef-now)/1000);
 
@@ -262,78 +168,25 @@ function blok(key,sureKey){
     return b;
 }
 
-/* 🔥 SADECE İSİMLER KAYDIR */
-window.kaydir = function(){
+/* 🔥 MOLADA MI (GECE FIX EKLİ) */
+function moladaMi(saatStr,sure){
 
-    if(!adminMi){
-        alert("Sadece admin kullanabilir!");
-        return;
+    if(!saatStr) return false;
+
+    let now = new Date();
+    let [h,m] = saatStr.split(":");
+
+    let hedef = new Date();
+    hedef.setHours(h,m,0);
+
+    /* 🔥 GECE FIX */
+    if(hedef < now){
+        hedef.setDate(hedef.getDate() + 1);
     }
 
-    ["cay","yemek","son"].forEach(grup=>{
+    let fark = Math.floor((hedef-now)/1000);
 
-        let kisilerList = [
-            state[grup+"1"]?.kisiler || [],
-            state[grup+"2"]?.kisiler || [],
-            state[grup+"3"]?.kisiler || []
-        ];
-
-        let son = kisilerList.pop();
-        kisilerList.unshift(son);
-
-        for(let i=1;i<=3;i++){
-            state[grup+i] = state[grup+i] || {};
-            state[grup+i].kisiler = kisilerList[i-1];
-            // 🔥 saat dokunulmuyor
-        }
-    });
-
-    alan.innerHTML = "";
-
-    alan.appendChild(baslik("caySure","☕ Çay Molası"));
-    alan.appendChild(grid("cay",4,"caySure"));
-
-    alan.appendChild(baslik("yemekSure","🍽️ Yemek Molası"));
-    alan.appendChild(grid("yemek",4,"yemekSure"));
-
-    alan.appendChild(baslik("sonSure","🕓 Son Mola"));
-    alan.appendChild(grid("son",4,"sonSure"));
-}
-
-/* 🔥 KAYDET */
-window.kaydet = async function(){
-
-    if(!adminMi){
-        alert("Sadece admin kaydedebilir!");
-        return;
-    }
-
-    for(let i=1;i<=4;i++){
-
-        let cayKey = "cay"+i;
-
-        if(!state[cayKey]?.kisiler) continue;
-
-        ["yemek","son"].forEach(grup=>{
-
-            let hedefKey = grup+i;
-
-            state[hedefKey] = state[hedefKey] || {};
-            state[hedefKey].kisiler = state[hedefKey].kisiler || [];
-
-            for(let j=0;j<6;j++){
-
-                if(!state[hedefKey].kisiler[j]){
-                    state[hedefKey].kisiler[j] = state[cayKey].kisiler[j] || "";
-                }
-
-            }
-
-        });
-    }
-
-    await setDoc(doc(db,"kasa","mola"),{data:state});
-    alert("Kaydedildi");
+    return (fark<=0 && fark>-sure);
 }
 
 </script>
