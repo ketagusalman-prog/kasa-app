@@ -41,7 +41,7 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 
 <div id="alan"></div>
 
-<!-- BUTONLAR -->
+<!-- 🔥 BUTONLAR -->
 <button id="kaydetBtn" onclick="kaydet()">Kaydet</button>
 <button id="kaydirBtn" onclick="kaydir()">⬇️ Kaydır</button>
 <button id="degistirBtn" onclick="degistir()">↔️ Yer Değiştir</button>
@@ -128,6 +128,7 @@ function olustur() {
                 i2.value = k.sag;
             }
 
+            // 👥 PERSONEL SADECE GÖRÜR
             if (!adminMi) {
                 i1.disabled = true;
                 i2.disabled = true;
@@ -140,17 +141,24 @@ function olustur() {
             inputs.push(i1, i2);
         }
 
-        // 🔥 BUTONLAR HER ZAMAN GÖRÜNSÜN (TEST)
-        document.getElementById("kaydetBtn").style.display = "block";
-        document.getElementById("kaydirBtn").style.display = "block";
-        document.getElementById("degistirBtn").style.display = "block";
+        // 🔥 BUTON YETKİ KONTROLÜ
+        if (adminMi) {
+            document.getElementById("kaydetBtn").style.display = "block";
+            document.getElementById("kaydirBtn").style.display = "block";
+            document.getElementById("degistirBtn").style.display = "block";
+        } else {
+            document.getElementById("kaydetBtn").style.display = "none";
+            document.getElementById("kaydirBtn").style.display = "none";
+            document.getElementById("degistirBtn").style.display = "none";
+        }
     });
 }
 
 // 💾 KAYDET
 window.kaydet = async function() {
-    let data = {};
+    if (!adminMi) return;
 
+    let data = {};
     for (let i = 0; i < inputs.length; i+=2) {
         data["kasa"+(i/2+1)] = {
             sol: inputs[i].value,
@@ -159,11 +167,11 @@ window.kaydet = async function() {
     }
 
     await setDoc(doc(db, "kasa", "liste"), {data});
-    alert("Kaydedildi");
 }
 
 // 🔄 KAYDIR
 window.kaydir = async function() {
+    if (!adminMi) return;
 
     let yeni = [];
 
@@ -192,6 +200,7 @@ window.kaydir = async function() {
 
 // ↔️ YER DEĞİŞTİR
 window.degistir = async function() {
+    if (!adminMi) return;
 
     let yeni = [];
 
@@ -219,33 +228,6 @@ window.degistir = async function() {
     }
 
     await setDoc(doc(db, "kasa", "liste"), {data});
-}
-
-// 👥 PERSONEL EKLE
-window.ekle = async function() {
-    let k = document.getElementById("yeniK").value;
-    let s = document.getElementById("yeniS").value;
-
-    personeller.push({k,s});
-    await setDoc(doc(db, "kasa", "personel"), {liste: personeller});
-}
-
-// 📋 LİSTE
-function listeGoster() {
-    let div = document.getElementById("liste");
-    div.innerHTML = "";
-
-    personeller.forEach((p,i) => {
-        let d = document.createElement("div");
-        d.innerHTML = p.k + " <button onclick='sil("+i+")'>❌</button>";
-        div.appendChild(d);
-    });
-}
-
-// ❌ SİL
-window.sil = async function(i) {
-    personeller.splice(i,1);
-    await setDoc(doc(db, "kasa", "personel"), {liste: personeller});
 }
 
 </script>
