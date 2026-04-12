@@ -2,321 +2,54 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Kasa Sistem</title>
+<title>Excel Personel Bilgi</title>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 <style>
-body { font-family: Arial; background:#1e1e2f; color:white; text-align:center;}
-.container { max-width:400px; margin:auto; position:relative; }
+body {
+    font-family: Arial;
+    background:#1e1e2f;
+    color:white;
+    text-align:center;
+}
+
+.container {
+    max-width:800px;
+    margin:auto;
+}
 
 input {
-    width:90%;
     padding:10px;
-    margin:5px;
-    border-radius:8px;
-    border:none;
-    background:#fff;
-    color:#000;
-    font-weight:bold;
-}
-
-input:disabled {
-    background:#ddd;
-    color:#000;
-    opacity:1;
-}
-
-button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4CAF50; color:white;}
-
-.kasa {
-    display:flex;
-    justify-content:space-between;
     margin:10px;
-    padding:12px;
-    border-radius:12px;
-    font-weight:bold;
 }
 
-.erkek { background:linear-gradient(135deg,#2196F3,#0d47a1); }
-.kadin { background:linear-gradient(135deg,#ff6ec7,#c2185b); }
-
-.molada {
-    background:#8B0000 !important;
-    box-shadow:0 0 10px red;
-}
-
-.aktif {
-    box-shadow:0 0 10px lime;
-}
-
-.hidden { display:none; }
-
-.panel {
-    background:#222;
+.kart {
+    background:#2a2a3d;
     padding:10px;
     margin:10px;
     border-radius:10px;
-    max-height:0;
-    overflow:hidden;
-    transition:all 0.4s ease;
-}
-
-.panel.acik {
-    max-height:400px;
-    overflow-y:auto;
-    padding:10px;
-}
-
-.ustButonlar {
-    position:absolute;
-    top:120px;
-    right:-180px;
-    display:flex;
-    flex-direction:column;
-    gap:8px;
 }
 </style>
-
-<!-- 🔥 EXCEL KÜTÜPHANESİ -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-
 </head>
 
 <body>
 
 <div class="container">
 
-<h2>Kasa Sistem</h2>
+<h2>📊 Personel Bilgi Sistemi</h2>
 
-<div id="login">
-<input id="kullanici" placeholder="Kullanıcı adı">
-<input id="sifre" type="password" placeholder="Şifre">
-<button onclick="giris()">Giriş</button>
-</div>
-
-<div id="app" class="hidden">
-
-<h3 id="info"></h3>
-
-<button onclick="window.location.href='mola.html'">☕ Mola Sayfası</button>
-
-<button id="panelBtn" onclick="panelToggle()" style="display:none;">👥 Personel Paneli</button>
-
-<div class="ustButonlar">
-<button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
-<button id="kaydirBtn" onclick="kaydir()" style="display:none;">⬇️ Kaydır</button>
-<button id="degistirBtn" onclick="degistir()" style="display:none;">↔️ Yer Değiştir</button>
-</div>
-
-<div id="alan"></div>
-
-<div id="panel" class="panel">
-<h4>👥 Personel</h4>
-<input id="yeniK" placeholder="Kullanıcı">
-<input id="yeniS" placeholder="Şifre">
-<button onclick="ekle()">Ekle</button>
-
-<!-- 🔥 EXCEL YÜKLE -->
 <input type="file" id="excelInput">
 
-<div id="liste"></div>
-</div>
+<div id="sonuc"></div>
 
 </div>
 
-</div>
+<script>
 
-<!-- 🔥 POPUP -->
-<div id="popup" style="
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.7);
-display:none;
-justify-content:center;
-align-items:center;
-">
-
-<div style="
-background:#2a2a3d;
-padding:20px;
-border-radius:12px;
-width:300px;
-text-align:left;
-">
-
-<h3>👤 Personel Bilgi</h3>
-<div id="popupContent"></div>
-
-<button onclick="kapat()">Kapat</button>
-
-</div>
-</div>
-
-<script type="module">
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSy...",
-  authDomain: "ukasa1.firebaseapp.com",
-  projectId: "ukasa1"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-let admin = {k:"admin", s:"1234"};
-let personeller = [];
-let adminMi = false;
-let inputs = [];
-let alan = document.getElementById("alan");
-
-/* 🔥 EXCEL DATA */
 let excelData = [];
 
-let molaData = {};
-const molaRef = doc(db, "kasa", "mola");
-onSnapshot(molaRef, (snap)=>{
-    molaData = snap.exists() ? snap.data().data : {};
-});
-
-function cinsiyet(isim){
-    isim = (isim || "").toLowerCase();
-    let kadin = ["ayşe","fatma","zeynep","elif","buse"];
-    return kadin.includes(isim) ? "kadin" : "erkek";
-}
-
-function moladaMi(isim){
-    if(!isim) return false;
-
-    let now = new Date();
-    let gruplar = ["cay","yemek","son"];
-
-    for(let g of gruplar){
-        for(let i=1;i<=4;i++){
-
-            let key = g+i;
-            let saat = molaData[key]?.saat;
-            let kisiler = molaData[key]?.kisiler || [];
-
-            if(!saat) continue;
-
-            let [h,m] = saat.split(":");
-
-            let hedef = new Date();
-            hedef.setHours(h,m,0);
-
-            let sure = (molaData[g+"Sure"]?.sure || 15)*60;
-            let fark = Math.floor((hedef-now)/1000);
-
-            if(fark<=0 && fark>-sure){
-                if(kisiler.map(x=>x.toLowerCase()).includes(isim.toLowerCase())){
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
-}
-
-window.giris = function() {
-
-    const ref = doc(db, "kasa", "personel");
-
-    onSnapshot(ref, (snap) => {
-
-        if (snap.exists()) {
-            personeller = snap.data().liste;
-        }
-
-        let k = document.getElementById("kullanici").value.trim();
-        let s = document.getElementById("sifre").value.trim();
-
-        if (k === admin.k && s === admin.s) {
-            adminMi = true;
-            document.getElementById("panelBtn").style.display = "block";
-        } else {
-            let bulundu = personeller.find(p => p.k === k && p.s === s);
-            if (!bulundu) {
-                alert("Hatalı giriş");
-                return;
-            }
-        }
-
-        localStorage.setItem("kullanici", k);
-
-        document.getElementById("login").classList.add("hidden");
-        document.getElementById("app").classList.remove("hidden");
-
-        olustur();
-        listeGoster();
-    });
-}
-
-window.panelToggle = function(){
-    let p = document.getElementById("panel");
-    p.classList.toggle("acik");
-}
-
-function olustur() {
-    const ref = doc(db, "kasa", "liste");
-
-    onSnapshot(ref, (snap) => {
-
-        let kayit = snap.exists() ? snap.data().data : {};
-
-        alan.innerHTML = "";
-        inputs = [];
-
-        for (let i = 0; i < 6; i++) {
-
-            let div = document.createElement("div");
-            div.className = "kasa";
-
-            let i1 = document.createElement("input");
-            let i2 = document.createElement("input");
-
-            let k = kayit["kasa"+(i+1)];
-            if (k) {
-                i1.value = k.sol;
-                i2.value = k.sag;
-            }
-
-            if (!adminMi) {
-                i1.disabled = true;
-                i2.disabled = true;
-            }
-
-            div.classList.add(cinsiyet(i1.value || i2.value));
-
-            if(moladaMi(i1.value) || moladaMi(i2.value)){
-                div.classList.add("molada");
-            } else {
-                div.classList.add("aktif");
-            }
-
-            div.appendChild(i1);
-            div.appendChild(i2);
-            alan.appendChild(div);
-
-            /* 🔥 KASA TIKLAMA */
-            div.onclick = () => kasaTikla(i1.value, i2.value);
-
-            inputs.push(i1, i2);
-        }
-
-        if (adminMi) {
-            document.getElementById("kaydetBtn").style.display = "block";
-            document.getElementById("kaydirBtn").style.display = "block";
-            document.getElementById("degistirBtn").style.display = "block";
-        }
-    });
-}
-
-/* 🔥 EXCEL OKUMA */
+/* 📥 EXCEL OKU */
 document.getElementById("excelInput").addEventListener("change", function(e){
 
     let file = e.target.files[0];
@@ -329,56 +62,34 @@ document.getElementById("excelInput").addEventListener("change", function(e){
         let sheet = workbook.Sheets[workbook.SheetNames[0]];
         excelData = XLSX.utils.sheet_to_json(sheet);
 
-        alert("Excel yüklendi");
+        console.log(excelData);
+
+        goster();
     }
 
     reader.readAsArrayBuffer(file);
 });
 
-/* 🔥 KASA TIKLAMA */
-function kasaTikla(sol, sag){
+/* 📊 GÖSTER */
+function goster(){
 
-    let aktif = (localStorage.getItem("kullanici") || "").toLowerCase();
+    let div = document.getElementById("sonuc");
+    div.innerHTML = "";
 
-    let isimler = [sol, sag];
-    let sonuc = [];
+    excelData.forEach(kisi => {
 
-    isimler.forEach(isim => {
+        let d = document.createElement("div");
+        d.className = "kart";
 
-        if(!isim) return;
+        d.innerHTML = `
+            <b>${kisi.isim || "-"}</b><br>
+            Departman: ${kisi.departman || "-"}<br>
+            Sicil: ${kisi.sicil || "-"}<br>
+            Telefon: ${kisi.telefon || "-"}
+        `;
 
-        if(adminMi || isim.toLowerCase() === aktif){
-
-            let kisi = excelData.find(x =>
-                (x.isim || "").toLowerCase() === isim.toLowerCase()
-            );
-
-            if(kisi) sonuc.push(kisi);
-        }
-
+        div.appendChild(d);
     });
-
-    if(sonuc.length === 0){
-        alert("Bilgi yok");
-        return;
-    }
-
-    let html = "";
-
-    sonuc.forEach(k => {
-        html += `
-        <b>${k.isim}</b><br>
-        Departman: ${k.departman || "-"}<br>
-        Sicil: ${k.sicil || "-"}<br>
-        Telefon: ${k.telefon || "-"}<hr>`;
-    });
-
-    document.getElementById("popupContent").innerHTML = html;
-    document.getElementById("popup").style.display = "flex";
-}
-
-window.kapat = function(){
-    document.getElementById("popup").style.display = "none";
 }
 
 </script>
