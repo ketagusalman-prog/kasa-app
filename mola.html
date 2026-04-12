@@ -207,26 +207,9 @@ function blok(key,sureKey){
 
         inp.oninput = () => {
             if(!adminMi) return;
-
             state[key] = state[key] || {};
             state[key].kisiler = state[key].kisiler || [];
             state[key].kisiler[i] = inp.value;
-
-            /* 🔥 YENİ EKLEME: ÇAY → DİĞER MOLALAR */
-            if(key.startsWith("cay")){
-                let index = key.replace("cay","");
-                ["yemek","son"].forEach(grup=>{
-                    let hedefKey = grup + index;
-
-                    state[hedefKey] = state[hedefKey] || {};
-                    state[hedefKey].kisiler = state[hedefKey].kisiler || [];
-
-                    /* sadece boşsa kopyala (manueli bozmaz) */
-                    if(!state[hedefKey].kisiler[i]){
-                        state[hedefKey].kisiler[i] = inp.value;
-                    }
-                });
-            }
         }
 
         b.appendChild(inp);
@@ -240,9 +223,6 @@ function blok(key,sureKey){
 
         if(!saat.value) return;
 
-        let aktif = (localStorage.getItem("kullanici")||"").toLowerCase();
-        let grup = kisiler.map(k=>k.value.toLowerCase());
-
         let dk = parseInt(state[sureKey]?.sure || 15);
         let sure = dk*60;
 
@@ -253,8 +233,6 @@ function blok(key,sureKey){
         hedef.setHours(h,m,0);
 
         let fark=Math.floor((hedef-now)/1000);
-
-        let benim = grup.includes(aktif);
 
         if(fark<=0 && fark>-sure){
             b.classList.add("aktif");
@@ -282,11 +260,39 @@ function blok(key,sureKey){
     return b;
 }
 
+/* 🔥 KAYDET */
 window.kaydet = async function(){
+
     if(!adminMi){
         alert("Sadece admin kaydedebilir!");
         return;
     }
+
+    // 🔥 BURAYA EKLENDİ
+    for(let i=1;i<=4;i++){
+
+        let cayKey = "cay"+i;
+
+        if(!state[cayKey]?.kisiler) continue;
+
+        ["yemek","son"].forEach(grup=>{
+
+            let hedefKey = grup+i;
+
+            state[hedefKey] = state[hedefKey] || {};
+            state[hedefKey].kisiler = state[hedefKey].kisiler || [];
+
+            for(let j=0;j<6;j++){
+
+                if(!state[hedefKey].kisiler[j]){
+                    state[hedefKey].kisiler[j] = state[cayKey].kisiler[j] || "";
+                }
+
+            }
+
+        });
+    }
+
     await setDoc(doc(db,"kasa","mola"),{data:state});
     alert("Kaydedildi");
 }
