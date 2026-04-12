@@ -234,12 +234,13 @@ function blok(key,sureKey){
         let hedef=new Date();
         hedef.setHours(h,m,0);
 
-        /* 🔥 GECE 00:00 FIX */
-        if(hedef < now){
-            hedef.setDate(hedef.getDate()+1);
-        }
-
         let fark=Math.floor((hedef-now)/1000);
+
+        /* 🔥 GECE 00:00 FIX (DOĞRU) */
+        if(fark > 43200){
+            hedef.setDate(hedef.getDate()-1);
+            fark = Math.floor((hedef-now)/1000);
+        }
 
         if(fark<=0 && fark>-sure){
             b.classList.add("aktif");
