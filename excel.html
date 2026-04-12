@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Excel Personel Bilgi</title>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<style>
+body {
+    font-family: Arial;
+    background:#1e1e2f;
+    color:white;
+    text-align:center;
+}
+
+.container {
+    max-width:800px;
+    margin:auto;
+}
+
+input {
+    padding:10px;
+    margin:10px;
+}
+
+.kart {
+    background:#2a2a3d;
+    padding:10px;
+    margin:10px;
+    border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>📊 Personel Bilgi Sistemi</h2>
+
+<input type="file" id="excelInput">
+
+<div id="sonuc"></div>
+
+</div>
+
+<script>
+
+let excelData = [];
+
+/* 📥 EXCEL OKU */
+document.getElementById("excelInput").addEventListener("change", function(e){
+
+    let file = e.target.files[0];
+    let reader = new FileReader();
+
+    reader.onload = function(e){
+        let data = new Uint8Array(e.target.result);
+        let workbook = XLSX.read(data, {type: 'array'});
+
+        let sheet = workbook.Sheets[workbook.SheetNames[0]];
+        excelData = XLSX.utils.sheet_to_json(sheet);
+
+        console.log(excelData);
+
+        goster();
+    }
+
+    reader.readAsArrayBuffer(file);
+});
+
+/* 📊 GÖSTER */
+function goster(){
+
+    let div = document.getElementById("sonuc");
+    div.innerHTML = "";
+
+    excelData.forEach(kisi => {
+
+        let d = document.createElement("div");
+        d.className = "kart";
+
+        d.innerHTML = `
+            <b>${kisi.isim || "-"}</b><br>
+            Departman: ${kisi.departman || "-"}<br>
+            Sicil: ${kisi.sicil || "-"}<br>
+            Telefon: ${kisi.telefon || "-"}
+        `;
+
+        div.appendChild(d);
+    });
+}
+
+</script>
+
+</body>
+</html>
