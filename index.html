@@ -113,7 +113,7 @@ input.molada {
 
 <button onclick="window.location.href='mola.html'">☕ Mola Sayfası</button>
 
-<!-- ✅ DOĞRU YER -->
+<!-- ✅ DOĞRU EKLENDİ -->
 <button onclick="window.location.href='kisisel.html'">
 👤 Kişisel Panel
 </button>
@@ -140,7 +140,6 @@ input.molada {
 
 </div>
 
-<!-- EXCEL PANEL -->
 <div id="excelPanel" class="excelPanel" style="display:none;">
     <div style="font-size:12px; margin-bottom:5px;">📊 Excel Yükle</div>
     <input type="file" id="excelInput" accept=".xlsx,.xls">
@@ -262,6 +261,58 @@ window.giris = function() {
 
         olustur();
         listeGoster();
+    });
+}
+
+/* 🔥 BURASI EKSİKTİ — EKLENDİ */
+function olustur() {
+    const ref = doc(db, "kasa", "liste");
+
+    onSnapshot(ref, (snap) => {
+
+        let kayit = snap.exists() ? snap.data().data : {};
+
+        alan.innerHTML = "";
+        inputs = [];
+
+        for (let i = 0; i < 6; i++) {
+
+            let div = document.createElement("div");
+            div.className = "kasa";
+
+            let i1 = document.createElement("input");
+            let i2 = document.createElement("input");
+
+            let k = kayit["kasa"+(i+1)];
+            if (k) {
+                i1.value = k.sol;
+                i2.value = k.sag;
+            }
+
+            if (!adminMi) {
+                i1.disabled = true;
+                i2.disabled = true;
+            }
+
+            div.classList.add(cinsiyet(i1.value || i2.value));
+
+            if(moladaMi(i1.value)) i1.classList.add("molada");
+            if(moladaMi(i2.value)) i2.classList.add("molada");
+
+            div.classList.add("aktif");
+
+            div.appendChild(i1);
+            div.appendChild(i2);
+            alan.appendChild(div);
+
+            inputs.push(i1, i2);
+        }
+
+        if (adminMi) {
+            document.getElementById("kaydetBtn").style.display = "block";
+            document.getElementById("kaydirBtn").style.display = "block";
+            document.getElementById("degistirBtn").style.display = "block";
+        }
     });
 }
 </script>
