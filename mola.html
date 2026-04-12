@@ -94,7 +94,6 @@ button {
 
 <div id="alan"></div>
 
-<!-- 🔥 ADMIN BUTONU -->
 <button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
 
 </div>
@@ -113,11 +112,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* 🔥 NET ADMIN KONTROLÜ */
 let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase().trim();
 let adminMi = (kullanici === "admin");
 
-/* 🔥 SAYFA AÇILIR AÇILMAZ BUTON KONTROL */
 document.getElementById("kaydetBtn").style.display = adminMi ? "block" : "none";
 
 let alan = document.getElementById("alan");
@@ -210,9 +207,26 @@ function blok(key,sureKey){
 
         inp.oninput = () => {
             if(!adminMi) return;
+
             state[key] = state[key] || {};
             state[key].kisiler = state[key].kisiler || [];
             state[key].kisiler[i] = inp.value;
+
+            /* 🔥 YENİ EKLEME: ÇAY → DİĞER MOLALAR */
+            if(key.startsWith("cay")){
+                let index = key.replace("cay","");
+                ["yemek","son"].forEach(grup=>{
+                    let hedefKey = grup + index;
+
+                    state[hedefKey] = state[hedefKey] || {};
+                    state[hedefKey].kisiler = state[hedefKey].kisiler || [];
+
+                    /* sadece boşsa kopyala (manueli bozmaz) */
+                    if(!state[hedefKey].kisiler[i]){
+                        state[hedefKey].kisiler[i] = inp.value;
+                    }
+                });
+            }
         }
 
         b.appendChild(inp);
@@ -268,7 +282,6 @@ function blok(key,sureKey){
     return b;
 }
 
-/* 🔥 KAYDET */
 window.kaydet = async function(){
     if(!adminMi){
         alert("Sadece admin kaydedebilir!");
