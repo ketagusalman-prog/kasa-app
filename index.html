@@ -6,7 +6,7 @@
 
 <style>
 body { font-family: Arial; background:#1e1e2f; color:white; text-align:center;}
-.container { max-width:400px; margin:auto; }
+.container { max-width:400px; margin:auto; position:relative; }
 
 input {
     width:90%;
@@ -50,6 +50,15 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 
 .hidden { display:none; }
 .panel { background:#222; padding:10px; margin:10px; border-radius:10px;}
+
+/* 🔥 EKLENEN KISIM */
+.ustButonlar{
+    position:absolute;
+    top:60px;
+    right:0;
+    display:flex;
+    flex-direction:column;
+}
 </style>
 </head>
 
@@ -71,9 +80,15 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 
 <button onclick="window.location.href='mola.html'">☕ Mola Sayfası</button>
 
+<!-- 🔥 BUTONLAR SAĞ ÜSTE ALINDI -->
+<div class="ustButonlar">
+<button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
+<button id="kaydirBtn" onclick="kaydir()" style="display:none;">⬇️ Kaydır</button>
+<button id="degistirBtn" onclick="degistir()" style="display:none;">↔️ Yer Değiştir</button>
+</div>
+
 <div id="alan"></div>
 
-<!-- 🔥 PANEL BURAYA ALINDI (KASALARIN ALTINA) -->
 <div id="panel" class="panel hidden">
 <h4>👥 Personel</h4>
 <input id="yeniK" placeholder="Kullanıcı">
@@ -81,10 +96,6 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 <button onclick="ekle()">Ekle</button>
 <div id="liste"></div>
 </div>
-
-<button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
-<button id="kaydirBtn" onclick="kaydir()" style="display:none;">⬇️ Kaydır</button>
-<button id="degistirBtn" onclick="degistir()" style="display:none;">↔️ Yer Değiştir</button>
 
 </div>
 
