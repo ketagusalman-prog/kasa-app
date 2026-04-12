@@ -305,5 +305,14 @@ window.kaydet = async function(){
 
 </script>
 
+<!-- 🔥 SADECE BU EKLENDİ -->
+<script>
+history.pushState(null, null, location.href);
+
+window.onpopstate = function () {
+    window.location.href = "index.html";
+};
+</script>
+
 </body>
 </html>
