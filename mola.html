@@ -40,8 +40,8 @@ button {
 
 <h2>☕ Mola Grupları</h2>
 
-<!-- 🔥 AKILLI GERİ -->
-<button onclick="geriDon()">⬅️ Geri</button>
+<!-- 🔥 DİREKT KASA -->
+<button onclick="window.location.href='index.html'">⬅️ Kasa</button>
 
 <div id="alan"></div>
 
@@ -70,16 +70,7 @@ let adminMi = (kullanici === "admin");
 let alan = document.getElementById("alan");
 let inputs = [];
 
-// 🔥 GERİ FONKSİYON
-window.geriDon = function() {
-    if (sessionStorage.getItem("from") === "kasa") {
-        window.history.back();
-    } else {
-        window.location.href = "index.html";
-    }
-}
-
-// 🔥 VERİ
+// 🔥 VERİYİ ÇEK
 const ref = doc(db, "kasa", "mola");
 
 onSnapshot(ref, (snap) => {
@@ -127,7 +118,7 @@ onSnapshot(ref, (snap) => {
         alan.appendChild(blok);
     }
 
-    // 🔒 SADECE ADMIN
+    // 🔒 SADECE ADMIN GÖRÜR
     if (adminMi) {
         document.getElementById("kaydetBtn").style.display = "block";
     }
