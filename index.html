@@ -31,7 +31,7 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 
 <h3 id="info"></h3>
 
-<!-- ☕ MOLA BUTONU -->
+<!-- 🔥 MOLA BUTONU (EKLENDİ) -->
 <button onclick="window.location.href='mola.html'">☕ Mola Sayfası</button>
 
 <div id="panel" class="panel hidden">
@@ -44,7 +44,7 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 
 <div id="alan"></div>
 
-<!-- 🔒 BAŞTA GİZLİ -->
+<!-- 🔒 SADECE ADMIN -->
 <button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
 <button id="kaydirBtn" onclick="kaydir()" style="display:none;">⬇️ Kaydır</button>
 <button id="degistirBtn" onclick="degistir()" style="display:none;">↔️ Yer Değiştir</button>
@@ -98,7 +98,7 @@ window.giris = function() {
             }
         }
 
-        // 🔥 KULLANICIYI KAYDET (MOLA İÇİN)
+        // 🔥 MOLA İÇİN KULLANICIYI KAYDET
         localStorage.setItem("kullanici", k);
 
         document.getElementById("login").classList.add("hidden");
@@ -110,7 +110,7 @@ window.giris = function() {
     });
 }
 
-// 🔥 KASA
+// 🔥 KASA OLUŞTUR
 function olustur() {
     const ref = doc(db, "kasa", "liste");
 
