@@ -49,7 +49,24 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 }
 
 .hidden { display:none; }
-.panel { background:#222; padding:10px; margin:10px; border-radius:10px;}
+
+/* 🔥 PANEL ANİMASYON */
+.panel {
+    background:#222;
+    padding:10px;
+    margin:10px;
+    border-radius:10px;
+
+    max-height:0;
+    overflow:hidden;
+    opacity:0;
+    transition: all 0.4s ease;
+}
+
+.panel.acik {
+    max-height:500px;
+    opacity:1;
+}
 </style>
 </head>
 
@@ -73,11 +90,10 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 
 <div id="alan"></div>
 
-<!-- 🔥 YENİ BUTON -->
+<!-- 🔥 SADECE ADMİN GÖRÜR -->
 <button onclick="panelToggle()" id="panelBtn" style="display:none;">👥 Personel Paneli Aç</button>
 
-<!-- 👇 PANEL ARTIK ALTTA -->
-<div id="panel" class="panel hidden">
+<div id="panel" class="panel">
 <h4>👥 Personel</h4>
 <input id="yeniK" placeholder="Kullanıcı">
 <input id="yeniS" placeholder="Şifre">
@@ -179,7 +195,7 @@ window.giris = function() {
 
         if (k === admin.k && s === admin.s) {
             adminMi = true;
-            document.getElementById("panelBtn").style.display = "block"; // 🔥 buton açıldı
+            document.getElementById("panelBtn").style.display = "block";
         } else {
             let bulundu = personeller.find(p => p.k === k && p.s === s);
             if (!bulundu) {
@@ -199,17 +215,17 @@ window.giris = function() {
     });
 }
 
-// 🔥 PANEL AÇ/KAPA
+// 🔥 PANEL AÇ/KAPA (ANİMASYONLU)
 window.panelToggle = function(){
     let panel = document.getElementById("panel");
     let btn = document.getElementById("panelBtn");
 
-    panel.classList.toggle("hidden");
+    panel.classList.toggle("acik");
 
-    if(panel.classList.contains("hidden")){
-        btn.innerText = "👥 Personel Paneli Aç";
-    } else {
+    if(panel.classList.contains("acik")){
         btn.innerText = "❌ Paneli Kapat";
+    } else {
+        btn.innerText = "👥 Personel Paneli Aç";
     }
 }
 
