@@ -39,13 +39,21 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 .erkek { background:linear-gradient(135deg,#2196F3,#0d47a1); }
 .kadin { background:linear-gradient(135deg,#ff6ec7,#c2185b); }
 
-.molada {
-    background:#8B0000 !important;
-    box-shadow:0 0 10px red;
-}
-
 .aktif {
     box-shadow:0 0 10px lime;
+}
+
+/* 🔥 YENİ: SADECE KİŞİ YANSIN */
+@keyframes yanipSonme {
+    0%   { background:#8B0000; box-shadow:0 0 5px red; }
+    50%  { background:#ff0000; box-shadow:0 0 20px red; }
+    100% { background:#8B0000; box-shadow:0 0 5px red; }
+}
+
+input.molada {
+    background:#8B0000 !important;
+    color:#fff !important;
+    animation: yanipSonme 1s infinite;
 }
 
 .hidden { display:none; }
@@ -206,7 +214,7 @@ window.giris = function() {
             }
         }
 
-        /* 🔥 EKLENEN SATIR (ASIL İSTEDİĞİN) */
+        // 🔥 EKLENDİ
         localStorage.setItem("kullanici", k);
 
         document.getElementById("login").classList.add("hidden");
@@ -253,11 +261,16 @@ function olustur() {
 
             div.classList.add(cinsiyet(i1.value || i2.value));
 
-            if(moladaMi(i1.value) || moladaMi(i2.value)){
-                div.classList.add("molada");
-            } else {
-                div.classList.add("aktif");
+            // 🔥 SADECE KİŞİYİ BOYA
+            if(moladaMi(i1.value)){
+                i1.classList.add("molada");
             }
+
+            if(moladaMi(i2.value)){
+                i2.classList.add("molada");
+            }
+
+            div.classList.add("aktif");
 
             div.appendChild(i1);
             div.appendChild(i2);
