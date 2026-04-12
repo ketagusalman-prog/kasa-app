@@ -50,9 +50,10 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 
 .hidden { display:none; }
 
+/* 🔥 PANEL DÜZELTME */
 .panel {
     background:#222;
-    padding:10px;
+    padding:0 10px;
     margin:10px;
     border-radius:10px;
     max-height:0;
@@ -60,10 +61,11 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
     transition:all 0.4s ease;
 }
 
-/* 🔥 AÇILINCA */
+/* 🔥 AÇILINCA TAM GÖRÜNÜR + SCROLL */
 .panel.acik {
-    max-height:300px;
+    max-height:400px;       /* arttırıldı */
     padding:10px;
+    overflow-y:auto;        /* scroll eklendi */
 }
 
 /* 🔥 BUTON KONUM */
@@ -96,10 +98,8 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 
 <button onclick="window.location.href='mola.html'">☕ Mola Sayfası</button>
 
-<!-- 🔥 PERSONEL PANEL BUTONU -->
 <button id="panelBtn" onclick="panelToggle()" style="display:none;">👥 Personel Paneli</button>
 
-<!-- 🔥 BUTONLAR -->
 <div class="ustButonlar">
 <button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
 <button id="kaydirBtn" onclick="kaydir()" style="display:none;">⬇️ Kaydır</button>
@@ -217,7 +217,6 @@ window.giris = function() {
     });
 }
 
-/* 🔥 PANEL AÇ/KAPA */
 window.panelToggle = function(){
     let p = document.getElementById("panel");
     p.classList.toggle("acik");
