@@ -90,7 +90,7 @@ button {
 
 <h2>☕ Mola Sistemi</h2>
 
-<button onclick="history.back()">⬅️ Kasa</button>
+<button onclick="window.location.href='index.html'">⬅️ Kasa</button>
 
 <div id="alan"></div>
 
@@ -112,8 +112,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* 🔥 ADMIN KONTROLÜ (AYNEN KORUNDU) */
-let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase();
+let kullanici = localStorage.getItem("kullanici");
 let adminMi = (kullanici === "admin");
 
 let alan = document.getElementById("alan");
@@ -138,12 +137,11 @@ onSnapshot(ref, (snap) => {
 
     if (adminMi) {
         document.getElementById("kaydetBtn").style.display = "block";
-    } else {
-        document.getElementById("kaydetBtn").style.display = "none";
     }
 });
 
 function baslik(key,text){
+
     let d = document.createElement("div");
     d.className = "baslik";
 
@@ -159,15 +157,17 @@ function baslik(key,text){
     if(!adminMi) inp.disabled=true;
 
     inp.oninput = () => {
-        if(!adminMi) return;   // 🔥 EKLENDİ
+        if(!adminMi) return; // 🔥 EKLENDİ
         state[key] = { sure: inp.value };
     }
 
     d.appendChild(inp);
+
     return d;
 }
 
 function grid(prefix,adet,sureKey){
+
     let g = document.createElement("div");
     g.className="grid";
 
@@ -194,7 +194,7 @@ function blok(key,sureKey){
     if(!adminMi) saat.disabled=true;
 
     saat.oninput = () => {
-        if(!adminMi) return;   // 🔥 EKLENDİ
+        if(!adminMi) return; // 🔥 EKLENDİ
         state[key] = state[key] || {};
         state[key].saat = saat.value;
     }
@@ -204,6 +204,7 @@ function blok(key,sureKey){
     let kisiler=[];
 
     for(let i=0;i<6;i++){
+
         let inp = document.createElement("input");
         inp.className="kisiInput";
         inp.value = state[key]?.kisiler?.[i] || "";
@@ -211,7 +212,7 @@ function blok(key,sureKey){
         if(!adminMi) inp.disabled=true;
 
         inp.oninput = () => {
-            if(!adminMi) return;   // 🔥 EKLENDİ
+            if(!adminMi) return; // 🔥 EKLENDİ
             state[key] = state[key] || {};
             state[key].kisiler = state[key].kisiler || [];
             state[key].kisiler[i] = inp.value;
@@ -225,6 +226,7 @@ function blok(key,sureKey){
     b.appendChild(sayac);
 
     setInterval(()=>{
+
         if(!saat.value) return;
 
         let aktif = (localStorage.getItem("kullanici")||"").toLowerCase();
@@ -244,6 +246,7 @@ function blok(key,sureKey){
         let benim = grup.includes(aktif);
 
         if(fark<=0 && fark>-sure){
+
             b.classList.add("aktif");
             b.classList.remove("bitti");
 
@@ -261,7 +264,9 @@ function blok(key,sureKey){
                 b.basladi=true;
             }
         }
+
         else if(fark<=-sure){
+
             b.classList.add("bitti");
             b.classList.remove("aktif");
 
@@ -275,6 +280,7 @@ function blok(key,sureKey){
                 b.bitti=true;
             }
         }
+
         else{
             b.classList.remove("aktif","bitti");
             sayac.innerText="";
@@ -288,10 +294,7 @@ function blok(key,sureKey){
 }
 
 window.kaydet = async function(){
-    if(!adminMi){
-        alert("Sadece admin kaydedebilir!");
-        return;
-    }
+    if(!adminMi) return;
     await setDoc(doc(db,"kasa","mola"),{data:state});
     alert("Kaydedildi");
 }
