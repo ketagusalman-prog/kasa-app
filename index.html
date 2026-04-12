@@ -31,6 +31,10 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 
 <h3 id="info"></h3>
 
+<!-- 🚪 ÇIKIŞ BUTONU -->
+<button onclick="cikis()" style="background:red;">🚪 Çıkış</button>
+
+<!-- ☕ MOLA -->
 <button onclick="window.location.href='mola.html'">☕ Mola Sayfası</button>
 
 <div id="panel" class="panel hidden">
@@ -71,7 +75,7 @@ let adminMi = false;
 let inputs = [];
 let alan = document.getElementById("alan");
 
-// 🔥 OTOMATİK GİRİŞ (YENİ)
+// 🔥 OTOMATİK GİRİŞ
 window.onload = function() {
     let k = localStorage.getItem("kullanici");
 
@@ -86,6 +90,14 @@ window.onload = function() {
         }
 
         olustur();
+    }
+}
+
+// 🚪 ÇIKIŞ
+window.cikis = function() {
+    if(confirm("Çıkış yapmak istiyor musun?")){
+        localStorage.removeItem("kullanici");
+        location.reload();
     }
 }
 
