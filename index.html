@@ -31,8 +31,8 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 
 <h3 id="info"></h3>
 
-<!-- 🔥 MOLA BUTONU (EKLENDİ) -->
-<button onclick="window.location.href='mola.html'">☕ Mola Sayfası</button>
+<!-- 🔥 MOLA BUTONU (PROFESYONEL) -->
+<button onclick="gitMola()">☕ Mola Sayfası</button>
 
 <div id="panel" class="panel hidden">
 <h4>👥 Personel</h4>
@@ -73,6 +73,12 @@ let adminMi = false;
 let inputs = [];
 let alan = document.getElementById("alan");
 
+// 🔥 MOLA GEÇİŞ
+window.gitMola = function() {
+    sessionStorage.setItem("from","kasa");
+    window.location.href = "mola.html";
+}
+
 // 🔐 GİRİŞ
 window.giris = function() {
 
@@ -98,7 +104,7 @@ window.giris = function() {
             }
         }
 
-        // 🔥 MOLA İÇİN KULLANICIYI KAYDET
+        // 🔥 KULLANICIYI KAYDET (MOLA İÇİN)
         localStorage.setItem("kullanici", k);
 
         document.getElementById("login").classList.add("hidden");
