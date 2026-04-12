@@ -34,6 +34,14 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
     padding:12px;
     border-radius:12px;
     font-weight:bold;
+    flex-direction:column; /* 🔥 EKLENDİ */
+}
+
+.kasaNo {
+    font-size:12px;
+    color:#FFD700;
+    margin-bottom:5px;
+    text-align:left;
 }
 
 .erkek { background:linear-gradient(135deg,#2196F3,#0d47a1); }
@@ -137,6 +145,16 @@ let adminMi = false;
 let inputs = [];
 let alan = document.getElementById("alan");
 
+/* 🔥 KASA NUMARALARI (SENİN VERDİĞİN) */
+let kasaNumaralari = [
+    "1-008p / 21-028p",
+    "20-027p / 26-172p",
+    "27-182p / 29-198p",
+    "19-026p / 28-197p",
+    "25-171p / 14-021p",
+    "18-025p / 15-022p"
+];
+
 let molaData = {};
 const molaRef = doc(db, "kasa", "mola");
 onSnapshot(molaRef, (snap)=>{
@@ -206,7 +224,6 @@ window.giris = function() {
             }
         }
 
-        /* 🔥 EKLENEN SATIR (ASIL İSTEDİĞİN) */
         localStorage.setItem("kullanici", k);
 
         document.getElementById("login").classList.add("hidden");
@@ -237,6 +254,16 @@ function olustur() {
             let div = document.createElement("div");
             div.className = "kasa";
 
+            /* 🔥 KASA NUMARASI YAZDIRMA */
+            let no = document.createElement("div");
+            no.className = "kasaNo";
+            no.innerText = kasaNumaralari[i] || "";
+            div.appendChild(no);
+
+            let row = document.createElement("div");
+            row.style.display = "flex";
+            row.style.justifyContent = "space-between";
+
             let i1 = document.createElement("input");
             let i2 = document.createElement("input");
 
@@ -251,6 +278,10 @@ function olustur() {
                 i2.disabled = true;
             }
 
+            row.appendChild(i1);
+            row.appendChild(i2);
+            div.appendChild(row);
+
             div.classList.add(cinsiyet(i1.value || i2.value));
 
             if(moladaMi(i1.value) || moladaMi(i2.value)){
@@ -259,8 +290,6 @@ function olustur() {
                 div.classList.add("aktif");
             }
 
-            div.appendChild(i1);
-            div.appendChild(i2);
             alan.appendChild(div);
 
             inputs.push(i1, i2);
