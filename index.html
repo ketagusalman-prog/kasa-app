@@ -41,10 +41,10 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 
 <div id="alan"></div>
 
-<!-- 🔥 BUTONLAR -->
-<button id="kaydetBtn" onclick="kaydet()">Kaydet</button>
-<button id="kaydirBtn" onclick="kaydir()">⬇️ Kaydır</button>
-<button id="degistirBtn" onclick="degistir()">↔️ Yer Değiştir</button>
+<!-- 🔒 BAŞTAN GİZLİ -->
+<button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
+<button id="kaydirBtn" onclick="kaydir()" style="display:none;">⬇️ Kaydır</button>
+<button id="degistirBtn" onclick="degistir()" style="display:none;">↔️ Yer Değiştir</button>
 
 </div>
 
@@ -109,6 +109,7 @@ function olustur() {
     const ref = doc(db, "kasa", "liste");
 
     onSnapshot(ref, (snap) => {
+
         let kayit = snap.exists() ? snap.data().data : {};
 
         alan.innerHTML = "";
@@ -141,7 +142,7 @@ function olustur() {
             inputs.push(i1, i2);
         }
 
-        // 🔥 BUTON YETKİ KONTROLÜ
+        // 🔒 BUTON YETKİ KONTROLÜ (KESİN)
         if (adminMi) {
             document.getElementById("kaydetBtn").style.display = "block";
             document.getElementById("kaydirBtn").style.display = "block";
