@@ -137,49 +137,20 @@ let adminMi = false;
 let inputs = [];
 let alan = document.getElementById("alan");
 
-let molaData = {};
-const molaRef = doc(db, "kasa", "mola");
-onSnapshot(molaRef, (snap)=>{
-    molaData = snap.exists() ? snap.data().data : {};
-});
+/* 🔥 SENİN VERDİĞİN DEFAULT KASA DİZİLİMİ */
+let defaultData = {
+    kasa1: {sol:"1-008p", sag:"21-028p"},
+    kasa2: {sol:"20-027p", sag:"26-172p"},
+    kasa3: {sol:"27-182p", sag:"29-198p"},
+    kasa4: {sol:"19-026p", sag:"28-197p"},
+    kasa5: {sol:"25-171p", sag:"14-021p"},
+    kasa6: {sol:"18-025p", sag:"15-022p"}
+};
 
 function cinsiyet(isim){
     isim = (isim || "").toLowerCase();
     let kadin = ["ayşe","fatma","zeynep","elif","buse"];
     return kadin.includes(isim) ? "kadin" : "erkek";
-}
-
-function moladaMi(isim){
-    if(!isim) return false;
-
-    let now = new Date();
-    let gruplar = ["cay","yemek","son"];
-
-    for(let g of gruplar){
-        for(let i=1;i<=4;i++){
-
-            let key = g+i;
-            let saat = molaData[key]?.saat;
-            let kisiler = molaData[key]?.kisiler || [];
-
-            if(!saat) continue;
-
-            let [h,m] = saat.split(":");
-
-            let hedef = new Date();
-            hedef.setHours(h,m,0);
-
-            let sure = (molaData[g+"Sure"]?.sure || 15)*60;
-            let fark = Math.floor((hedef-now)/1000);
-
-            if(fark<=0 && fark>-sure){
-                if(kisiler.map(x=>x.toLowerCase()).includes(isim.toLowerCase())){
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
 }
 
 window.giris = function() {
@@ -206,9 +177,6 @@ window.giris = function() {
             }
         }
 
-        /* 🔥 EKLENEN SATIR (ASIL İSTEDİĞİN) */
-        localStorage.setItem("kullanici", k);
-
         document.getElementById("login").classList.add("hidden");
         document.getElementById("app").classList.remove("hidden");
 
@@ -217,17 +185,20 @@ window.giris = function() {
     });
 }
 
-window.panelToggle = function(){
-    let p = document.getElementById("panel");
-    p.classList.toggle("acik");
-}
-
 function olustur() {
     const ref = doc(db, "kasa", "liste");
 
-    onSnapshot(ref, (snap) => {
+    onSnapshot(ref, async (snap) => {
 
-        let kayit = snap.exists() ? snap.data().data : {};
+        let kayit;
+
+        /* 🔥 EĞER VERİ YOKSA DEFAULT YÜKLE */
+        if (!snap.exists()) {
+            kayit = defaultData;
+            await setDoc(doc(db, "kasa", "liste"), {data: defaultData});
+        } else {
+            kayit = snap.data().data;
+        }
 
         alan.innerHTML = "";
         inputs = [];
@@ -252,12 +223,6 @@ function olustur() {
             }
 
             div.classList.add(cinsiyet(i1.value || i2.value));
-
-            if(moladaMi(i1.value) || moladaMi(i2.value)){
-                div.classList.add("molada");
-            } else {
-                div.classList.add("aktif");
-            }
 
             div.appendChild(i1);
             div.appendChild(i2);
@@ -286,6 +251,7 @@ window.kaydet = async function() {
 }
 
 window.kaydir = async function() {
+
     let yeni = [];
     for (let i = 0; i < inputs.length; i+=2) {
         yeni.push({sol: inputs[i].value, sag: inputs[i+1].value});
@@ -302,49 +268,6 @@ window.kaydir = async function() {
     let data = {};
     yeni.forEach((k,i)=> data["kasa"+(i+1)] = k);
     await setDoc(doc(db, "kasa", "liste"), {data});
-}
-
-window.degistir = async function() {
-    let yeni = [];
-
-    for (let i = 0; i < inputs.length; i+=2) {
-        yeni.push({sol: inputs[i].value, sag: inputs[i+1].value});
-    }
-
-    yeni.forEach(k => [k.sol, k.sag] = [k.sag, k.sol]);
-
-    for (let i = 0; i < yeni.length; i++) {
-        inputs[i*2].value = yeni[i].sol;
-        inputs[i*2+1].value = yeni[i].sag;
-    }
-
-    let data = {};
-    yeni.forEach((k,i)=> data["kasa"+(i+1)] = k);
-    await setDoc(doc(db, "kasa", "liste"), {data});
-}
-
-window.ekle = async function() {
-    let k = document.getElementById("yeniK").value;
-    let s = document.getElementById("yeniS").value;
-
-    personeller.push({k,s});
-    await setDoc(doc(db, "kasa", "personel"), {liste: personeller});
-}
-
-function listeGoster() {
-    let div = document.getElementById("liste");
-    div.innerHTML = "";
-
-    personeller.forEach((p,i) => {
-        let d = document.createElement("div");
-        d.innerHTML = p.k + " <button onclick='sil("+i+")'>❌</button>";
-        div.appendChild(d);
-    });
-}
-
-window.sil = async function(i) {
-    personeller.splice(i,1);
-    await setDoc(doc(db, "kasa", "personel"), {liste: personeller});
 }
 
 </script>
