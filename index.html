@@ -45,6 +45,7 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 
 <button id="kaydetBtn" onclick="kaydet()">Kaydet</button>
 <button id="kaydirBtn" onclick="kaydir()">⬇️ Kaydır</button>
+<button id="degistirBtn" onclick="degistir()">↔️ Yer Değiştir</button>
 
 </div>
 
@@ -128,7 +129,6 @@ function olustur() {
                 i2.value = k.sag;
             }
 
-            // 👇 SADECE PERSONELE KISITLAMA
             if (!adminMi) {
                 i1.disabled = true;
                 i2.disabled = true;
@@ -141,13 +141,15 @@ function olustur() {
             inputs.push(i1, i2);
         }
 
-        // 👇 BUTONLARI KONTROL ET
+        // BUTON KONTROL
         if (!adminMi) {
             document.getElementById("kaydetBtn").style.display = "none";
             document.getElementById("kaydirBtn").style.display = "none";
+            document.getElementById("degistirBtn").style.display = "none";
         } else {
             document.getElementById("kaydetBtn").style.display = "inline-block";
             document.getElementById("kaydirBtn").style.display = "inline-block";
+            document.getElementById("degistirBtn").style.display = "inline-block";
         }
     });
 }
@@ -181,6 +183,38 @@ window.kaydir = async function() {
 
     let son = yeni.pop();
     yeni.unshift(son);
+
+    for (let i = 0; i < yeni.length; i++) {
+        inputs[i*2].value = yeni[i].sol;
+        inputs[i*2+1].value = yeni[i].sag;
+    }
+
+    let data = {};
+    for (let i = 0; i < yeni.length; i++) {
+        data["kasa"+(i+1)] = yeni[i];
+    }
+
+    await setDoc(doc(db, "kasa", "liste"), {data});
+}
+
+// ↔️ YER DEĞİŞTİR
+window.degistir = async function() {
+
+    let yeni = [];
+
+    for (let i = 0; i < inputs.length; i+=2) {
+        yeni.push({
+            sol: inputs[i].value,
+            sag: inputs[i+1].value
+        });
+    }
+
+    // swap
+    for (let i = 0; i < yeni.length; i++) {
+        let temp = yeni[i].sol;
+        yeni[i].sol = yeni[i].sag;
+        yeni[i].sag = temp;
+    }
 
     for (let i = 0; i < yeni.length; i++) {
         inputs[i*2].value = yeni[i].sol;
