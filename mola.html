@@ -247,7 +247,6 @@ function blok(key,sureKey){
 
         let benim = grup.includes(aktif);
 
-        // 🔴 BAŞLADI
         if(fark<=0 && fark>-sure){
 
             b.classList.add("aktif");
@@ -268,7 +267,6 @@ function blok(key,sureKey){
             }
         }
 
-        // 🟢 BİTTİ
         else if(fark<=-sure){
 
             b.classList.add("bitti");
@@ -305,13 +303,22 @@ window.kaydet = async function(){
 
 </script>
 
-<!-- 🔥 SADECE BU EKLENDİ -->
+<!-- 🔥 GERİ TUŞU %100 ÇALIŞAN -->
 <script>
-history.pushState(null, null, location.href);
+(function () {
 
-window.onpopstate = function () {
-    window.location.href = "index.html";
-};
+    function gitKasa() {
+        window.location.replace("index.html");
+    }
+
+    history.pushState(null, null, location.href);
+    history.pushState(null, null, location.href);
+
+    window.addEventListener("popstate", function () {
+        gitKasa();
+    });
+
+})();
 </script>
 
 </body>
