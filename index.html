@@ -123,7 +123,6 @@ input.molada {
 </div>
 
 </div>
-
 </div>
 
 <script type="module">
@@ -131,7 +130,7 @@ input.molada {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-/* 🔥 FIX BURADA */
+/* 🔥 ÇAKIŞMA FIX */
 const firebaseApp = initializeApp({
   apiKey: "AIzaSy...",
   authDomain: "ukasa1.firebaseapp.com",
@@ -140,33 +139,54 @@ const firebaseApp = initializeApp({
 
 const db = getFirestore(firebaseApp);
 
+/* 🔥 DOM TANIM */
+const kullaniciInput = document.getElementById("kullanici");
+const sifreInput = document.getElementById("sifre");
+const panelBtn = document.getElementById("panelBtn");
+const loginDiv = document.getElementById("login");
+const appDiv = document.getElementById("app");
+const kaydetBtn = document.getElementById("kaydetBtn");
+const kaydirBtn = document.getElementById("kaydirBtn");
+const degistirBtn = document.getElementById("degistirBtn");
+const listeDiv = document.getElementById("liste");
+
 let admin = {k:"admin", s:"1234"};
 let personeller = [];
 let adminMi = false;
 let inputs = [];
 let alan = document.getElementById("alan");
 
+/* 🔥 MOLA DATA */
 let molaData = {};
 onSnapshot(doc(db,"kasa","mola"), snap=>{
     molaData = snap.exists()?snap.data().data:{};
 });
 
+/* 🔥 CİNSİYET */
 function cinsiyet(isim){
     let kadin=["ayşe","fatma","zeynep","elif","buse"];
     return kadin.includes((isim||"").toLowerCase())?"kadin":"erkek";
 }
 
+/* 🔥 MOLA KONTROL */
 function moladaMi(isim){
     if(!isim) return false;
+
     let now=new Date();
+
     for(let g of ["cay","yemek","son"]){
         for(let i=1;i<=4;i++){
+
             let d=molaData[g+i];
             if(!d?.saat) continue;
+
             let [h,m]=d.saat.split(":");
-            let hedef=new Date(); hedef.setHours(h,m,0);
-            let fark=(hedef-now)/1000;
+            let hedef=new Date();
+            hedef.setHours(h,m,0);
+
             let sure=(molaData[g+"Sure"]?.sure||15)*60;
+            let fark=Math.floor((hedef-now)/1000);
+
             if(fark<=0 && fark>-sure){
                 if(d.kisiler?.map(x=>x.toLowerCase()).includes(isim.toLowerCase())){
                     return true;
@@ -174,15 +194,19 @@ function moladaMi(isim){
             }
         }
     }
+
     return false;
 }
 
+/* 🔥 GİRİŞ */
 window.giris=function(){
+
     onSnapshot(doc(db,"kasa","personel"), snap=>{
+
         if(snap.exists()) personeller=snap.data().liste;
 
-        let k=kullanici.value.trim();
-        let s=sifre.value.trim();
+        let k = kullaniciInput.value.trim();
+        let s = sifreInput.value.trim();
 
         if(k===admin.k && s===admin.s){
             adminMi=true;
@@ -193,17 +217,132 @@ window.giris=function(){
         }
 
         localStorage.setItem("kullanici",k);
-        document.getElementById("login").classList.add("hidden");
-        document.getElementById("app").classList.remove("hidden");
+
+        loginDiv.classList.add("hidden");
+        appDiv.classList.remove("hidden");
 
         olustur();
         listeGoster();
     });
 }
 
-window.panelToggle=()=>panel.classList.toggle("acik");
+/* 🔥 PANEL */
+window.panelToggle=()=>document.getElementById("panel").classList.toggle("acik");
 
-/* devam aynı (çalışan fonksiyonlar) */
+/* 🔥 KASA OLUŞTUR */
+function olustur(){
+
+    onSnapshot(doc(db,"kasa","liste"), snap=>{
+
+        let data=snap.exists()?snap.data().data:{};
+
+        alan.innerHTML="";
+        inputs=[];
+
+        for(let i=0;i<6;i++){
+
+            let d=document.createElement("div");
+            d.className="kasa";
+
+            let i1=document.createElement("input");
+            let i2=document.createElement("input");
+
+            let k=data["kasa"+(i+1)];
+
+            if(k){
+                i1.value=k.sol;
+                i2.value=k.sag;
+            }
+
+            if(!adminMi){
+                i1.disabled=true;
+                i2.disabled=true;
+            }
+
+            d.classList.add(cinsiyet(i1.value||i2.value));
+
+            if(moladaMi(i1.value)) i1.classList.add("molada");
+            if(moladaMi(i2.value)) i2.classList.add("molada");
+
+            d.classList.add("aktif");
+
+            d.append(i1,i2);
+            alan.appendChild(d);
+
+            inputs.push(i1,i2);
+        }
+
+        if(adminMi){
+            kaydetBtn.style.display="block";
+            kaydirBtn.style.display="block";
+            degistirBtn.style.display="block";
+        }
+    });
+}
+
+/* 🔥 KAYDET */
+window.kaydet=async()=>{
+    let data={};
+    for(let i=0;i<inputs.length;i+=2){
+        data["kasa"+(i/2+1)]={
+            sol:inputs[i].value,
+            sag:inputs[i+1].value
+        };
+    }
+    await setDoc(doc(db,"kasa","liste"),{data});
+}
+
+/* 🔥 KAYDIR */
+window.kaydir=async()=>{
+    let arr=[];
+    for(let i=0;i<inputs.length;i+=2){
+        arr.push({sol:inputs[i].value,sag:inputs[i+1].value});
+    }
+
+    let son=arr.pop();
+    arr.unshift(son);
+
+    arr.forEach((k,i)=>{
+        inputs[i*2].value=k.sol;
+        inputs[i*2+1].value=k.sag;
+    });
+
+    let data={};
+    arr.forEach((k,i)=>data["kasa"+(i+1)]=k);
+
+    await setDoc(doc(db,"kasa","liste"),{data});
+}
+
+/* 🔥 YER DEĞİŞTİR */
+window.degistir=async()=>{
+    for(let i=0;i<inputs.length;i+=2){
+        [inputs[i].value,inputs[i+1].value]=[inputs[i+1].value,inputs[i].value];
+    }
+    await kaydet();
+}
+
+/* 🔥 PERSONEL EKLE */
+window.ekle=async()=>{
+    personeller.push({k:yeniK.value,s:yeniS.value});
+    await setDoc(doc(db,"kasa","personel"),{liste:personeller});
+}
+
+/* 🔥 LİSTE */
+function listeGoster(){
+    listeDiv.innerHTML="";
+    personeller.forEach((p,i)=>{
+        let d=document.createElement("div");
+        d.innerHTML=p.k+" <button onclick='sil("+i+")'>❌</button>";
+        listeDiv.appendChild(d);
+    });
+}
+
+/* 🔥 SİL */
+window.sil=async(i)=>{
+    personeller.splice(i,1);
+    await setDoc(doc(db,"kasa","personel"),{liste:personeller});
+}
+
 </script>
 
 </body>
