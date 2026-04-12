@@ -14,56 +14,54 @@ body {
 
 .container { max-width:1200px; margin:auto; }
 
-/* 🔥 INPUT DÜZELTME */
-input {
-    background:#ffffff;
-    color:#000000;
-    font-weight:bold;
-    padding:6px;
-    margin:4px;
-    border-radius:6px;
-    border:none;
-}
-
-input:disabled {
-    background:#dddddd;
-    color:#000;
-    opacity:1;
-}
-
-/* 🔥 GRID */
 .grid {
     display:grid;
     grid-template-columns: repeat(4, 1fr);
-    gap:10px;
+    gap:15px;
 }
 
-/* 🔥 KASA BLOK */
+/* 💳 KASA */
 .kasa {
-    background:#2a2a3d;
-    padding:10px;
-    border-radius:10px;
+    border-radius:15px;
+    padding:15px;
+    color:white;
+    font-weight:bold;
+    box-shadow:0 5px 15px rgba(0,0,0,0.5);
+    transition:0.3s;
+}
+
+/* 👨 */
+.erkek {
+    background:linear-gradient(135deg,#2196F3,#0d47a1);
+}
+
+/* 👩 */
+.kadin {
+    background:linear-gradient(135deg,#ff6ec7,#c2185b);
 }
 
 /* 🔴 MOLADA */
 .molada {
-    background:#8B0000 !important;
-    box-shadow:0 0 15px red;
+    background:linear-gradient(135deg,#8B0000,#ff0000) !important;
+    box-shadow:0 0 20px red;
 }
 
 /* 🟢 AKTİF */
 .aktifKasa {
-    background:#2e7d32 !important;
-    box-shadow:0 0 15px lime;
+    box-shadow:0 0 10px lime;
 }
 
-button {
-    padding:10px;
-    margin:5px;
-    border:none;
-    border-radius:8px;
-    background:#4CAF50;
-    color:white;
+.kasaNo {
+    font-size:16px;
+}
+
+.kisi {
+    font-size:20px;
+    margin:15px 0;
+}
+
+.durum {
+    font-size:14px;
 }
 </style>
 </head>
@@ -103,18 +101,36 @@ const molaRef = doc(db,"kasa","mola");
 let kasaData = {};
 let molaData = {};
 
+// 🔄 KASA VERİ
 onSnapshot(kasaRef, (snap)=>{
     kasaData = snap.exists()? snap.data().data : {};
     render();
 });
 
+// 🔄 MOLA VERİ
 onSnapshot(molaRef, (snap)=>{
     molaData = snap.exists()? snap.data().data : {};
     render();
 });
 
+// 👨‍👩‍👧 CİNSİYET
+function cinsiyetBelirle(isim){
+
+    isim = (isim || "").toLowerCase();
+
+    let kadinlar = ["ayşe","fatma","zeynep","elif","eda","melis","buse"];
+    let erkekler = ["ahmet","mehmet","ali","hasan","emre","can","mert"];
+
+    if(kadinlar.includes(isim)) return "kadin";
+    if(erkekler.includes(isim)) return "erkek";
+
+    return "erkek";
+}
+
 // 🔥 MOLA KONTROL
 function moladaMi(isim){
+
+    if(!isim) return false;
 
     let now = new Date();
     let gruplar = ["cay","yemek","son"];
@@ -149,42 +165,52 @@ function moladaMi(isim){
     return false;
 }
 
-// 🔥 EKRAN ÇİZ
+// 🎨 RENDER
 function render(){
 
     alan.innerHTML="";
 
-    Object.keys(kasaData).forEach(key=>{
+    // 🔥 boşsa bile 8 kasa göster
+    let kasaList = Object.keys(kasaData).length ? kasaData : {
+        "Kasa 1":{}, "Kasa 2":{}, "Kasa 3":{}, "Kasa 4":{},
+        "Kasa 5":{}, "Kasa 6":{}, "Kasa 7":{}, "Kasa 8":{}
+    };
 
-        let isim = kasaData[key]?.isim || "";
+    Object.keys(kasaList).forEach(key=>{
+
+        let isim = kasaList[key]?.isim || "";
 
         let div = document.createElement("div");
         div.className="kasa";
 
-        let title = document.createElement("h3");
-        title.innerText = key;
-        div.appendChild(title);
+        let cinsiyet = cinsiyetBelirle(isim);
+        div.classList.add(cinsiyet);
 
-        let inp = document.createElement("input");
-        inp.value = isim;
-        inp.disabled = true;
-        div.appendChild(inp);
+        let no = document.createElement("div");
+        no.className="kasaNo";
+        no.innerText = key;
+        div.appendChild(no);
+
+        let kisi = document.createElement("div");
+        kisi.className="kisi";
+        kisi.innerText = isim || "-";
+        div.appendChild(kisi);
 
         let durum = document.createElement("div");
+        durum.className="durum";
 
         if(isim && moladaMi(isim)){
             div.classList.add("molada");
-            durum.innerText="Molada";
+            durum.innerText="🔴 Molada";
         }
         else{
             div.classList.add("aktifKasa");
-            durum.innerText="Aktif";
+            durum.innerText="🟢 Aktif";
         }
 
         div.appendChild(durum);
 
         alan.appendChild(div);
-
     });
 }
 
