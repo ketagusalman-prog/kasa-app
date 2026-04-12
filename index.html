@@ -113,18 +113,17 @@ input.molada {
 
 <button onclick="window.location.href='mola.html'">☕ Mola Sayfası</button>
 
+<!-- ✅ DOĞRU YER -->
+<button onclick="window.location.href='kisisel.html'">
+👤 Kişisel Panel
+</button>
+
 <button id="panelBtn" onclick="panelToggle()" style="display:none;">👥 Personel Paneli</button>
 
 <div class="ustButonlar">
 <button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
 <button id="kaydirBtn" onclick="kaydir()" style="display:none;">⬇️ Kaydır</button>
 <button id="degistirBtn" onclick="degistir()" style="display:none;">↔️ Yer Değiştir</button>
-
-<!-- 🔥 EKLENDİ: KİŞİSEL PANEL BUTONU -->
-<button onclick="window.location.href='kisisel.html'">
-👤 Kişisel Panel
-</button>
-
 </div>
 
 <div id="alan"></div>
@@ -141,7 +140,7 @@ input.molada {
 
 </div>
 
-<!-- 🔥 EXCEL PANEL -->
+<!-- EXCEL PANEL -->
 <div id="excelPanel" class="excelPanel" style="display:none;">
     <div style="font-size:12px; margin-bottom:5px;">📊 Excel Yükle</div>
     <input type="file" id="excelInput" accept=".xlsx,.xls">
@@ -169,7 +168,6 @@ let adminMi = false;
 let inputs = [];
 let alan = document.getElementById("alan");
 
-/* 🔥 EXCEL DATA */
 let excelData = [];
 
 document.getElementById("excelInput").addEventListener("change", function(e){
@@ -189,6 +187,7 @@ document.getElementById("excelInput").addEventListener("change", function(e){
 
 let molaData = {};
 const molaRef = doc(db, "kasa", "mola");
+
 onSnapshot(molaRef, (snap)=>{
     molaData = snap.exists() ? snap.data().data : {};
 });
@@ -265,12 +264,6 @@ window.giris = function() {
         listeGoster();
     });
 }
-
-window.panelToggle = function(){
-    let p = document.getElementById("panel");
-    p.classList.toggle("acik");
-}
-
 </script>
 
 </body>
