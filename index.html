@@ -60,14 +60,12 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
     transition:all 0.4s ease;
 }
 
-/* 🔥 BURASI DÜZELTİLDİ */
 .panel.acik {
-    max-height:400px;       /* biraz artırıldı */
-    overflow-y:auto;        /* 🔥 scroll eklendi */
+    max-height:400px;
+    overflow-y:auto;
     padding:10px;
 }
 
-/* 🔥 SADECE BUTON KONUMU */
 .ustButonlar {
     position:absolute;
     top:120px;
@@ -207,6 +205,9 @@ window.giris = function() {
                 return;
             }
         }
+
+        /* 🔥 EKLENEN SATIR (ASIL İSTEDİĞİN) */
+        localStorage.setItem("kullanici", k);
 
         document.getElementById("login").classList.add("hidden");
         document.getElementById("app").classList.remove("hidden");
