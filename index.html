@@ -31,6 +31,9 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 
 <h3 id="info"></h3>
 
+<!-- ☕ MOLA BUTONU -->
+<button onclick="window.location.href='mola.html'">☕ Mola Sayfası</button>
+
 <div id="panel" class="panel hidden">
 <h4>👥 Personel</h4>
 <input id="yeniK" placeholder="Kullanıcı">
@@ -41,7 +44,7 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 
 <div id="alan"></div>
 
-<!-- 🔒 BAŞTAN GİZLİ -->
+<!-- 🔒 BAŞTA GİZLİ -->
 <button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
 <button id="kaydirBtn" onclick="kaydir()" style="display:none;">⬇️ Kaydır</button>
 <button id="degistirBtn" onclick="degistir()" style="display:none;">↔️ Yer Değiştir</button>
@@ -95,6 +98,9 @@ window.giris = function() {
             }
         }
 
+        // 🔥 KULLANICIYI KAYDET (MOLA İÇİN)
+        localStorage.setItem("kullanici", k);
+
         document.getElementById("login").classList.add("hidden");
         document.getElementById("app").classList.remove("hidden");
         document.getElementById("info").innerText = k;
@@ -129,7 +135,6 @@ function olustur() {
                 i2.value = k.sag;
             }
 
-            // 👥 PERSONEL SADECE GÖRÜR
             if (!adminMi) {
                 i1.disabled = true;
                 i2.disabled = true;
@@ -142,7 +147,7 @@ function olustur() {
             inputs.push(i1, i2);
         }
 
-        // 🔒 BUTON YETKİ KONTROLÜ (KESİN)
+        // 🔒 BUTON YETKİ
         if (adminMi) {
             document.getElementById("kaydetBtn").style.display = "block";
             document.getElementById("kaydirBtn").style.display = "block";
@@ -160,6 +165,7 @@ window.kaydet = async function() {
     if (!adminMi) return;
 
     let data = {};
+
     for (let i = 0; i < inputs.length; i+=2) {
         data["kasa"+(i/2+1)] = {
             sol: inputs[i].value,
@@ -229,6 +235,33 @@ window.degistir = async function() {
     }
 
     await setDoc(doc(db, "kasa", "liste"), {data});
+}
+
+// 👥 PERSONEL EKLE
+window.ekle = async function() {
+    let k = document.getElementById("yeniK").value;
+    let s = document.getElementById("yeniS").value;
+
+    personeller.push({k,s});
+    await setDoc(doc(db, "kasa", "personel"), {liste: personeller});
+}
+
+// 📋 LİSTE
+function listeGoster() {
+    let div = document.getElementById("liste");
+    div.innerHTML = "";
+
+    personeller.forEach((p,i) => {
+        let d = document.createElement("div");
+        d.innerHTML = p.k + " <button onclick='sil("+i+")'>❌</button>";
+        div.appendChild(d);
+    });
+}
+
+// ❌ SİL
+window.sil = async function(i) {
+    personeller.splice(i,1);
+    await setDoc(doc(db, "kasa", "personel"), {liste: personeller});
 }
 
 </script>
