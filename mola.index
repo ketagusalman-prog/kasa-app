@@ -1,0 +1,158 @@
+[mola.html](https://github.com/user-attachments/files/26658571/mola.html)
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Mola Sistemi</title>
+
+<style>
+body { font-family: Arial; background:#1e1e2f; color:white; text-align:center;}
+.container { max-width:500px; margin:auto; }
+
+.blok {
+    background:#333;
+    margin:15px;
+    padding:15px;
+    border-radius:10px;
+}
+
+input {
+    width:90%;
+    padding:8px;
+    margin:5px;
+    border-radius:8px;
+    border:none;
+}
+
+button {
+    padding:10px;
+    margin:5px;
+    border-radius:8px;
+    border:none;
+    background:#4CAF50;
+    color:white;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>☕ Mola Grupları</h2>
+
+<button onclick="window.location.href='index.html'">⬅️ Geri</button>
+
+<div id="alan"></div>
+
+<button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyChKcwZnw1fe_SFWy2dJA_JZOMiKghF5_o",
+  authDomain: "ukasa1.firebaseapp.com",
+  projectId: "ukasa1"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// 🔒 ADMIN KONTROL (AYNI)
+let admin = {k:"admin", s:"1234"};
+let adminMi = false;
+
+// ⚠️ BURADA ADMIN OTOMATİK YAPALIM (ŞİMDİLİK)
+adminMi = true; // İstersen sonra login bağlarız
+
+let alan = document.getElementById("alan");
+let inputs = [];
+
+// 🔥 VERİYİ ÇEK
+const ref = doc(db, "kasa", "mola");
+
+onSnapshot(ref, (snap) => {
+
+    let data = snap.exists() ? snap.data().data : {};
+
+    alan.innerHTML = "";
+    inputs = [];
+
+    for (let i = 1; i <= 3; i++) {
+
+        let blok = document.createElement("div");
+        blok.className = "blok";
+
+        let title = document.createElement("h3");
+        title.innerText = i + ". Grup";
+        blok.appendChild(title);
+
+        // ⏰ SAAT
+        let saat = document.createElement("input");
+        saat.placeholder = "Mola saati";
+        saat.value = data["grup"+i]?.saat || "";
+
+        if (!adminMi) saat.disabled = true;
+
+        blok.appendChild(saat);
+        inputs.push(saat);
+
+        // 👥 6 KİŞİ
+        for (let j = 0; j < 6; j++) {
+
+            let inp = document.createElement("input");
+            inp.placeholder = "İsim";
+
+            if (data["grup"+i]?.kisiler) {
+                inp.value = data["grup"+i].kisiler[j] || "";
+            }
+
+            if (!adminMi) inp.disabled = true;
+
+            blok.appendChild(inp);
+            inputs.push(inp);
+        }
+
+        alan.appendChild(blok);
+    }
+
+    // 🔒 BUTON
+    if (adminMi) {
+        document.getElementById("kaydetBtn").style.display = "block";
+    }
+});
+
+// 💾 KAYDET
+window.kaydet = async function() {
+
+    let data = {};
+    let index = 0;
+
+    for (let i = 1; i <= 3; i++) {
+
+        let saat = inputs[index++].value;
+        let kisiler = [];
+
+        for (let j = 0; j < 6; j++) {
+            kisiler.push(inputs[index++].value);
+        }
+
+        data["grup"+i] = {
+            saat: saat,
+            kisiler: kisiler
+        };
+    }
+
+    await setDoc(doc(db, "kasa", "mola"), {data});
+    alert("Kaydedildi");
+}
+
+</script>
+
+</body>
+</html>
