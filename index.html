@@ -39,13 +39,21 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 .erkek { background:linear-gradient(135deg,#2196F3,#0d47a1); }
 .kadin { background:linear-gradient(135deg,#ff6ec7,#c2185b); }
 
-.molada {
-    background:#8B0000 !important;
-    box-shadow:0 0 10px red;
-}
-
 .aktif {
     box-shadow:0 0 10px lime;
+}
+
+/* 🔥 YENİ: SADECE KİŞİ YANSIN */
+@keyframes yanipSonme {
+    0%   { background:#8B0000; box-shadow:0 0 5px red; }
+    50%  { background:#ff0000; box-shadow:0 0 20px red; }
+    100% { background:#8B0000; box-shadow:0 0 5px red; }
+}
+
+input.molada {
+    background:#8B0000 !important;
+    color:#fff !important;
+    animation: yanipSonme 1s infinite;
 }
 
 .hidden { display:none; }
@@ -75,10 +83,6 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
     gap:8px;
 }
 </style>
-
-<!-- 🔥 EXCEL KÜTÜPHANESİ -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-
 </head>
 
 <body>
@@ -114,44 +118,11 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 <input id="yeniK" placeholder="Kullanıcı">
 <input id="yeniS" placeholder="Şifre">
 <button onclick="ekle()">Ekle</button>
-
-<!-- 🔥 EXCEL YÜKLE -->
-<input type="file" id="excelInput">
-
 <div id="liste"></div>
 </div>
 
 </div>
 
-</div>
-
-<!-- 🔥 POPUP -->
-<div id="popup" style="
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.7);
-display:none;
-justify-content:center;
-align-items:center;
-">
-
-<div style="
-background:#2a2a3d;
-padding:20px;
-border-radius:12px;
-width:300px;
-text-align:left;
-">
-
-<h3>👤 Personel Bilgi</h3>
-<div id="popupContent"></div>
-
-<button onclick="kapat()">Kapat</button>
-
-</div>
 </div>
 
 <script type="module">
@@ -173,9 +144,6 @@ let personeller = [];
 let adminMi = false;
 let inputs = [];
 let alan = document.getElementById("alan");
-
-/* 🔥 EXCEL DATA */
-let excelData = [];
 
 let molaData = {};
 const molaRef = doc(db, "kasa", "mola");
@@ -246,6 +214,7 @@ window.giris = function() {
             }
         }
 
+        // 🔥 EKLENDİ
         localStorage.setItem("kullanici", k);
 
         document.getElementById("login").classList.add("hidden");
@@ -292,18 +261,20 @@ function olustur() {
 
             div.classList.add(cinsiyet(i1.value || i2.value));
 
-            if(moladaMi(i1.value) || moladaMi(i2.value)){
-                div.classList.add("molada");
-            } else {
-                div.classList.add("aktif");
+            // 🔥 SADECE KİŞİYİ BOYA
+            if(moladaMi(i1.value)){
+                i1.classList.add("molada");
             }
+
+            if(moladaMi(i2.value)){
+                i2.classList.add("molada");
+            }
+
+            div.classList.add("aktif");
 
             div.appendChild(i1);
             div.appendChild(i2);
             alan.appendChild(div);
-
-            /* 🔥 KASA TIKLAMA */
-            div.onclick = () => kasaTikla(i1.value, i2.value);
 
             inputs.push(i1, i2);
         }
@@ -316,69 +287,77 @@ function olustur() {
     });
 }
 
-/* 🔥 EXCEL OKUMA */
-document.getElementById("excelInput").addEventListener("change", function(e){
-
-    let file = e.target.files[0];
-    let reader = new FileReader();
-
-    reader.onload = function(e){
-        let data = new Uint8Array(e.target.result);
-        let workbook = XLSX.read(data, {type: 'array'});
-
-        let sheet = workbook.Sheets[workbook.SheetNames[0]];
-        excelData = XLSX.utils.sheet_to_json(sheet);
-
-        alert("Excel yüklendi");
+window.kaydet = async function() {
+    let data = {};
+    for (let i = 0; i < inputs.length; i+=2) {
+        data["kasa"+(i/2+1)] = {
+            sol: inputs[i].value,
+            sag: inputs[i+1].value
+        };
     }
-
-    reader.readAsArrayBuffer(file);
-});
-
-/* 🔥 KASA TIKLAMA */
-function kasaTikla(sol, sag){
-
-    let aktif = (localStorage.getItem("kullanici") || "").toLowerCase();
-
-    let isimler = [sol, sag];
-    let sonuc = [];
-
-    isimler.forEach(isim => {
-
-        if(!isim) return;
-
-        if(adminMi || isim.toLowerCase() === aktif){
-
-            let kisi = excelData.find(x =>
-                (x.isim || "").toLowerCase() === isim.toLowerCase()
-            );
-
-            if(kisi) sonuc.push(kisi);
-        }
-
-    });
-
-    if(sonuc.length === 0){
-        alert("Bilgi yok");
-        return;
-    }
-
-    let html = "";
-
-    sonuc.forEach(k => {
-        html += `
-        <b>${k.isim}</b><br>
-        Departman: ${k.departman || "-"}<br>
-        Sicil: ${k.sicil || "-"}<br>
-        Telefon: ${k.telefon || "-"}<hr>`;
-    });
-
-    document.getElementById("popupContent").innerHTML = html;
-    document.getElementById("popup").style.display = "flex";
+    await setDoc(doc(db, "kasa", "liste"), {data});
 }
 
-window.kapat = function(){
-    document.getElementById("popup").style.display = "none";
+window.kaydir = async function() {
+    let yeni = [];
+    for (let i = 0; i < inputs.length; i+=2) {
+        yeni.push({sol: inputs[i].value, sag: inputs[i+1].value});
+    }
+
+    let son = yeni.pop();
+    yeni.unshift(son);
+
+    for (let i = 0; i < yeni.length; i++) {
+        inputs[i*2].value = yeni[i].sol;
+        inputs[i*2+1].value = yeni[i].sag;
+    }
+
+    let data = {};
+    yeni.forEach((k,i)=> data["kasa"+(i+1)] = k);
+    await setDoc(doc(db, "kasa", "liste"), {data});
+}
+
+window.degistir = async function() {
+    let yeni = [];
+
+    for (let i = 0; i < inputs.length; i+=2) {
+        yeni.push({sol: inputs[i].value, sag: inputs[i+1].value});
+    }
+
+    yeni.forEach(k => [k.sol, k.sag] = [k.sag, k.sol]);
+
+    for (let i = 0; i < yeni.length; i++) {
+        inputs[i*2].value = yeni[i].sol;
+        inputs[i*2+1].value = yeni[i].sag;
+    }
+
+    let data = {};
+    yeni.forEach((k,i)=> data["kasa"+(i+1)] = k);
+    await setDoc(doc(db, "kasa", "liste"), {data});
+}
+
+window.ekle = async function() {
+    let k = document.getElementById("yeniK").value;
+    let s = document.getElementById("yeniS").value;
+
+    personeller.push({k,s});
+    await setDoc(doc(db, "kasa", "personel"), {liste: personeller});
+}
+
+function listeGoster() {
+    let div = document.getElementById("liste");
+    div.innerHTML = "";
+
+    personeller.forEach((p,i) => {
+        let d = document.createElement("div");
+        d.innerHTML = p.k + " <button onclick='sil("+i+")'>❌</button>";
+        div.appendChild(d);
+    });
+}
+
+window.sil = async function(i) {
+    personeller.splice(i,1);
+    await setDoc(doc(db, "kasa", "personel"), {liste: personeller});
 }
 
 </script>
