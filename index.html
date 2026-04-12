@@ -31,8 +31,7 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 
 <h3 id="info"></h3>
 
-<!-- 🔥 MOLA BUTONU (PROFESYONEL) -->
-<button onclick="gitMola()">☕ Mola Sayfası</button>
+<button onclick="window.location.href='mola.html'">☕ Mola Sayfası</button>
 
 <div id="panel" class="panel hidden">
 <h4>👥 Personel</h4>
@@ -44,7 +43,6 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 
 <div id="alan"></div>
 
-<!-- 🔒 SADECE ADMIN -->
 <button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
 <button id="kaydirBtn" onclick="kaydir()" style="display:none;">⬇️ Kaydır</button>
 <button id="degistirBtn" onclick="degistir()" style="display:none;">↔️ Yer Değiştir</button>
@@ -73,10 +71,22 @@ let adminMi = false;
 let inputs = [];
 let alan = document.getElementById("alan");
 
-// 🔥 MOLA GEÇİŞ
-window.gitMola = function() {
-    sessionStorage.setItem("from","kasa");
-    window.location.href = "mola.html";
+// 🔥 OTOMATİK GİRİŞ (YENİ)
+window.onload = function() {
+    let k = localStorage.getItem("kullanici");
+
+    if (k) {
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("app").classList.remove("hidden");
+        document.getElementById("info").innerText = k;
+
+        if (k === "admin") {
+            adminMi = true;
+            document.getElementById("panel").classList.remove("hidden");
+        }
+
+        olustur();
+    }
 }
 
 // 🔐 GİRİŞ
@@ -104,7 +114,6 @@ window.giris = function() {
             }
         }
 
-        // 🔥 KULLANICIYI KAYDET (MOLA İÇİN)
         localStorage.setItem("kullanici", k);
 
         document.getElementById("login").classList.add("hidden");
@@ -112,11 +121,10 @@ window.giris = function() {
         document.getElementById("info").innerText = k;
 
         olustur();
-        listeGoster();
     });
 }
 
-// 🔥 KASA OLUŞTUR
+// 🔥 KASA
 function olustur() {
     const ref = doc(db, "kasa", "liste");
 
@@ -153,15 +161,10 @@ function olustur() {
             inputs.push(i1, i2);
         }
 
-        // 🔒 BUTON YETKİ
         if (adminMi) {
             document.getElementById("kaydetBtn").style.display = "block";
             document.getElementById("kaydirBtn").style.display = "block";
             document.getElementById("degistirBtn").style.display = "block";
-        } else {
-            document.getElementById("kaydetBtn").style.display = "none";
-            document.getElementById("kaydirBtn").style.display = "none";
-            document.getElementById("degistirBtn").style.display = "none";
         }
     });
 }
@@ -171,7 +174,6 @@ window.kaydet = async function() {
     if (!adminMi) return;
 
     let data = {};
-
     for (let i = 0; i < inputs.length; i+=2) {
         data["kasa"+(i/2+1)] = {
             sol: inputs[i].value,
@@ -241,33 +243,6 @@ window.degistir = async function() {
     }
 
     await setDoc(doc(db, "kasa", "liste"), {data});
-}
-
-// 👥 PERSONEL EKLE
-window.ekle = async function() {
-    let k = document.getElementById("yeniK").value;
-    let s = document.getElementById("yeniS").value;
-
-    personeller.push({k,s});
-    await setDoc(doc(db, "kasa", "personel"), {liste: personeller});
-}
-
-// 📋 LİSTE
-function listeGoster() {
-    let div = document.getElementById("liste");
-    div.innerHTML = "";
-
-    personeller.forEach((p,i) => {
-        let d = document.createElement("div");
-        d.innerHTML = p.k + " <button onclick='sil("+i+")'>❌</button>";
-        div.appendChild(d);
-    });
-}
-
-// ❌ SİL
-window.sil = async function(i) {
-    personeller.splice(i,1);
-    await setDoc(doc(db, "kasa", "personel"), {liste: personeller});
 }
 
 </script>
