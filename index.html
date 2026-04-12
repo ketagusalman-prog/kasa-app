@@ -60,16 +60,18 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
     transition:all 0.4s ease;
 }
 
+/* 🔥 BURASI DÜZELTİLDİ */
 .panel.acik {
-    max-height:300px;
+    max-height:400px;       /* biraz artırıldı */
+    overflow-y:auto;        /* 🔥 scroll eklendi */
     padding:10px;
 }
 
-/* 🔥 SADECE BURASI DEĞİŞTİ */
+/* 🔥 SADECE BUTON KONUMU */
 .ustButonlar {
     position:absolute;
     top:120px;
-    right:-180px; /* 🔥 1 kasa genişliği kadar sağa kaydırıldı */
+    right:-180px;
     display:flex;
     flex-direction:column;
     gap:8px;
