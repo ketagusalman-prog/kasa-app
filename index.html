@@ -164,7 +164,7 @@ function moladaMi(isim){
     return false;
 }
 
-// 🔐 GİRİŞ (AYNI)
+// 🔐 GİRİŞ
 window.giris = function() {
 
     const ref = doc(db, "kasa", "personel");
@@ -200,7 +200,7 @@ window.giris = function() {
     });
 }
 
-// 🔥 SADECE BURAYA EKLENDİ (SENİN KODUN + EK)
+// 🔥 KASA OLUŞTUR
 function olustur() {
     const ref = doc(db, "kasa", "liste");
 
@@ -230,7 +230,6 @@ function olustur() {
                 i2.disabled = true;
             }
 
-            /* 🔥 EKLENEN KISIM BAŞLANGIÇ */
             div.classList.add(cinsiyet(i1.value || i2.value));
 
             if(moladaMi(i1.value) || moladaMi(i2.value)){
@@ -238,7 +237,6 @@ function olustur() {
             } else {
                 div.classList.add("aktif");
             }
-            /* 🔥 EKLENEN KISIM BİTİŞ */
 
             div.appendChild(i1);
             div.appendChild(i2);
@@ -255,7 +253,7 @@ function olustur() {
     });
 }
 
-// 💾 KAYDET (AYNI)
+// 💾 KAYDET
 window.kaydet = async function() {
     if (!adminMi) return;
 
@@ -271,7 +269,7 @@ window.kaydet = async function() {
     await setDoc(doc(db, "kasa", "liste"), {data});
 }
 
-// 🔄 KAYDIR (AYNI)
+// 🔄 KAYDIR
 window.kaydir = async function() {
     if (!adminMi) return;
 
@@ -300,7 +298,7 @@ window.kaydir = async function() {
     await setDoc(doc(db, "kasa", "liste"), {data});
 }
 
-// ↔️ DEĞİŞTİR (AYNI)
+// ↔️ DEĞİŞTİR
 window.degistir = async function() {
     if (!adminMi) return;
 
@@ -332,7 +330,7 @@ window.degistir = async function() {
     await setDoc(doc(db, "kasa", "liste"), {data});
 }
 
-// 👥 PERSONEL EKLE (AYNI)
+// 👥 PERSONEL EKLE
 window.ekle = async function() {
     let k = document.getElementById("yeniK").value;
     let s = document.getElementById("yeniS").value;
@@ -341,7 +339,7 @@ window.ekle = async function() {
     await setDoc(doc(db, "kasa", "personel"), {liste: personeller});
 }
 
-// 📋 LİSTE (AYNI)
+// 📋 LİSTE
 function listeGoster() {
     let div = document.getElementById("liste");
     div.innerHTML = "";
@@ -353,11 +351,30 @@ function listeGoster() {
     });
 }
 
-// ❌ SİL (AYNI)
+// ❌ SİL
 window.sil = async function(i) {
     personeller.splice(i,1);
     await setDoc(doc(db, "kasa", "personel"), {liste: personeller});
 }
+
+/* 🔥 SADECE BU EKLENDİ (AUTO LOGIN) */
+window.addEventListener("load", () => {
+
+    let k = localStorage.getItem("kullanici");
+
+    if (!k) return;
+
+    document.getElementById("kullanici").value = k;
+
+    if (k === "admin") {
+        document.getElementById("sifre").value = "1234";
+    }
+
+    setTimeout(() => {
+        giris();
+    }, 100);
+
+});
 
 </script>
 
