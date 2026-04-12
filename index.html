@@ -50,10 +50,9 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 
 .hidden { display:none; }
 
-/* 🔥 PANEL DÜZELTME */
 .panel {
     background:#222;
-    padding:0 10px;
+    padding:10px;
     margin:10px;
     border-radius:10px;
     max-height:0;
@@ -61,18 +60,16 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
     transition:all 0.4s ease;
 }
 
-/* 🔥 AÇILINCA TAM GÖRÜNÜR + SCROLL */
 .panel.acik {
-    max-height:400px;       /* arttırıldı */
+    max-height:300px;
     padding:10px;
-    overflow-y:auto;        /* scroll eklendi */
 }
 
-/* 🔥 BUTON KONUM */
+/* 🔥 SADECE BURASI DEĞİŞTİ */
 .ustButonlar {
     position:absolute;
     top:120px;
-    right:-90px;
+    right:-180px; /* 🔥 1 kasa genişliği kadar sağa kaydırıldı */
     display:flex;
     flex-direction:column;
     gap:8px;
@@ -323,7 +320,6 @@ window.degistir = async function() {
     await setDoc(doc(db, "kasa", "liste"), {data});
 }
 
-/* PERSONEL */
 window.ekle = async function() {
     let k = document.getElementById("yeniK").value;
     let s = document.getElementById("yeniS").value;
