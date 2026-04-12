@@ -5,13 +5,20 @@
 <title>Mola Sistemi</title>
 
 <style>
-body { font-family: Arial; background:#1e1e2f; color:white; text-align:center;}
+body {
+    font-family: Arial;
+    background:#1e1e2f;
+    color:#ffffff;
+    text-align:center;
+}
+
 .container { max-width:1000px; margin:auto; }
 
 .baslik {
     margin-top:25px;
-    font-size:20px;
+    font-size:22px;
     font-weight:bold;
+    color:#FFD700;
 }
 
 .grid {
@@ -21,11 +28,18 @@ body { font-family: Arial; background:#1e1e2f; color:white; text-align:center;}
 }
 
 .blok {
-    background:#333;
+    background:#2a2a3d;
     margin:10px;
     padding:10px;
     border-radius:10px;
     width:200px;
+    border:1px solid #555;
+}
+
+h4 {
+    margin:5px 0;
+    font-weight:bold;
+    color:#00ffff;
 }
 
 input {
@@ -34,14 +48,15 @@ input {
     border-radius:6px;
     border:none;
     font-size:12px;
-}
-
-.sureInput {
-    width:60px;
+    font-weight:bold;
 }
 
 .kisiInput {
     width:90%;
+}
+
+.sureInput {
+    width:60px;
 }
 
 button {
@@ -51,6 +66,7 @@ button {
     border:none;
     background:#4CAF50;
     color:white;
+    font-weight:bold;
 }
 </style>
 </head>
@@ -75,7 +91,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyChKcwZnw1fe_SFWy2dJA_JZOMiKghF5_o",
+  apiKey: "AIzaSy...",
   authDomain: "ukasa1.firebaseapp.com",
   projectId: "ukasa1"
 };
@@ -87,212 +103,186 @@ let kullanici = localStorage.getItem("kullanici");
 let adminMi = (kullanici === "admin");
 
 let alan = document.getElementById("alan");
-let inputs = [];
+
+let state = {}; // 🔥 TÜM VERİYİ BURADA TUTACAĞIZ
 
 const ref = doc(db, "kasa", "mola");
 
 onSnapshot(ref, (snap) => {
 
-    let data = snap.exists() ? snap.data().data : {};
+    state = snap.exists() ? snap.data().data : {};
 
     alan.innerHTML = "";
-    inputs = [];
 
-    alan.appendChild(baslik("caySure","☕ Çay Molası", data));
-    alan.appendChild(gridOlustur("cay", 4, data, "caySure"));
+    alan.appendChild(baslik("caySure","☕ Çay Molası"));
+    alan.appendChild(grid("cay",4,"caySure"));
 
-    alan.appendChild(baslik("yemekSure","🍽️ Yemek Molası", data));
-    alan.appendChild(gridOlustur("yemek", 4, data, "yemekSure"));
+    alan.appendChild(baslik("yemekSure","🍽️ Yemek Molası"));
+    alan.appendChild(grid("yemek",4,"yemekSure"));
 
-    alan.appendChild(baslik("sonSure","🕓 Son Mola", data));
-    alan.appendChild(gridOlustur("son", 4, data, "sonSure"));
+    alan.appendChild(baslik("sonSure","🕓 Son Mola"));
+    alan.appendChild(grid("son",4,"sonSure"));
 
     if (adminMi) {
         document.getElementById("kaydetBtn").style.display = "block";
     }
 });
 
-// 🔥 BAŞLIK + SÜRE
-function baslik(key, text, data) {
+// 🔥 BAŞLIK
+function baslik(key,text){
 
     let d = document.createElement("div");
     d.className = "baslik";
 
     let span = document.createElement("span");
-    span.innerText = text + " ";
+    span.innerText = text;
     d.appendChild(span);
 
-    let sureInput = document.createElement("input");
-    sureInput.type = "number";
-    sureInput.className = "sureInput";
-    sureInput.placeholder = "dk";
-    sureInput.value = data[key]?.sure || "";
+    let inp = document.createElement("input");
+    inp.type="number";
+    inp.className="sureInput";
+    inp.value = state[key]?.sure || "";
 
-    if (!adminMi) sureInput.disabled = true;
+    if(!adminMi) inp.disabled=true;
 
-    d.appendChild(sureInput);
-    inputs.push(sureInput);
+    inp.oninput = () => {
+        state[key] = { sure: inp.value };
+    }
+
+    d.appendChild(inp);
 
     return d;
 }
 
 // 🔥 GRID
-function gridOlustur(prefix, adet, data, sureKey) {
+function grid(prefix,adet,sureKey){
 
-    let grid = document.createElement("div");
-    grid.className = "grid";
+    let g = document.createElement("div");
+    g.className="grid";
 
-    for (let i = 1; i <= adet; i++) {
-        grid.appendChild(blokOlustur(prefix+i, i + ". Grup", data, sureKey));
+    for(let i=1;i<=adet;i++){
+        g.appendChild(blok(prefix+i,sureKey));
     }
 
-    return grid;
+    return g;
 }
 
 // 🔥 BLOK
-function blokOlustur(key, titleText, data, sureKey) {
+function blok(key,sureKey){
 
-    let blok = document.createElement("div");
-    blok.className = "blok";
+    let b = document.createElement("div");
+    b.className="blok";
 
-    let title = document.createElement("h4");
-    title.innerText = titleText;
-    blok.appendChild(title);
+    let t = document.createElement("h4");
+    t.innerText=key;
+    b.appendChild(t);
 
     let saat = document.createElement("input");
-    saat.type = "time";
-    saat.value = data[key]?.saat || "";
+    saat.type="time";
+    saat.value = state[key]?.saat || "";
 
-    if (!adminMi) saat.disabled = true;
+    if(!adminMi) saat.disabled=true;
 
-    blok.appendChild(saat);
-    inputs.push(saat);
+    saat.oninput = () => {
+        state[key] = state[key] || {};
+        state[key].saat = saat.value;
+    }
 
-    let kisiler = [];
+    b.appendChild(saat);
 
-    for (let j = 0; j < 6; j++) {
+    let kisiler=[];
+
+    for(let i=0;i<6;i++){
+
         let inp = document.createElement("input");
-        inp.className = "kisiInput";
-        inp.value = data[key]?.kisiler?.[j] || "";
+        inp.className="kisiInput";
+        inp.value = state[key]?.kisiler?.[i] || "";
 
-        if (!adminMi) inp.disabled = true;
+        if(!adminMi) inp.disabled=true;
 
-        blok.appendChild(inp);
-        inputs.push(inp);
+        inp.oninput = () => {
+            state[key] = state[key] || {};
+            state[key].kisiler = state[key].kisiler || [];
+            state[key].kisiler[i] = inp.value;
+        }
+
+        b.appendChild(inp);
         kisiler.push(inp);
     }
 
-    let sayac = document.createElement("div");
-    blok.appendChild(sayac);
+    let sayac=document.createElement("div");
+    b.appendChild(sayac);
 
-    setInterval(() => {
+    // 🔥 SAAT SİSTEMİ
+    setInterval(()=>{
 
-        if (!saat.value) return;
+        if(!saat.value) return;
 
-        let aktifKullanici = (localStorage.getItem("kullanici") || "").toLowerCase();
+        let aktif = (localStorage.getItem("kullanici")||"").toLowerCase();
+        let grup = kisiler.map(k=>k.value.toLowerCase());
 
-        let grupKisiler = kisiler.map(k => k.value.toLowerCase().trim());
+        let dk = parseInt(state[sureKey]?.sure || 15);
+        let sure = dk*60;
 
-        let dk = parseInt(data[sureKey]?.sure || 15);
-        let molaSuresi = dk * 60;
+        let now = new Date();
+        let [h,m]=saat.value.split(":");
 
-        let simdi = new Date();
-        let [h, m] = saat.value.split(":");
+        let hedef=new Date();
+        hedef.setHours(h,m,0);
 
-        let hedef = new Date();
-        hedef.setHours(h, m, 0);
+        let fark=Math.floor((hedef-now)/1000);
 
-        let fark = Math.floor((hedef - simdi) / 1000);
+        let benim = grup.includes(aktif);
 
-        let benimMola = grupKisiler.includes(aktifKullanici);
+        if(fark<=0 && fark>-sure){
 
-        // 🔴 BAŞLADI
-        if (fark <= 0 && fark > -molaSuresi) {
+            b.style.background="#8B0000";
 
-            blok.style.background = "#8B0000";
+            let kalan=sure+fark;
+            let d=Math.floor(kalan/60);
+            let s=kalan%60;
 
-            let kalan = molaSuresi + fark;
-            let dk2 = Math.floor(kalan / 60);
-            let sn = kalan % 60;
+            sayac.innerText=`Mola: ${d}dk ${s}sn`;
 
-            sayac.innerText = "Mola: " + dk2 + "dk " + sn + "sn";
-
-            if (!blok.basladi) {
-
-                if (benimMola) {
+            if(!b.basladi){
+                if(benim){
                     alert("Molan başladı!");
-
-                    if (navigator.vibrate) {
-                        navigator.vibrate([300,200,300,200,500]);
-                    }
+                    navigator.vibrate?.([300,200,300]);
                 }
-
-                blok.basladi = true;
+                b.basladi=true;
             }
         }
+        else if(fark<=-sure){
 
-        // ✅ BİTTİ
-        else if (fark <= -molaSuresi) {
+            b.style.background="#2e7d32";
+            sayac.innerText="Mola bitti";
 
-            blok.style.background = "#2e7d32";
-            sayac.innerText = "Mola bitti";
-
-            if (!blok.bitti) {
-
-                if (benimMola) {
+            if(!b.bitti){
+                if(benim){
                     alert("Molan bitti!");
-
-                    if (navigator.vibrate) {
-                        navigator.vibrate([500,200,500]);
-                    }
+                    navigator.vibrate?.([500,200,500]);
                 }
-
-                blok.bitti = true;
+                b.bitti=true;
             }
         }
-
-        else {
-            blok.style.background = "#333";
-            sayac.innerText = "";
-            blok.basladi = false;
-            blok.bitti = false;
+        else{
+            b.style.background="#2a2a3d";
+            sayac.innerText="";
+            b.basladi=false;
+            b.bitti=false;
         }
 
-    }, 1000);
+    },1000);
 
-    return blok;
+    return b;
 }
 
 // 💾 KAYDET
-window.kaydet = async function() {
+window.kaydet = async function(){
 
-    if (!adminMi) return;
+    if(!adminMi) return;
 
-    let data = {};
-    let index = 0;
-
-    // süreler
-    data["caySure"] = { sure: inputs[index++].value };
-    data["yemekSure"] = { sure: inputs[index++].value };
-    data["sonSure"] = { sure: inputs[index++].value };
-
-    let gruplar = ["cay","yemek","son"];
-
-    for (let g of gruplar) {
-        for (let i = 1; i <= 4; i++) {
-
-            let saat = inputs[index++].value;
-            let kisiler = [];
-
-            for (let j = 0; j < 6; j++) {
-                kisiler.push(inputs[index++].value);
-            }
-
-            data[g+i] = { saat, kisiler };
-        }
-    }
-
-    await setDoc(doc(db, "kasa", "mola"), {data});
+    await setDoc(doc(db,"kasa","mola"),{data:state});
     alert("Kaydedildi");
 }
 
