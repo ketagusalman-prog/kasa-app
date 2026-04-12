@@ -92,6 +92,11 @@ button {
 
 <button onclick="window.location.href='index.html'">⬅️ Kasa</button>
 
+<!-- 🔥 EKLENEN BUTON -->
+<button onclick="window.location.href='kisisel.html'">
+👤 Kişisel Panel
+</button>
+
 <div id="alan"></div>
 
 <button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
@@ -236,7 +241,6 @@ function blok(key,sureKey){
 
         let fark=Math.floor((hedef-now)/1000);
 
-        /* 🔥 GECE 00:00 FIX (DOĞRU) */
         if(fark > 43200){
             hedef.setDate(hedef.getDate()-1);
             fark = Math.floor((hedef-now)/1000);
@@ -268,7 +272,6 @@ function blok(key,sureKey){
     return b;
 }
 
-/* 🔥 KAYDIR */
 window.kaydir = function(){
 
     if(!adminMi){
@@ -305,7 +308,6 @@ window.kaydir = function(){
     alan.appendChild(grid("son",4,"sonSure"));
 }
 
-/* 🔥 KAYDET */
 window.kaydet = async function(){
 
     if(!adminMi){
