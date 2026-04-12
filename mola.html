@@ -40,7 +40,8 @@ button {
 
 <h2>☕ Mola Grupları</h2>
 
-<button onclick="window.location.href='index.html'">⬅️ Geri</button>
+<!-- 🔥 AKILLI GERİ -->
+<button onclick="geriDon()">⬅️ Geri</button>
 
 <div id="alan"></div>
 
@@ -62,12 +63,21 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 🔐 KULLANICI KONTROL
+// 🔐 ADMIN KONTROL
 let kullanici = localStorage.getItem("kullanici");
 let adminMi = (kullanici === "admin");
 
 let alan = document.getElementById("alan");
 let inputs = [];
+
+// 🔥 GERİ FONKSİYON
+window.geriDon = function() {
+    if (sessionStorage.getItem("from") === "kasa") {
+        window.history.back();
+    } else {
+        window.location.href = "index.html";
+    }
+}
 
 // 🔥 VERİ
 const ref = doc(db, "kasa", "mola");
@@ -117,7 +127,7 @@ onSnapshot(ref, (snap) => {
         alan.appendChild(blok);
     }
 
-    // 🔒 SADECE ADMIN GÖRÜR
+    // 🔒 SADECE ADMIN
     if (adminMi) {
         document.getElementById("kaydetBtn").style.display = "block";
     }
