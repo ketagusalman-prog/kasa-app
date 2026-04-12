@@ -51,13 +51,14 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 .hidden { display:none; }
 .panel { background:#222; padding:10px; margin:10px; border-radius:10px;}
 
-/* 🔥 EKLENEN KISIM */
+/* 🔥 GÜNCELLENDİ */
 .ustButonlar{
     position:absolute;
-    top:60px;
-    right:0;
+    top:40px;
+    right:-70px;
     display:flex;
     flex-direction:column;
+    gap:10px;
 }
 </style>
 </head>
@@ -80,7 +81,6 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 
 <button onclick="window.location.href='mola.html'">☕ Mola Sayfası</button>
 
-<!-- 🔥 BUTONLAR SAĞ ÜSTE ALINDI -->
 <div class="ustButonlar">
 <button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
 <button id="kaydirBtn" onclick="kaydir()" style="display:none;">⬇️ Kaydır</button>
