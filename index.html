@@ -45,15 +45,11 @@ body {
     box-shadow:0 0 15px lime, 0 0 25px lime;
 }
 
-/* 🔥 YANIP SÖNME */
-.yanip {
-    animation: blink 1s infinite;
-}
-
-@keyframes blink {
-    0% { opacity:1; }
-    50% { opacity:0.3; }
-    100% { opacity:1; }
+h4 {
+    margin:5px 0;
+    font-weight:bold;
+    color:#00ffff;
+    font-size:14px;
 }
 
 input {
@@ -70,6 +66,7 @@ input {
 input:disabled {
     background:#dddddd;
     color:#000000;
+    opacity:1;
 }
 
 .kisiInput { width:90%; }
@@ -82,6 +79,7 @@ button {
     border:none;
     background:#4CAF50;
     color:white;
+    font-weight:bold;
 }
 </style>
 </head>
@@ -97,6 +95,7 @@ button {
 <div id="alan"></div>
 
 <button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
+<button id="kaydirBtn" onclick="kaydir()" style="display:none;">⬅️➡️ Kaydır</button>
 
 </div>
 
@@ -118,11 +117,7 @@ let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase().trim();
 let adminMi = (kullanici === "admin");
 
 document.getElementById("kaydetBtn").style.display = adminMi ? "block" : "none";
-
-/* 🔔 BİLDİRİM İZNİ */
-if ("Notification" in window && Notification.permission !== "granted") {
-    Notification.requestPermission();
-}
+document.getElementById("kaydirBtn").style.display = adminMi ? "block" : "none";
 
 let alan = document.getElementById("alan");
 let state = {};
@@ -158,6 +153,7 @@ function baslik(key,text){
     inp.type="number";
     inp.className="sureInput";
     inp.value = state[key]?.sure || "";
+
     inp.disabled = !adminMi;
 
     inp.oninput = () => {
@@ -166,6 +162,7 @@ function baslik(key,text){
     }
 
     d.appendChild(inp);
+
     return d;
 }
 
@@ -228,6 +225,9 @@ function blok(key,sureKey){
 
         if(!saat.value) return;
 
+        let aktif = (localStorage.getItem("kullanici")||"").toLowerCase();
+        let grup = kisiler.map(k=>k.value.toLowerCase());
+
         let dk = parseInt(state[sureKey]?.sure || 15);
         let sure = dk*60;
 
@@ -239,22 +239,23 @@ function blok(key,sureKey){
 
         let fark=Math.floor((hedef-now)/1000);
 
-        // 🔔 10 DK KALA UYARI
-        if(fark === - (sure - 600) && !b.uyari10){
-            if(Notification.permission === "granted"){
-                new Notification("⚠️ Mola bitiyor!", {
-                    body: key + " için 10 dakika kaldı"
-                });
+        let benim = grup.includes(aktif);
+
+        /* 🔥 10 DK KALA UYARI */
+        if(fark < - (sure - 600) && fark > - (sure - 590)){
+            if(benim && !b.uyari10dk){
+                alert("⏰ Molanın bitmesine 10 dakika kaldı!");
+                navigator.vibrate?.([300,200,300,200,500]);
+
+                let ses = new Audio("https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg");
+                ses.play();
+
+                b.uyari10dk = true;
             }
-
-            let audio = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
-            audio.play();
-
-            b.uyari10 = true;
         }
 
         if(fark<=0 && fark>-sure){
-            b.classList.add("aktif","yanip");
+            b.classList.add("aktif");
             b.classList.remove("bitti");
 
             let kalan=sure+fark;
@@ -265,19 +266,56 @@ function blok(key,sureKey){
         }
         else if(fark<=-sure){
             b.classList.add("bitti");
-            b.classList.remove("aktif","yanip");
+            b.classList.remove("aktif");
 
             sayac.innerText="Mola bitti";
         }
         else{
-            b.classList.remove("aktif","bitti","yanip");
+            b.classList.remove("aktif","bitti");
             sayac.innerText="";
-            b.uyari10=false;
+            b.uyari10dk = false;
         }
 
     },1000);
 
     return b;
+}
+
+/* 🔥 SADECE İSİMLER KAYDIR */
+window.kaydir = function(){
+
+    if(!adminMi){
+        alert("Sadece admin kullanabilir!");
+        return;
+    }
+
+    ["cay","yemek","son"].forEach(grup=>{
+
+        let kisilerList = [
+            state[grup+"1"]?.kisiler || [],
+            state[grup+"2"]?.kisiler || [],
+            state[grup+"3"]?.kisiler || []
+        ];
+
+        let son = kisilerList.pop();
+        kisilerList.unshift(son);
+
+        for(let i=1;i<=3;i++){
+            state[grup+i] = state[grup+i] || {};
+            state[grup+i].kisiler = kisilerList[i-1];
+        }
+    });
+
+    alan.innerHTML = "";
+
+    alan.appendChild(baslik("caySure","☕ Çay Molası"));
+    alan.appendChild(grid("cay",4,"caySure"));
+
+    alan.appendChild(baslik("yemekSure","🍽️ Yemek Molası"));
+    alan.appendChild(grid("yemek",4,"yemekSure"));
+
+    alan.appendChild(baslik("sonSure","🕓 Son Mola"));
+    alan.appendChild(grid("son",4,"sonSure"));
 }
 
 /* 🔥 KAYDET */
@@ -286,6 +324,27 @@ window.kaydet = async function(){
     if(!adminMi){
         alert("Sadece admin kaydedebilir!");
         return;
+    }
+
+    for(let i=1;i<=4;i++){
+
+        let cayKey = "cay"+i;
+
+        if(!state[cayKey]?.kisiler) continue;
+
+        ["yemek","son"].forEach(grup=>{
+
+            let hedefKey = grup+i;
+
+            state[hedefKey] = state[hedefKey] || {};
+            state[hedefKey].kisiler = state[hedefKey].kisiler || [];
+
+            for(let j=0;j<6;j++){
+                if(!state[hedefKey].kisiler[j]){
+                    state[hedefKey].kisiler[j] = state[cayKey].kisiler[j] || "";
+                }
+            }
+        });
     }
 
     await setDoc(doc(db,"kasa","mola"),{data:state});
