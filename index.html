@@ -44,7 +44,7 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 <div id="alan"></div>
 
 <button id="kaydetBtn" onclick="kaydet()">Kaydet</button>
-<button onclick="kaydir()">⬇️ Kaydır</button>
+<button id="kaydirBtn" onclick="kaydir()">⬇️ Kaydır</button>
 
 </div>
 
@@ -104,7 +104,7 @@ window.giris = function() {
     });
 }
 
-// 🔥 KASA OLUŞTUR
+// 🔥 KASA
 function olustur() {
     const ref = doc(db, "kasa", "liste");
 
@@ -128,10 +128,10 @@ function olustur() {
                 i2.value = k.sag;
             }
 
+            // 👇 SADECE PERSONELE KISITLAMA
             if (!adminMi) {
                 i1.disabled = true;
                 i2.disabled = true;
-                document.getElementById("kaydetBtn").style.display = "none";
             }
 
             div.appendChild(i1);
@@ -139,6 +139,15 @@ function olustur() {
             alan.appendChild(div);
 
             inputs.push(i1, i2);
+        }
+
+        // 👇 BUTONLARI KONTROL ET
+        if (!adminMi) {
+            document.getElementById("kaydetBtn").style.display = "none";
+            document.getElementById("kaydirBtn").style.display = "none";
+        } else {
+            document.getElementById("kaydetBtn").style.display = "inline-block";
+            document.getElementById("kaydirBtn").style.display = "inline-block";
         }
     });
 }
@@ -158,7 +167,7 @@ window.kaydet = async function() {
     alert("Kaydedildi");
 }
 
-// 🔄 KAYDIR (SONU BAŞA AL)
+// 🔄 KAYDIR
 window.kaydir = async function() {
 
     let yeni = [];
@@ -170,16 +179,14 @@ window.kaydir = async function() {
         });
     }
 
-    let son = yeni.pop(); // sonu al
-    yeni.unshift(son);   // başa koy
+    let son = yeni.pop();
+    yeni.unshift(son);
 
-    // inputlara yaz
     for (let i = 0; i < yeni.length; i++) {
         inputs[i*2].value = yeni[i].sol;
         inputs[i*2+1].value = yeni[i].sag;
     }
 
-    // firebase kaydet
     let data = {};
     for (let i = 0; i < yeni.length; i++) {
         data["kasa"+(i+1)] = yeni[i];
