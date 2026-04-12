@@ -43,6 +43,7 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
     box-shadow:0 0 10px lime;
 }
 
+/* 🔥 YANIP SÖNME */
 @keyframes yanipSonme {
     0%   { background:#8B0000; box-shadow:0 0 5px red; }
     50%  { background:#ff0000; box-shadow:0 0 20px red; }
@@ -82,6 +83,7 @@ input.molada {
     gap:8px;
 }
 
+/* 🔥 YENİ: EXCEL PANEL */
 .excelPanel{
     position:fixed;
     bottom:10px;
@@ -119,12 +121,6 @@ input.molada {
 <button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
 <button id="kaydirBtn" onclick="kaydir()" style="display:none;">⬇️ Kaydır</button>
 <button id="degistirBtn" onclick="degistir()" style="display:none;">↔️ Yer Değiştir</button>
-
-<!-- 🔥 EKLENEN BUTON (SADECE BU) -->
-<button onclick="window.location.href='kisisel.html'">
-👤 Kişisel Panel
-</button>
-
 </div>
 
 <div id="alan"></div>
@@ -138,6 +134,7 @@ input.molada {
 </div>
 
 </div>
+
 </div>
 
 <!-- 🔥 EXCEL PANEL -->
@@ -146,6 +143,7 @@ input.molada {
     <input type="file" id="excelInput" accept=".xlsx,.xls">
 </div>
 
+<!-- 🔥 XLSX -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 <script type="module">
@@ -172,15 +170,17 @@ let alan = document.getElementById("alan");
 let excelData = [];
 
 document.getElementById("excelInput").addEventListener("change", function(e){
+
     let file = e.target.files[0];
     let reader = new FileReader();
 
     reader.onload = function(evt){
         let data = new Uint8Array(evt.target.result);
         let workbook = XLSX.read(data, {type: 'array'});
+
         let sheet = workbook.Sheets[workbook.SheetNames[0]];
         excelData = XLSX.utils.sheet_to_json(sheet);
-        localStorage.setItem("excelData", JSON.stringify(excelData));
+
         alert("Excel yüklendi");
     }
 
@@ -207,12 +207,15 @@ function moladaMi(isim){
 
     for(let g of gruplar){
         for(let i=1;i<=4;i++){
+
             let key = g+i;
             let saat = molaData[key]?.saat;
             let kisiler = molaData[key]?.kisiler || [];
+
             if(!saat) continue;
 
             let [h,m] = saat.split(":");
+
             let hedef = new Date();
             hedef.setHours(h,m,0);
 
@@ -229,7 +232,176 @@ function moladaMi(isim){
     return false;
 }
 
-/* DEVAMI AYNI (HİÇ DOKUNULMADI) */
+window.giris = function() {
+
+    const ref = doc(db, "kasa", "personel");
+
+    onSnapshot(ref, (snap) => {
+
+        if (snap.exists()) {
+            personeller = snap.data().liste;
+        }
+
+        let k = document.getElementById("kullanici").value.trim();
+        let s = document.getElementById("sifre").value.trim();
+
+        if (k === admin.k && s === admin.s) {
+            adminMi = true;
+            document.getElementById("panelBtn").style.display = "block";
+
+            /* 🔥 EXCEL PANEL GÖSTER */
+            document.getElementById("excelPanel").style.display = "block";
+        } else {
+            let bulundu = personeller.find(p => p.k === k && p.s === s);
+            if (!bulundu) {
+                alert("Hatalı giriş");
+                return;
+            }
+        }
+
+        localStorage.setItem("kullanici", k);
+
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("app").classList.remove("hidden");
+
+        olustur();
+        listeGoster();
+    });
+}
+
+window.panelToggle = function(){
+    let p = document.getElementById("panel");
+    p.classList.toggle("acik");
+}
+
+function olustur() {
+    const ref = doc(db, "kasa", "liste");
+
+    onSnapshot(ref, (snap) => {
+
+        let kayit = snap.exists() ? snap.data().data : {};
+
+        alan.innerHTML = "";
+        inputs = [];
+
+        for (let i = 0; i < 6; i++) {
+
+            let div = document.createElement("div");
+            div.className = "kasa";
+
+            let i1 = document.createElement("input");
+            let i2 = document.createElement("input");
+
+            let k = kayit["kasa"+(i+1)];
+            if (k) {
+                i1.value = k.sol;
+                i2.value = k.sag;
+            }
+
+            if (!adminMi) {
+                i1.disabled = true;
+                i2.disabled = true;
+            }
+
+            div.classList.add(cinsiyet(i1.value || i2.value));
+
+            if(moladaMi(i1.value)){
+                i1.classList.add("molada");
+            }
+
+            if(moladaMi(i2.value)){
+                i2.classList.add("molada");
+            }
+
+            div.classList.add("aktif");
+
+            div.appendChild(i1);
+            div.appendChild(i2);
+            alan.appendChild(div);
+
+            inputs.push(i1, i2);
+        }
+
+        if (adminMi) {
+            document.getElementById("kaydetBtn").style.display = "block";
+            document.getElementById("kaydirBtn").style.display = "block";
+            document.getElementById("degistirBtn").style.display = "block";
+        }
+    });
+}
+
+window.kaydet = async function() {
+    let data = {};
+    for (let i = 0; i < inputs.length; i+=2) {
+        data["kasa"+(i/2+1)] = {
+            sol: inputs[i].value,
+            sag: inputs[i+1].value
+        };
+    }
+    await setDoc(doc(db, "kasa", "liste"), {data});
+}
+
+window.kaydir = async function() {
+    let yeni = [];
+    for (let i = 0; i < inputs.length; i+=2) {
+        yeni.push({sol: inputs[i].value, sag: inputs[i+1].value});
+    }
+
+    let son = yeni.pop();
+    yeni.unshift(son);
+
+    for (let i = 0; i < yeni.length; i++) {
+        inputs[i*2].value = yeni[i].sol;
+        inputs[i*2+1].value = yeni[i].sag;
+    }
+
+    let data = {};
+    yeni.forEach((k,i)=> data["kasa"+(i+1)] = k);
+    await setDoc(doc(db, "kasa", "liste"), {data});
+}
+
+window.degistir = async function() {
+    let yeni = [];
+
+    for (let i = 0; i < inputs.length; i+=2) {
+        yeni.push({sol: inputs[i].value, sag: inputs[i+1].value});
+    }
+
+    yeni.forEach(k => [k.sol, k.sag] = [k.sag, k.sol]);
+
+    for (let i = 0; i < yeni.length; i++) {
+        inputs[i*2].value = yeni[i].sol;
+        inputs[i*2+1].value = yeni[i].sag;
+    }
+
+    let data = {};
+    yeni.forEach((k,i)=> data["kasa"+(i+1)] = k);
+    await setDoc(doc(db, "kasa", "liste"), {data});
+}
+
+window.ekle = async function() {
+    let k = document.getElementById("yeniK").value;
+    let s = document.getElementById("yeniS").value;
+
+    personeller.push({k,s});
+    await setDoc(doc(db, "kasa", "personel"), {liste: personeller});
+}
+
+function listeGoster() {
+    let div = document.getElementById("liste");
+    div.innerHTML = "";
+
+    personeller.forEach((p,i) => {
+        let d = document.createElement("div");
+        d.innerHTML = p.k + " <button onclick='sil("+i+")'>❌</button>";
+        div.appendChild(d);
+    });
+}
+
+window.sil = async function(i) {
+    personeller.splice(i,1);
+    await setDoc(doc(db, "kasa", "personel"), {liste: personeller});
+}
 
 </script>
 
