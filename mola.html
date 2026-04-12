@@ -27,7 +27,6 @@ body {
     gap:10px;
 }
 
-/* 🔥 BLOK */
 .blok {
     background:#2a2a3d;
     padding:8px;
@@ -36,13 +35,11 @@ body {
     position:relative;
 }
 
-/* ✨ AKTİF PARLAMA */
 .aktif {
     background:#8B0000 !important;
     box-shadow:0 0 15px red, 0 0 25px red;
 }
 
-/* ✅ BİTTİ PARLAMA */
 .bitti {
     background:#2e7d32 !important;
     box-shadow:0 0 15px lime, 0 0 25px lime;
@@ -55,7 +52,6 @@ h4 {
     font-size:14px;
 }
 
-/* 🔥 INPUT DÜZELTME */
 input {
     padding:6px;
     margin:3px;
@@ -63,7 +59,6 @@ input {
     border:none;
     font-size:12px;
     font-weight:bold;
-
     background:#ffffff;
     color:#000000;
 }
@@ -95,7 +90,8 @@ button {
 
 <h2>☕ Mola Sistemi</h2>
 
-<button onclick="window.location.href='index.html'">⬅️ Kasa</button>
+<!-- ✅ SADECE BURASI DEĞİŞTİ -->
+<button onclick="history.back()">⬅️ Kasa</button>
 
 <div id="alan"></div>
 
@@ -146,7 +142,6 @@ onSnapshot(ref, (snap) => {
 });
 
 function baslik(key,text){
-
     let d = document.createElement("div");
     d.className = "baslik";
 
@@ -166,12 +161,10 @@ function baslik(key,text){
     }
 
     d.appendChild(inp);
-
     return d;
 }
 
 function grid(prefix,adet,sureKey){
-
     let g = document.createElement("div");
     g.className="grid";
 
@@ -207,7 +200,6 @@ function blok(key,sureKey){
     let kisiler=[];
 
     for(let i=0;i<6;i++){
-
         let inp = document.createElement("input");
         inp.className="kisiInput";
         inp.value = state[key]?.kisiler?.[i] || "";
@@ -228,7 +220,6 @@ function blok(key,sureKey){
     b.appendChild(sayac);
 
     setInterval(()=>{
-
         if(!saat.value) return;
 
         let aktif = (localStorage.getItem("kullanici")||"").toLowerCase();
@@ -248,7 +239,6 @@ function blok(key,sureKey){
         let benim = grup.includes(aktif);
 
         if(fark<=0 && fark>-sure){
-
             b.classList.add("aktif");
             b.classList.remove("bitti");
 
@@ -266,9 +256,7 @@ function blok(key,sureKey){
                 b.basladi=true;
             }
         }
-
         else if(fark<=-sure){
-
             b.classList.add("bitti");
             b.classList.remove("aktif");
 
@@ -282,7 +270,6 @@ function blok(key,sureKey){
                 b.bitti=true;
             }
         }
-
         else{
             b.classList.remove("aktif","bitti");
             sayac.innerText="";
@@ -301,24 +288,6 @@ window.kaydet = async function(){
     alert("Kaydedildi");
 }
 
-</script>
-
-<!-- 🔥 GERİ TUŞU %100 ÇALIŞAN -->
-<script>
-(function () {
-
-    function gitKasa() {
-        window.location.replace("index.html");
-    }
-
-    history.pushState(null, null, location.href);
-    history.pushState(null, null, location.href);
-
-    window.addEventListener("popstate", function () {
-        gitKasa();
-    });
-
-})();
 </script>
 
 </body>
