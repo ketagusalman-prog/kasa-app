@@ -6,14 +6,7 @@
 
 <style>
 body { font-family: Arial; background:#1e1e2f; color:white; text-align:center;}
-.container { max-width:500px; margin:auto; }
-
-.blok {
-    background:#333;
-    margin:15px;
-    padding:15px;
-    border-radius:10px;
-}
+.container { max-width:1000px; margin:auto; }
 
 .baslik {
     margin-top:25px;
@@ -21,12 +14,29 @@ body { font-family: Arial; background:#1e1e2f; color:white; text-align:center;}
     font-weight:bold;
 }
 
+/* 🔥 ORTAK GRID */
+.grid {
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+}
+
+/* 🔥 TÜM BLOKLAR AYNI */
+.blok {
+    background:#333;
+    margin:10px;
+    padding:10px;
+    border-radius:10px;
+    width:200px;
+}
+
 input {
     width:90%;
-    padding:8px;
-    margin:5px;
-    border-radius:8px;
+    padding:6px;
+    margin:3px;
+    border-radius:6px;
     border:none;
+    font-size:12px;
 }
 
 button {
@@ -85,42 +95,54 @@ onSnapshot(ref, (snap) => {
     alan.innerHTML = "";
     inputs = [];
 
-    // ☕ ÇAY MOLASI
-    let baslik1 = document.createElement("div");
-    baslik1.className = "baslik";
-    baslik1.innerText = "☕ Çay Molası";
-    alan.appendChild(baslik1);
+    // ☕ ÇAY
+    alan.appendChild(baslik("☕ Çay Molası"));
+    alan.appendChild(gridOlustur("cay", 4, data));
 
-    for (let i = 1; i <= 3; i++) {
-        blokOlustur("cay"+i, i + ". Grup", data);
-    }
+    // 🍽️ YEMEK
+    alan.appendChild(baslik("🍽️ Yemek Molası"));
+    alan.appendChild(gridOlustur("yemek", 4, data));
 
-    // 🍽️ YEMEK MOLASI
-    let baslik2 = document.createElement("div");
-    baslik2.className = "baslik";
-    baslik2.innerText = "🍽️ Yemek Molası";
-    alan.appendChild(baslik2);
-
-    for (let i = 1; i <= 4; i++) {
-        blokOlustur("yemek"+i, i + ". Grup", data);
-    }
+    // 🕓 SON MOLA
+    alan.appendChild(baslik("🕓 Son Mola"));
+    alan.appendChild(gridOlustur("son", 4, data));
 
     if (adminMi) {
         document.getElementById("kaydetBtn").style.display = "block";
     }
 });
 
-// 🔧 BLOK OLUŞTUR
+// 🔧 BAŞLIK
+function baslik(text) {
+    let d = document.createElement("div");
+    d.className = "baslik";
+    d.innerText = text;
+    return d;
+}
+
+// 🔧 GRID
+function gridOlustur(prefix, adet, data) {
+
+    let grid = document.createElement("div");
+    grid.className = "grid";
+
+    for (let i = 1; i <= adet; i++) {
+        grid.appendChild(blokOlustur(prefix+i, i + ". Grup", data));
+    }
+
+    return grid;
+}
+
+// 🔧 BLOK
 function blokOlustur(key, titleText, data) {
 
     let blok = document.createElement("div");
     blok.className = "blok";
 
-    let title = document.createElement("h3");
+    let title = document.createElement("h4");
     title.innerText = titleText;
     blok.appendChild(title);
 
-    // ⏰ SAAT
     let saat = document.createElement("input");
     saat.placeholder = "Saat";
     saat.value = data[key]?.saat || "";
@@ -130,7 +152,6 @@ function blokOlustur(key, titleText, data) {
     blok.appendChild(saat);
     inputs.push(saat);
 
-    // 👥 6 KİŞİ
     for (let j = 0; j < 6; j++) {
         let inp = document.createElement("input");
         inp.placeholder = "İsim";
@@ -142,7 +163,7 @@ function blokOlustur(key, titleText, data) {
         inputs.push(inp);
     }
 
-    alan.appendChild(blok);
+    return blok;
 }
 
 // 💾 KAYDET
@@ -153,28 +174,34 @@ window.kaydet = async function() {
     let data = {};
     let index = 0;
 
-    // ☕ ÇAY
-    for (let i = 1; i <= 3; i++) {
-        let saat = inputs[index++].value;
-        let kisiler = [];
-
-        for (let j = 0; j < 6; j++) {
-            kisiler.push(inputs[index++].value);
-        }
-
-        data["cay"+i] = { saat, kisiler };
-    }
-
-    // 🍽️ YEMEK
+    // ☕
     for (let i = 1; i <= 4; i++) {
         let saat = inputs[index++].value;
         let kisiler = [];
-
         for (let j = 0; j < 6; j++) {
             kisiler.push(inputs[index++].value);
         }
+        data["cay"+i] = { saat, kisiler };
+    }
 
+    // 🍽️
+    for (let i = 1; i <= 4; i++) {
+        let saat = inputs[index++].value;
+        let kisiler = [];
+        for (let j = 0; j < 6; j++) {
+            kisiler.push(inputs[index++].value);
+        }
         data["yemek"+i] = { saat, kisiler };
+    }
+
+    // 🕓
+    for (let i = 1; i <= 4; i++) {
+        let saat = inputs[index++].value;
+        let kisiler = [];
+        for (let j = 0; j < 6; j++) {
+            kisiler.push(inputs[index++].value);
+        }
+        data["son"+i] = { saat, kisiler };
     }
 
     await setDoc(doc(db, "kasa", "mola"), {data});
