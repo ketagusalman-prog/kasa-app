@@ -83,7 +83,6 @@ input.molada {
     gap:8px;
 }
 
-/* 🔥 YENİ: EXCEL PANEL */
 .excelPanel{
     position:fixed;
     bottom:10px;
@@ -105,7 +104,7 @@ input.molada {
 
 <div id="login">
 <input id="kullanici" placeholder="Kullanıcı adı">
-<input id="sifre" placeholder="Şifre">
+<input id="sifre" type="password" placeholder="Şifre">
 <button onclick="giris()">Giriş</button>
 </div>
 
@@ -113,11 +112,12 @@ input.molada {
 
 <h3 id="info"></h3>
 
-<!-- 🔥 BURAYA EKLENDİ -->
 <button onclick="window.location.href='mola.html'">☕ Mola Sayfası</button>
-<button id="mesajBtn" onclick="window.location.href='mesaj.html'" style="display:none;">📩 Mesaj</button>
 
 <button id="panelBtn" onclick="panelToggle()" style="display:none;">👥 Personel Paneli</button>
+
+<!-- ✅ SADECE BURAYA EKLENDİ (EN GÜVENLİ YER) -->
+<button id="mesajBtn" onclick="window.location.href='mesaj.html'" style="display:none;">📩 Mesaj</button>
 
 <div class="ustButonlar">
 <button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
@@ -139,7 +139,6 @@ input.molada {
 
 </div>
 
-<!-- 🔥 EXCEL PANEL -->
 <div id="excelPanel" class="excelPanel" style="display:none;">
     <div style="font-size:12px; margin-bottom:5px;">📊 Excel Yükle</div>
     <input type="file" id="excelInput" accept=".xlsx,.xls">
@@ -167,23 +166,50 @@ let adminMi = false;
 let inputs = [];
 let alan = document.getElementById("alan");
 
-/* 🔥 EXCEL DATA */
-let excelData = [];
-
-document.getElementById("excelInput").addEventListener("change", function(e){
-    let file = e.target.files[0];
-    let reader = new FileReader();
-
-    reader.onload = function(evt){
-        let data = new Uint8Array(evt.target.result);
-        let workbook = XLSX.read(data, {type: 'array'});
-        let sheet = workbook.Sheets[workbook.SheetNames[0]];
-        excelData = XLSX.utils.sheet_to_json(sheet);
-        alert("Excel yüklendi");
-    }
-
-    reader.readAsArrayBuffer(file);
+let molaData = {};
+const molaRef = doc(db, "kasa", "mola");
+onSnapshot(molaRef, (snap)=>{
+    molaData = snap.exists() ? snap.data().data : {};
 });
+
+function cinsiyet(isim){
+    isim = (isim || "").toLowerCase();
+    let kadin = ["ayşe","fatma","zeynep","elif","buse"];
+    return kadin.includes(isim) ? "kadin" : "erkek";
+}
+
+function moladaMi(isim){
+    if(!isim) return false;
+
+    let now = new Date();
+    let gruplar = ["cay","yemek","son"];
+
+    for(let g of gruplar){
+        for(let i=1;i<=4;i++){
+
+            let key = g+i;
+            let saat = molaData[key]?.saat;
+            let kisiler = molaData[key]?.kisiler || [];
+
+            if(!saat) continue;
+
+            let [h,m] = saat.split(":");
+
+            let hedef = new Date();
+            hedef.setHours(h,m,0);
+
+            let sure = (molaData[g+"Sure"]?.sure || 15)*60;
+            let fark = Math.floor((hedef-now)/1000);
+
+            if(fark<=0 && fark>-sure){
+                if(kisiler.map(x=>x.toLowerCase()).includes(isim.toLowerCase())){
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
 
 window.giris = function() {
 
@@ -202,8 +228,8 @@ window.giris = function() {
             adminMi = true;
             document.getElementById("panelBtn").style.display = "block";
 
-            /* 🔥 SADECE BURASI EKLENDİ */
-            document.getElementById("mesajBtn").style.display = "inline-block";
+            /* ✅ SADECE BURASI EKLENDİ */
+            document.getElementById("mesajBtn").style.display = "block";
 
             document.getElementById("excelPanel").style.display = "block";
         } else {
@@ -229,7 +255,56 @@ window.panelToggle = function(){
     p.classList.toggle("acik");
 }
 
-/* kalan kodların HEPSİ AYNI bırakıldı */
+function olustur() {
+    const ref = doc(db, "kasa", "liste");
+
+    onSnapshot(ref, (snap) => {
+
+        let kayit = snap.exists() ? snap.data().data : {};
+
+        alan.innerHTML = "";
+        inputs = [];
+
+        for (let i = 0; i < 6; i++) {
+
+            let div = document.createElement("div");
+            div.className = "kasa";
+
+            let i1 = document.createElement("input");
+            let i2 = document.createElement("input");
+
+            let k = kayit["kasa"+(i+1)];
+            if (k) {
+                i1.value = k.sol;
+                i2.value = k.sag;
+            }
+
+            if (!adminMi) {
+                i1.disabled = true;
+                i2.disabled = true;
+            }
+
+            div.classList.add(cinsiyet(i1.value || i2.value));
+
+            if(moladaMi(i1.value)) i1.classList.add("molada");
+            if(moladaMi(i2.value)) i2.classList.add("molada");
+
+            div.classList.add("aktif");
+
+            div.appendChild(i1);
+            div.appendChild(i2);
+            alan.appendChild(div);
+
+            inputs.push(i1, i2);
+        }
+
+        if (adminMi) {
+            document.getElementById("kaydetBtn").style.display = "block";
+            document.getElementById("kaydirBtn").style.display = "block";
+            document.getElementById("degistirBtn").style.display = "block";
+        }
+    });
+}
 
 </script>
 
