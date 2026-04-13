@@ -2,88 +2,25 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Kasa Sistem</title>
+<title>Kişisel Panel</title>
 
 <style>
-body { font-family: Arial; background:#1e1e2f; color:white; text-align:center;}
-.container { max-width:400px; margin:auto; position:relative; }
-
-input {
-    width:90%;
-    padding:10px;
-    margin:5px;
-    border-radius:8px;
-    border:none;
-    background:#fff;
-    color:#000;
-    font-weight:bold;
+body {
+    font-family: Arial;
+    background:#1e1e2f;
+    color:white;
+    text-align:center;
 }
 
-input:disabled {
-    background:#ddd;
-    color:#000;
-    opacity:1;
+.container {
+    max-width:600px;
+    margin:auto;
 }
 
-button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4CAF50; color:white;}
-
-.kasa {
-    display:flex;
-    justify-content:space-between;
+.kart {
+    background:#2a2a3d;
+    padding:15px;
     margin:10px;
-    padding:12px;
-    border-radius:12px;
-    font-weight:bold;
-}
-
-.erkek { background:linear-gradient(135deg,#2196F3,#0d47a1); }
-.kadin { background:linear-gradient(135deg,#ff6ec7,#c2185b); }
-
-.aktif { box-shadow:0 0 10px lime; }
-
-@keyframes yanipSonme {
-    0% { background:#8B0000; }
-    50% { background:#ff0000; }
-    100% { background:#8B0000; }
-}
-
-input.molada {
-    background:#8B0000 !important;
-    color:#fff !important;
-    animation: yanipSonme 1s infinite;
-}
-
-.hidden { display:none; }
-
-.panel {
-    background:#222;
-    padding:10px;
-    margin:10px;
-    border-radius:10px;
-    max-height:0;
-    overflow:hidden;
-    transition:all 0.4s ease;
-}
-
-.panel.acik {
-    max-height:500px;
-    overflow-y:auto;
-}
-
-.ustButonlar {
-    position:absolute;
-    top:120px;
-    right:-180px;
-    display:flex;
-    flex-direction:column;
-}
-
-.excelPanel{
-    position:fixed;
-    bottom:10px;
-    right:10px;
-    background:#111;
-    padding:10px;
     border-radius:10px;
 }
 </style>
@@ -93,251 +30,57 @@ input.molada {
 
 <div class="container">
 
-<h2>Kasa Sistem</h2>
+<h2>👤 Kişisel Panel</h2>
 
-<div id="login">
-<input id="kullanici" placeholder="Kullanıcı adı">
-<input id="sifre" type="password" placeholder="Şifre">
-<button onclick="giris()">Giriş</button>
-</div>
-
-<div id="app" class="hidden">
-
-<button onclick="window.location.href='mola.html'">☕ Mola</button>
-<button onclick="window.location.href='kisisel.html'">👤 Kişisel</button>
-
-<button id="panelBtn" onclick="panelToggle()" style="display:none;">👥 Personel Paneli</button>
-
-<div class="ustButonlar">
-<button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
-<button id="kaydirBtn" onclick="kaydir()" style="display:none;">Kaydır</button>
-<button id="degistirBtn" onclick="degistir()" style="display:none;">Yer Değiştir</button>
-</div>
-
-<div id="alan"></div>
-
-<div id="panel" class="panel">
-
-<h4>👥 Personel</h4>
-<input id="yeniK">
-<input id="yeniS">
-<button onclick="ekle()">Ekle</button>
-<div id="liste"></div>
-
-<!-- 🔥 MESAJ PANEL -->
-<h4>📩 Mesaj Gönder</h4>
-
-<textarea id="mesajText" style="width:90%;height:60px;"></textarea>
-
-<div id="kisiListesi"></div>
-
-<label>
-<input type="checkbox" id="tumune"> Tümüne gönder
-</label>
-
-<button onclick="mesajGonder()">Gönder</button>
+<div id="bilgi"></div>
 
 </div>
-
-</div>
-</div>
-
-<div id="excelPanel" class="excelPanel" style="display:none;">
-<input type="file" id="excelInput">
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-const app = initializeApp({ apiKey:"AIzaSy...", projectId:"ukasa1" });
+const firebaseConfig = {
+  apiKey: "AIzaSy...",
+  authDomain: "ukasa1.firebaseapp.com",
+  projectId: "ukasa1"
+};
+
+const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let admin = {k:"admin", s:"1234"};
-let personeller = [];
-let adminMi = false;
-let inputs = [];
-let alan = document.getElementById("alan");
+/* 🔥 GİRİŞ YAPAN KULLANICI */
+let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase();
 
-let excelData = [];
+const ref = doc(db, "kasa", "excel");
 
-document.getElementById("excelInput").addEventListener("change", function(e){
-    let reader = new FileReader();
-    reader.onload = function(evt){
-        let data = new Uint8Array(evt.target.result);
-        let wb = XLSX.read(data,{type:'array'});
-        excelData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-        localStorage.setItem("excelData", JSON.stringify(excelData));
-        alert("Excel yüklendi");
+onSnapshot(ref, (snap)=>{
+
+    let data = snap.exists() ? snap.data().liste : [];
+
+    let kisi = data.find(x =>
+        (x.isim || "").toLowerCase() === kullanici
+    );
+
+    let div = document.getElementById("bilgi");
+
+    if(!kisi){
+        div.innerHTML = "Veri bulunamadı ❌";
+        return;
     }
-    reader.readAsArrayBuffer(e.target.files[0]);
+
+    div.innerHTML = `
+        <div class="kart">
+            <h3>${kisi.isim}</h3>
+            <p>Departman: ${kisi.departman || "-"}</p>
+            <p>Sicil: ${kisi.sicil || "-"}</p>
+            <p>Telefon: ${kisi.telefon || "-"}</p>
+            <p>Fiş Sayısı: ${kisi.fis || "-"}</p>
+        </div>
+    `;
 });
 
-window.giris = function(){
-    const ref = doc(db,"kasa","personel");
-
-    onSnapshot(ref,(snap)=>{
-        if(snap.exists()) personeller = snap.data().liste;
-
-        let k = kullanici.value;
-        let s = sifre.value;
-
-        if(k===admin.k && s===admin.s){
-            adminMi = true;
-            panelBtn.style.display="block";
-            excelPanel.style.display="block";
-        } else {
-            let b = personeller.find(p=>p.k===k && p.s===s);
-            if(!b){ alert("Hatalı"); return;}
-        }
-
-        localStorage.setItem("kullanici",k);
-
-        login.classList.add("hidden");
-        app.classList.remove("hidden");
-
-        olustur();
-        listeGoster();
-    });
-}
-
-function olustur(){
-    const ref = doc(db,"kasa","liste");
-
-    onSnapshot(ref,(snap)=>{
-        let data = snap.exists()?snap.data().data:{};
-
-        alan.innerHTML="";
-        inputs=[];
-
-        for(let i=0;i<6;i++){
-            let div=document.createElement("div");
-            div.className="kasa aktif";
-
-            let i1=document.createElement("input");
-            let i2=document.createElement("input");
-
-            let k=data["kasa"+(i+1)];
-            if(k){ i1.value=k.sol; i2.value=k.sag; }
-
-            if(!adminMi){ i1.disabled=true; i2.disabled=true;}
-
-            div.appendChild(i1);
-            div.appendChild(i2);
-            alan.appendChild(div);
-
-            inputs.push(i1,i2);
-        }
-
-        if(adminMi){
-            kaydetBtn.style.display="block";
-            kaydirBtn.style.display="block";
-            degistirBtn.style.display="block";
-        }
-    });
-}
-
-window.kaydet = async function(){
-    let data={};
-    for(let i=0;i<inputs.length;i+=2){
-        data["kasa"+(i/2+1)]={sol:inputs[i].value,sag:inputs[i+1].value};
-    }
-    await setDoc(doc(db,"kasa","liste"),{data});
-}
-
-window.kaydir = async function(){
-    let arr=[];
-    for(let i=0;i<inputs.length;i+=2){
-        arr.push({sol:inputs[i].value,sag:inputs[i+1].value});
-    }
-    let son=arr.pop();
-    arr.unshift(son);
-
-    arr.forEach((k,i)=>{
-        inputs[i*2].value=k.sol;
-        inputs[i*2+1].value=k.sag;
-    });
-
-    let data={};
-    arr.forEach((k,i)=>data["kasa"+(i+1)]=k);
-    await setDoc(doc(db,"kasa","liste"),{data});
-}
-
-window.degistir = async function(){
-    for(let i=0;i<inputs.length;i+=2){
-        [inputs[i].value,inputs[i+1].value]=[inputs[i+1].value,inputs[i].value];
-    }
-    kaydet();
-}
-
-window.ekle = async function(){
-    personeller.push({k:yeniK.value,s:yeniS.value});
-    await setDoc(doc(db,"kasa","personel"),{liste:personeller});
-}
-
-function listeGoster(){
-    liste.innerHTML="";
-    kisiListesi.innerHTML="";
-
-    personeller.forEach((p,i)=>{
-        let d=document.createElement("div");
-        d.innerHTML=p.k+" <button onclick='sil("+i+")'>❌</button>";
-        liste.appendChild(d);
-
-        let l=document.createElement("label");
-        l.innerHTML=`<input type="checkbox" value="${p.k}"> ${p.k}`;
-        kisiListesi.appendChild(l);
-    });
-}
-
-window.sil = async function(i){
-    personeller.splice(i,1);
-    await setDoc(doc(db,"kasa","personel"),{liste:personeller});
-}
-
-window.panelToggle = function(){
-    panel.classList.toggle("acik");
-}
-
-/* 🔥 MESAJ */
-window.mesajGonder = async function(){
-
-    let text = mesajText.value.trim();
-    let tum = tumune.checked;
-
-    if(!text) return;
-
-    let kisiler=[];
-
-    if(tum){
-        kisiler = personeller.map(p=>p.k.toLowerCase());
-    } else {
-        document.querySelectorAll("#kisiListesi input:checked").forEach(c=>{
-            kisiler.push(c.value.toLowerCase());
-        });
-    }
-
-    const ref = doc(db,"kasa","mesajlar");
-
-    let mevcut=[];
-    const snap = await new Promise(r=>onSnapshot(ref,s=>r(s),{onlyOnce:true}));
-
-    if(snap.exists()) mevcut=snap.data().liste||[];
-
-    mevcut.push({
-        text,
-        kisiler,
-        okundu:[],
-        tarih:Date.now()
-    });
-
-    await setDoc(ref,{liste:mevcut});
-
-    alert("Gönderildi");
-}
 </script>
 
 </body>
