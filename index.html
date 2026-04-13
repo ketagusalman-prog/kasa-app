@@ -6,7 +6,7 @@
 
 <style>
 body { font-family: Arial; background:#1e1e2f; color:white; text-align:center;}
-.container { max-width:500px; margin:auto; }
+.container { max-width:400px; margin:auto; position:relative; }
 
 input {
     width:90%;
@@ -19,14 +19,13 @@ input {
     font-weight:bold;
 }
 
-button {
-    padding:10px;
-    margin:5px;
-    border-radius:8px;
-    border:none;
-    background:#4CAF50;
-    color:white;
+input:disabled {
+    background:#ddd;
+    color:#000;
+    opacity:1;
 }
+
+button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4CAF50; color:white;}
 
 .kasa {
     display:flex;
@@ -37,22 +36,29 @@ button {
     font-weight:bold;
 }
 
-.aktif { box-shadow:0 0 10px lime; }
+.erkek { background:linear-gradient(135deg,#2196F3,#0d47a1); }
+.kadin { background:linear-gradient(135deg,#ff6ec7,#c2185b); }
 
-.hidden { display:none; }
-
-.panel {
-    background:#222;
-    padding:10px;
-    margin:10px;
-    border-radius:10px;
+.molada {
+    background:#8B0000 !important;
+    box-shadow:0 0 10px red;
 }
 
-.mesajPanel {
-    background:#111;
-    padding:10px;
-    margin:10px;
-    border-radius:10px;
+.aktif {
+    box-shadow:0 0 10px lime;
+}
+
+.hidden { display:none; }
+.panel { background:#222; padding:10px; margin:10px; border-radius:10px;}
+
+/* 🔥 BUTON KONUM DÜZELTME */
+.ustButonlar {
+    position:absolute;
+    top:120px;      /* üst sınırı geçmez */
+    right:-90px;    /* biraz daha sağa alındı */
+    display:flex;
+    flex-direction:column;
+    gap:8px;        /* aralarında boşluk */
 }
 </style>
 </head>
@@ -71,46 +77,35 @@ button {
 
 <div id="app" class="hidden">
 
-<button onclick="window.location.href='mola.html'">☕ Mola</button>
-<button onclick="window.location.href='kisisel.html'">👤 Kişisel Panel</button>
+<h3 id="info"></h3>
 
-<button id="panelBtn" onclick="panelToggle()" style="display:none;">👥 Personel</button>
-<button id="mesajBtn" onclick="mesajToggle()" style="display:none;">📩 Mesaj</button>
+<button onclick="window.location.href='mola.html'">☕ Mola Sayfası</button>
 
-<div>
+<!-- 🔥 BUTONLAR -->
+<div class="ustButonlar">
 <button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
-<button id="kaydirBtn" onclick="kaydir()" style="display:none;">Kaydır</button>
-<button id="degistirBtn" onclick="degistir()" style="display:none;">Değiştir</button>
+<button id="kaydirBtn" onclick="kaydir()" style="display:none;">⬇️ Kaydır</button>
+<button id="degistirBtn" onclick="degistir()" style="display:none;">↔️ Yer Değiştir</button>
 </div>
 
 <div id="alan"></div>
 
 <div id="panel" class="panel hidden">
-<h4>Personel</h4>
-<input id="yeniK">
-<input id="yeniS">
+<h4>👥 Personel</h4>
+<input id="yeniK" placeholder="Kullanıcı">
+<input id="yeniS" placeholder="Şifre">
 <button onclick="ekle()">Ekle</button>
 <div id="liste"></div>
 </div>
 
-<div id="mesajPanel" class="mesajPanel hidden">
-<h4>📩 Mesaj Gönder</h4>
-
-<div id="kisiSec"></div>
-
-<input id="mesajText" placeholder="Mesaj yaz">
-
-<button onclick="mesajGonder()">Gönder</button>
-<button onclick="tumuneGonder()">Tümüne</button>
 </div>
 
-</div>
 </div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSy...",
@@ -127,154 +122,182 @@ let adminMi = false;
 let inputs = [];
 let alan = document.getElementById("alan");
 
-/* GİRİŞ */
-window.giris = function(){
+let molaData = {};
+const molaRef = doc(db, "kasa", "mola");
+onSnapshot(molaRef, (snap)=>{
+    molaData = snap.exists() ? snap.data().data : {};
+});
+
+function cinsiyet(isim){
+    isim = (isim || "").toLowerCase();
+    let kadin = ["ayşe","fatma","zeynep","elif","buse"];
+    return kadin.includes(isim) ? "kadin" : "erkek";
+}
+
+function moladaMi(isim){
+    if(!isim) return false;
+
+    let now = new Date();
+    let gruplar = ["cay","yemek","son"];
+
+    for(let g of gruplar){
+        for(let i=1;i<=4;i++){
+
+            let key = g+i;
+            let saat = molaData[key]?.saat;
+            let kisiler = molaData[key]?.kisiler || [];
+
+            if(!saat) continue;
+
+            let [h,m] = saat.split(":");
+
+            let hedef = new Date();
+            hedef.setHours(h,m,0);
+
+            let sure = (molaData[g+"Sure"]?.sure || 15)*60;
+            let fark = Math.floor((hedef-now)/1000);
+
+            if(fark<=0 && fark>-sure){
+                if(kisiler.map(x=>x.toLowerCase()).includes(isim.toLowerCase())){
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+window.giris = function() {
 
     const ref = doc(db, "kasa", "personel");
 
-    onSnapshot(ref, (snap)=>{
+    onSnapshot(ref, (snap) => {
 
-        if(snap.exists()) personeller = snap.data().liste;
+        if (snap.exists()) {
+            personeller = snap.data().liste;
+        }
 
         let k = document.getElementById("kullanici").value.trim();
         let s = document.getElementById("sifre").value.trim();
 
-        if(k === admin.k && s === admin.s){
+        if (k === admin.k && s === admin.s) {
             adminMi = true;
-            panelBtn.style.display="block";
-            mesajBtn.style.display="block";
-        }else{
-            let bulundu = personeller.find(p=>p.k===k && p.s===s);
-            if(!bulundu){ alert("Hatalı"); return; }
+            document.getElementById("panel").classList.remove("hidden");
+        } else {
+            let bulundu = personeller.find(p => p.k === k && p.s === s);
+            if (!bulundu) {
+                alert("Hatalı giriş");
+                return;
+            }
         }
 
-        localStorage.setItem("kullanici",k);
-
-        login.classList.add("hidden");
-        app.classList.remove("hidden");
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("app").classList.remove("hidden");
 
         olustur();
         listeGoster();
     });
 }
 
-window.panelToggle = function(){
-    panel.classList.toggle("hidden");
-}
+function olustur() {
+    const ref = doc(db, "kasa", "liste");
 
-window.mesajToggle = function(){
-    mesajPanel.classList.toggle("hidden");
-    kisiListe();
-}
-
-/* KASA */
-function olustur(){
-
-    const ref = doc(db,"kasa","liste");
-
-    onSnapshot(ref,(snap)=>{
+    onSnapshot(ref, (snap) => {
 
         let kayit = snap.exists() ? snap.data().data : {};
 
-        alan.innerHTML="";
-        inputs=[];
+        alan.innerHTML = "";
+        inputs = [];
 
-        for(let i=0;i<6;i++){
+        for (let i = 0; i < 6; i++) {
 
             let div = document.createElement("div");
-            div.className="kasa aktif";
+            div.className = "kasa";
 
-            let i1=document.createElement("input");
-            let i2=document.createElement("input");
+            let i1 = document.createElement("input");
+            let i2 = document.createElement("input");
 
             let k = kayit["kasa"+(i+1)];
-            if(k){
-                i1.value=k.sol;
-                i2.value=k.sag;
+            if (k) {
+                i1.value = k.sol;
+                i2.value = k.sag;
             }
 
-            if(!adminMi){
-                i1.disabled=true;
-                i2.disabled=true;
+            if (!adminMi) {
+                i1.disabled = true;
+                i2.disabled = true;
+            }
+
+            div.classList.add(cinsiyet(i1.value || i2.value));
+
+            if(moladaMi(i1.value) || moladaMi(i2.value)){
+                div.classList.add("molada");
+            } else {
+                div.classList.add("aktif");
             }
 
             div.appendChild(i1);
             div.appendChild(i2);
             alan.appendChild(div);
 
-            inputs.push(i1,i2);
+            inputs.push(i1, i2);
         }
 
-        if(adminMi){
-            kaydetBtn.style.display="block";
-            kaydirBtn.style.display="block";
-            degistirBtn.style.display="block";
+        if (adminMi) {
+            document.getElementById("kaydetBtn").style.display = "block";
+            document.getElementById("kaydirBtn").style.display = "block";
+            document.getElementById("degistirBtn").style.display = "block";
         }
-
     });
 }
 
-/* KİŞİ SEÇ */
-function kisiListe(){
-    let div=kisiSec;
-    div.innerHTML="";
-    personeller.forEach(p=>{
-        let label=document.createElement("label");
-        label.innerHTML=`<input type="checkbox" value="${p.k}"> ${p.k}`;
-        div.appendChild(label);
-        div.appendChild(document.createElement("br"));
-    });
+window.kaydet = async function() {
+    let data = {};
+    for (let i = 0; i < inputs.length; i+=2) {
+        data["kasa"+(i/2+1)] = {
+            sol: inputs[i].value,
+            sag: inputs[i+1].value
+        };
+    }
+    await setDoc(doc(db, "kasa", "liste"), {data});
 }
 
-/* ✅ DÜZELTİLMİŞ MESAJ GÖNDER */
-window.mesajGonder = async function(){
-
-    let msg = mesajText.value;
-
-    let secilen = [...document.querySelectorAll("#kisiSec input:checked")]
-                    .map(x=>x.value);
-
-    for(let kisi of secilen){
-
-        let ref = doc(db,"mesajlar",kisi);
-        let snap = await getDoc(ref);
-
-        let eski = snap.exists() ? snap.data().liste || [] : [];
-
-        eski.push({
-            text: msg,
-            okundu:false,
-            tarih: new Date().toISOString()
-        });
-
-        await setDoc(ref,{liste:eski});
+window.kaydir = async function() {
+    let yeni = [];
+    for (let i = 0; i < inputs.length; i+=2) {
+        yeni.push({sol: inputs[i].value, sag: inputs[i+1].value});
     }
 
-    alert("Gönderildi");
+    let son = yeni.pop();
+    yeni.unshift(son);
+
+    for (let i = 0; i < yeni.length; i++) {
+        inputs[i*2].value = yeni[i].sol;
+        inputs[i*2+1].value = yeni[i].sag;
+    }
+
+    let data = {};
+    yeni.forEach((k,i)=> data["kasa"+(i+1)] = k);
+    await setDoc(doc(db, "kasa", "liste"), {data});
 }
 
-/* ✅ TÜMÜNE */
-window.tumuneGonder = async function(){
+window.degistir = async function() {
+    let yeni = [];
 
-    let msg = mesajText.value;
-
-    for(let p of personeller){
-
-        let ref = doc(db,"mesajlar",p.k);
-        let snap = await getDoc(ref);
-
-        let eski = snap.exists() ? snap.data().liste || [] : [];
-
-        eski.push({
-            text: msg,
-            okundu:false,
-            tarih: new Date().toISOString()
-        });
-
-        await setDoc(ref,{liste:eski});
+    for (let i = 0; i < inputs.length; i+=2) {
+        yeni.push({sol: inputs[i].value, sag: inputs[i+1].value});
     }
 
-    alert("Herkese gönderildi");
+    yeni.forEach(k => [k.sol, k.sag] = [k.sag, k.sol]);
+
+    for (let i = 0; i < yeni.length; i++) {
+        inputs[i*2].value = yeni[i].sol;
+        inputs[i*2+1].value = yeni[i].sag;
+    }
+
+    let data = {};
+    yeni.forEach((k,i)=> data["kasa"+(i+1)] = k);
+    await setDoc(doc(db, "kasa", "liste"), {data});
 }
 
 </script>
