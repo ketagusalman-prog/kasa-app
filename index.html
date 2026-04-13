@@ -1,4 +1,4 @@
-<!DOCTYPE html>  
+<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
@@ -39,7 +39,9 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 .erkek { background:linear-gradient(135deg,#2196F3,#0d47a1); }
 .kadin { background:linear-gradient(135deg,#ff6ec7,#c2185b); }
 
-.aktif { box-shadow:0 0 10px lime; }
+.aktif {
+    box-shadow:0 0 10px lime;
+}
 
 /* 🔥 YANIP SÖNME */
 @keyframes yanipSonme {
@@ -99,11 +101,10 @@ input.molada {
 
 <h3 id="info"></h3>
 
-<!-- ✅ MOLA + SADECE ADMIN MESAJ -->
-<div>
 <button onclick="window.location.href='mola.html'">☕ Mola Sayfası</button>
+
+<!-- 🔥 SADECE ADMİN -->
 <button id="mesajBtn" onclick="window.location.href='mesaj.html'" style="display:none;">📩 Mesaj</button>
-</div>
 
 <button id="panelBtn" onclick="panelToggle()" style="display:none;">👥 Personel Paneli</button>
 
@@ -124,7 +125,6 @@ input.molada {
 </div>
 
 </div>
-
 </div>
 
 <script type="module">
@@ -147,15 +147,25 @@ let adminMi = false;
 let inputs = [];
 let alan = document.getElementById("alan");
 
-/* MOLA DATA */
+/* 🔥 MOLA DATA */
 let molaData = {};
 const molaRef = doc(db, "kasa", "mola");
 
 onSnapshot(molaRef, (snap)=>{
     molaData = snap.exists() ? snap.data().data : {};
+
+    // ✅ FIX: mola değişince kasayı yeniden çiz
+    if(!document.getElementById("app").classList.contains("hidden")){
+        olustur();
+    }
 });
 
-/* MOLADA MI */
+function cinsiyet(isim){
+    isim = (isim || "").toLowerCase();
+    let kadin = ["ayşe","fatma","zeynep","elif","buse"];
+    return kadin.includes(isim) ? "kadin" : "erkek";
+}
+
 function moladaMi(isim){
     if(!isim) return false;
 
@@ -189,7 +199,6 @@ function moladaMi(isim){
     return false;
 }
 
-/* GİRİŞ */
 window.giris = function() {
 
     const ref = doc(db, "kasa", "personel");
@@ -205,8 +214,9 @@ window.giris = function() {
 
         if (k === admin.k && s === admin.s) {
             adminMi = true;
+
             document.getElementById("panelBtn").style.display = "block";
-            document.getElementById("mesajBtn").style.display = "inline-block";
+            document.getElementById("mesajBtn").style.display = "block";
         } else {
             let bulundu = personeller.find(p => p.k === k && p.s === s);
             if (!bulundu) {
@@ -230,7 +240,6 @@ window.panelToggle = function(){
     p.classList.toggle("acik");
 }
 
-/* KASA */
 function olustur() {
     const ref = doc(db, "kasa", "liste");
 
@@ -282,7 +291,6 @@ function olustur() {
     });
 }
 
-/* KAYDET */
 window.kaydet = async function() {
     let data = {};
     for (let i = 0; i < inputs.length; i+=2) {
@@ -294,7 +302,6 @@ window.kaydet = async function() {
     await setDoc(doc(db, "kasa", "liste"), {data});
 }
 
-/* KAYDIR */
 window.kaydir = async function() {
     let yeni = [];
     for (let i = 0; i < inputs.length; i+=2) {
@@ -314,7 +321,6 @@ window.kaydir = async function() {
     await setDoc(doc(db, "kasa", "liste"), {data});
 }
 
-/* DEĞİŞTİR */
 window.degistir = async function() {
     let yeni = [];
 
@@ -334,7 +340,6 @@ window.degistir = async function() {
     await setDoc(doc(db, "kasa", "liste"), {data});
 }
 
-/* PERSONEL */
 window.ekle = async function() {
     let k = document.getElementById("yeniK").value;
     let s = document.getElementById("yeniS").value;
