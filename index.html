@@ -37,9 +37,6 @@ button {
     font-weight:bold;
 }
 
-.erkek { background:linear-gradient(135deg,#2196F3,#0d47a1); }
-.kadin { background:linear-gradient(135deg,#ff6ec7,#c2185b); }
-
 .aktif { box-shadow:0 0 10px lime; }
 
 .hidden { display:none; }
@@ -130,6 +127,10 @@ let adminMi = false;
 let inputs = [];
 let alan = document.getElementById("alan");
 
+/* 🔥 SPAM ENGEL */
+let mesajKilit = false;
+let sonMesaj = "";
+
 /* GİRİŞ */
 window.giris = function(){
 
@@ -144,9 +145,8 @@ window.giris = function(){
 
         if(k === admin.k && s === admin.s){
             adminMi = true;
-
-            document.getElementById("panelBtn").style.display="block";
-            document.getElementById("mesajBtn").style.display="block";
+            panelBtn.style.display="block";
+            mesajBtn.style.display="block";
         }else{
             let bulundu = personeller.find(p=>p.k===k && p.s===s);
             if(!bulundu){ alert("Hatalı"); return; }
@@ -154,8 +154,8 @@ window.giris = function(){
 
         localStorage.setItem("kullanici",k);
 
-        document.getElementById("login").classList.add("hidden");
-        document.getElementById("app").classList.remove("hidden");
+        login.classList.add("hidden");
+        app.classList.remove("hidden");
 
         olustur();
         listeGoster();
@@ -164,11 +164,11 @@ window.giris = function(){
 
 /* PANEL */
 window.panelToggle = function(){
-    document.getElementById("panel").classList.toggle("hidden");
+    panel.classList.toggle("hidden");
 }
 
 window.mesajToggle = function(){
-    document.getElementById("mesajPanel").classList.toggle("hidden");
+    mesajPanel.classList.toggle("hidden");
     kisiListe();
 }
 
@@ -211,30 +211,53 @@ function olustur(){
         }
 
         if(adminMi){
-            document.getElementById("kaydetBtn").style.display="block";
-            document.getElementById("kaydirBtn").style.display="block";
-            document.getElementById("degistirBtn").style.display="block";
+            kaydetBtn.style.display="block";
+            kaydirBtn.style.display="block";
+            degistirBtn.style.display="block";
         }
 
     });
 }
 
-/* KİŞİ SEÇ */
-function kisiListe(){
-    let div=document.getElementById("kisiSec");
-    div.innerHTML="";
+/* PERSONEL */
+window.ekle = async function(){
+    let k=yeniK.value;
+    let s=yeniS.value;
+    personeller.push({k,s});
+    await setDoc(doc(db,"kasa","personel"),{liste:personeller});
+}
+
+function listeGoster(){
+    liste.innerHTML="";
     personeller.forEach(p=>{
-        let label=document.createElement("label");
-        label.innerHTML=`<input type="checkbox" value="${p.k}"> ${p.k}`;
-        div.appendChild(label);
-        div.appendChild(document.createElement("br"));
+        let d=document.createElement("div");
+        d.innerText=p.k;
+        liste.appendChild(d);
     });
 }
 
-/* ✅ DÜZELTİLMİŞ MESAJ GÖNDER */
+/* KİŞİ SEÇ */
+function kisiListe(){
+    kisiSec.innerHTML="";
+    personeller.forEach(p=>{
+        let label=document.createElement("label");
+        label.innerHTML=`<input type="checkbox" value="${p.k}"> ${p.k}`;
+        kisiSec.appendChild(label);
+        kisiSec.appendChild(document.createElement("br"));
+    });
+}
+
+/* 🔥 MESAJ GÖNDER */
 window.mesajGonder = async function(){
 
-    let msg = document.getElementById("mesajText").value;
+    let msg = mesajText.value.trim();
+
+    if(!msg){ alert("Boş mesaj"); return; }
+    if(mesajKilit){ alert("Bekle"); return; }
+    if(msg === sonMesaj){ alert("Aynı mesaj"); return; }
+
+    mesajKilit = true;
+    sonMesaj = msg;
 
     let secilen = [...document.querySelectorAll("#kisiSec input:checked")]
                     .map(x=>x.value);
@@ -242,8 +265,8 @@ window.mesajGonder = async function(){
     for(let kisi of secilen){
 
         let ref = doc(db,"mesajlar",kisi);
-
         let snap = await getDoc(ref);
+
         let eski = snap.exists() ? snap.data().liste || [] : [];
 
         eski.push({
@@ -256,18 +279,27 @@ window.mesajGonder = async function(){
     }
 
     alert("Gönderildi");
+
+    setTimeout(()=>{ mesajKilit=false; },1000);
 }
 
-/* ✅ TÜMÜNE */
+/* 🔥 TÜMÜNE */
 window.tumuneGonder = async function(){
 
-    let msg = document.getElementById("mesajText").value;
+    let msg = mesajText.value.trim();
+
+    if(!msg){ alert("Boş mesaj"); return; }
+    if(mesajKilit){ alert("Bekle"); return; }
+    if(msg === sonMesaj){ alert("Aynı mesaj"); return; }
+
+    mesajKilit = true;
+    sonMesaj = msg;
 
     for(let p of personeller){
 
         let ref = doc(db,"mesajlar",p.k);
-
         let snap = await getDoc(ref);
+
         let eski = snap.exists() ? snap.data().liste || [] : [];
 
         eski.push({
@@ -280,6 +312,8 @@ window.tumuneGonder = async function(){
     }
 
     alert("Herkese gönderildi");
+
+    setTimeout(()=>{ mesajKilit=false; },1000);
 }
 
 </script>
