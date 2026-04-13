@@ -83,7 +83,7 @@ input.molada {
     gap:8px;
 }
 
-/* 🔥 YENİ: EXCEL PANEL */
+/* 🔥 EXCEL PANEL */
 .excelPanel{
     position:fixed;
     bottom:10px;
@@ -113,9 +113,11 @@ input.molada {
 
 <h3 id="info"></h3>
 
+<!-- 🔥 MOLA + MESAJ -->
 <button onclick="window.location.href='mola.html'">☕ Mola Sayfası</button>
-    
- <button onclick="window.location.href='mesaj.html'">📩 Mesaj Paneli</button>
+<button id="mesajBtn" onclick="window.location.href='mesaj.html'" style="display:none;">
+📩 Mesaj Paneli
+</button>
 
 <button id="panelBtn" onclick="panelToggle()" style="display:none;">👥 Personel Paneli</button>
 
@@ -136,7 +138,6 @@ input.molada {
 </div>
 
 </div>
-
 </div>
 
 <!-- 🔥 EXCEL PANEL -->
@@ -145,7 +146,6 @@ input.molada {
     <input type="file" id="excelInput" accept=".xlsx,.xls">
 </div>
 
-<!-- 🔥 XLSX -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 <script type="module">
@@ -168,72 +168,7 @@ let adminMi = false;
 let inputs = [];
 let alan = document.getElementById("alan");
 
-/* 🔥 EXCEL DATA */
-let excelData = [];
-
-document.getElementById("excelInput").addEventListener("change", function(e){
-
-    let file = e.target.files[0];
-    let reader = new FileReader();
-
-    reader.onload = function(evt){
-        let data = new Uint8Array(evt.target.result);
-        let workbook = XLSX.read(data, {type: 'array'});
-
-        let sheet = workbook.Sheets[workbook.SheetNames[0]];
-        excelData = XLSX.utils.sheet_to_json(sheet);
-
-        alert("Excel yüklendi");
-    }
-
-    reader.readAsArrayBuffer(file);
-});
-
-let molaData = {};
-const molaRef = doc(db, "kasa", "mola");
-onSnapshot(molaRef, (snap)=>{
-    molaData = snap.exists() ? snap.data().data : {};
-});
-
-function cinsiyet(isim){
-    isim = (isim || "").toLowerCase();
-    let kadin = ["ayşe","fatma","zeynep","elif","buse"];
-    return kadin.includes(isim) ? "kadin" : "erkek";
-}
-
-function moladaMi(isim){
-    if(!isim) return false;
-
-    let now = new Date();
-    let gruplar = ["cay","yemek","son"];
-
-    for(let g of gruplar){
-        for(let i=1;i<=4;i++){
-
-            let key = g+i;
-            let saat = molaData[key]?.saat;
-            let kisiler = molaData[key]?.kisiler || [];
-
-            if(!saat) continue;
-
-            let [h,m] = saat.split(":");
-
-            let hedef = new Date();
-            hedef.setHours(h,m,0);
-
-            let sure = (molaData[g+"Sure"]?.sure || 15)*60;
-            let fark = Math.floor((hedef-now)/1000);
-
-            if(fark<=0 && fark>-sure){
-                if(kisiler.map(x=>x.toLowerCase()).includes(isim.toLowerCase())){
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
-}
-
+/* GİRİŞ */
 window.giris = function() {
 
     const ref = doc(db, "kasa", "personel");
@@ -249,11 +184,11 @@ window.giris = function() {
 
         if (k === admin.k && s === admin.s) {
             adminMi = true;
-            document.getElementById("panelBtn").style.display = "block";
-            document.getElementById("mesajBtn").style.display = "block";
 
-            /* 🔥 EXCEL PANEL GÖSTER */
+            document.getElementById("panelBtn").style.display = "block";
+            document.getElementById("mesajBtn").style.display = "block"; // ✅ SADECE ADMIN
             document.getElementById("excelPanel").style.display = "block";
+
         } else {
             let bulundu = personeller.find(p => p.k === k && p.s === s);
             if (!bulundu) {
@@ -277,6 +212,7 @@ window.panelToggle = function(){
     p.classList.toggle("acik");
 }
 
+/* KASA */
 function olustur() {
     const ref = doc(db, "kasa", "liste");
 
@@ -290,7 +226,7 @@ function olustur() {
         for (let i = 0; i < 6; i++) {
 
             let div = document.createElement("div");
-            div.className = "kasa";
+            div.className = "kasa aktif";
 
             let i1 = document.createElement("input");
             let i2 = document.createElement("input");
@@ -305,18 +241,6 @@ function olustur() {
                 i1.disabled = true;
                 i2.disabled = true;
             }
-
-            div.classList.add(cinsiyet(i1.value || i2.value));
-
-            if(moladaMi(i1.value)){
-                i1.classList.add("molada");
-            }
-
-            if(moladaMi(i2.value)){
-                i2.classList.add("molada");
-            }
-
-            div.classList.add("aktif");
 
             div.appendChild(i1);
             div.appendChild(i2);
@@ -333,55 +257,7 @@ function olustur() {
     });
 }
 
-window.kaydet = async function() {
-    let data = {};
-    for (let i = 0; i < inputs.length; i+=2) {
-        data["kasa"+(i/2+1)] = {
-            sol: inputs[i].value,
-            sag: inputs[i+1].value
-        };
-    }
-    await setDoc(doc(db, "kasa", "liste"), {data});
-}
-
-window.kaydir = async function() {
-    let yeni = [];
-    for (let i = 0; i < inputs.length; i+=2) {
-        yeni.push({sol: inputs[i].value, sag: inputs[i+1].value});
-    }
-
-    let son = yeni.pop();
-    yeni.unshift(son);
-
-    for (let i = 0; i < yeni.length; i++) {
-        inputs[i*2].value = yeni[i].sol;
-        inputs[i*2+1].value = yeni[i].sag;
-    }
-
-    let data = {};
-    yeni.forEach((k,i)=> data["kasa"+(i+1)] = k);
-    await setDoc(doc(db, "kasa", "liste"), {data});
-}
-
-window.degistir = async function() {
-    let yeni = [];
-
-    for (let i = 0; i < inputs.length; i+=2) {
-        yeni.push({sol: inputs[i].value, sag: inputs[i+1].value});
-    }
-
-    yeni.forEach(k => [k.sol, k.sag] = [k.sag, k.sol]);
-
-    for (let i = 0; i < yeni.length; i++) {
-        inputs[i*2].value = yeni[i].sol;
-        inputs[i*2+1].value = yeni[i].sag;
-    }
-
-    let data = {};
-    yeni.forEach((k,i)=> data["kasa"+(i+1)] = k);
-    await setDoc(doc(db, "kasa", "liste"), {data});
-}
-
+/* PERSONEL */
 window.ekle = async function() {
     let k = document.getElementById("yeniK").value;
     let s = document.getElementById("yeniS").value;
