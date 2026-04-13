@@ -5,9 +5,29 @@
 <title>Kasa Sistem</title>
 
 <style>
-body { font-family: Arial; background:#1e1e2f; color:white; text-align:center;}
-.container { max-width:500px; margin:auto; }
+body {
+    font-family: Arial;
+    background:#1e1e2f;
+    color:white;
+    text-align:center;
+}
 
+/* GENEL */
+.container {
+    max-width:600px;
+    margin:auto;
+}
+
+/* ÜST MENÜ */
+.menu {
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:5px;
+    margin-bottom:10px;
+}
+
+/* INPUT */
 input {
     width:90%;
     padding:10px;
@@ -19,30 +39,44 @@ input {
     font-weight:bold;
 }
 
+/* BUTTON */
 button {
     padding:10px;
-    margin:5px;
     border-radius:8px;
     border:none;
     background:#4CAF50;
     color:white;
+    cursor:pointer;
 }
 
+/* KASA */
 .kasa {
     display:flex;
     justify-content:space-between;
     margin:10px;
     padding:12px;
     border-radius:12px;
-    font-weight:bold;
+    background:#2a2a3d;
+    box-shadow:0 0 10px lime;
 }
 
-.aktif { box-shadow:0 0 10px lime; }
+/* PANEL */
+.panel {
+    background:#222;
+    padding:10px;
+    margin:10px 0;
+    border-radius:10px;
+}
+
+/* MESAJ PANEL */
+.mesajPanel {
+    background:#111;
+    padding:10px;
+    margin:10px 0;
+    border-radius:10px;
+}
 
 .hidden { display:none; }
-
-.panel { background:#222; padding:10px; margin:10px; border-radius:10px; }
-.mesajPanel { background:#111; padding:10px; margin:10px; border-radius:10px; }
 </style>
 </head>
 
@@ -52,34 +86,38 @@ button {
 
 <h2>Kasa Sistem</h2>
 
+<!-- LOGIN -->
 <div id="login">
 <input id="kullanici" placeholder="Kullanıcı">
 <input id="sifre" type="password" placeholder="Şifre">
 <button onclick="giris()">Giriş</button>
 </div>
 
+<!-- APP -->
 <div id="app" class="hidden">
 
+<!-- 🔥 MENÜ -->
+<div class="menu">
 <button onclick="window.location.href='mola.html'">☕ Mola</button>
-<button onclick="window.location.href='kisisel.html'">👤 Kişisel Panel</button>
-
+<button onclick="window.location.href='kisisel.html'">👤 Kişisel</button>
 <button id="panelBtn" onclick="panelToggle()" style="display:none;">👥 Personel</button>
 <button id="mesajBtn" onclick="mesajToggle()" style="display:none;">📩 Mesaj</button>
-
-<div>
-<button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
-<button id="kaydirBtn" onclick="kaydir()" style="display:none;">Kaydır</button>
-<button id="degistirBtn" onclick="degistir()" style="display:none;">Değiştir</button>
+<button id="kaydetBtn" onclick="kaydet()" style="display:none;">💾 Kaydet</button>
+<button id="kaydirBtn" onclick="kaydir()" style="display:none;">⬇️ Kaydır</button>
+<button id="degistirBtn" onclick="degistir()" style="display:none;">↔️ Değiştir</button>
 </div>
 
+<!-- KASA -->
 <div id="alan"></div>
 
 <!-- PERSONEL PANEL -->
 <div id="panel" class="panel hidden">
-<h4>Personel</h4>
+<h4>👥 Personel</h4>
+
 <input id="yeniK" placeholder="Kullanıcı">
 <input id="yeniS" placeholder="Şifre">
 <button onclick="ekle()">Ekle</button>
+
 <div id="liste"></div>
 </div>
 
@@ -90,9 +128,11 @@ button {
 
 <div id="kisiSec"></div>
 
-<input id="mesajText" placeholder="Mesaj yaz">
+<input id="mesajText" placeholder="Mesaj">
 
-<label><input type="checkbox" id="onemli"> 📌 Önemli</label><br>
+<label>
+<input type="checkbox" id="onemli"> 📌 Önemli
+</label>
 
 <input id="sureInput" type="number" placeholder="Süre (dk)">
 
@@ -134,13 +174,13 @@ window.giris = function(){
 
         if(snap.exists()) personeller = snap.data().liste || [];
 
-        let k = document.getElementById("kullanici").value.trim();
-        let s = document.getElementById("sifre").value.trim();
+        let k = kullanici.value.trim();
+        let s = sifre.value.trim();
 
         if(k === admin.k && s === admin.s){
             adminMi = true;
-            panelBtn.style.display="block";
-            mesajBtn.style.display="block";
+            panelBtn.style.display="inline-block";
+            mesajBtn.style.display="inline-block";
         }else{
             let bulundu = personeller.find(p=>p.k===k && p.s===s);
             if(!bulundu){ alert("Hatalı"); return; }
@@ -229,7 +269,7 @@ function olustur(){
         for(let i=0;i<6;i++){
 
             let div = document.createElement("div");
-            div.className="kasa aktif";
+            div.className="kasa";
 
             let i1=document.createElement("input");
             let i2=document.createElement("input");
@@ -252,10 +292,16 @@ function olustur(){
             inputs.push(i1,i2);
         }
 
+        if(adminMi){
+            kaydetBtn.style.display="inline-block";
+            kaydirBtn.style.display="inline-block";
+            degistirBtn.style.display="inline-block";
+        }
+
     });
 }
 
-/* KASA KAYDET */
+/* KAYDET */
 window.kaydet = async function(){
 
     let data={};
@@ -268,16 +314,6 @@ window.kaydet = async function(){
     }
 
     await setDoc(doc(db,"kasa","liste"),{data});
-}
-
-/* KAYDIR */
-window.kaydir = function(){
-    alert("Kaydır aktif (isteğe bağlı geliştiririz)");
-}
-
-/* DEĞİŞTİR */
-window.degistir = function(){
-    alert("Değiştir aktif (isteğe bağlı geliştiririz)");
 }
 
 /* KİŞİ LİSTE */
@@ -305,7 +341,7 @@ window.mesajGonder = async function(){
 
     let msg = mesajText.value;
     let onemli = onemli.checked;
-    let dk = parseInt(document.getElementById("sureInput").value || 0);
+    let dk = parseInt(sureInput.value || 0);
 
     let secilen = [...document.querySelectorAll("#kisiSec input:checked")]
                     .map(x=>x.value);
@@ -327,7 +363,7 @@ window.mesajGonder = async function(){
 window.tumuneGonder = async function(){
 
     let msg = mesajText.value;
-    let dk = parseInt(document.getElementById("sureInput").value || 0);
+    let dk = parseInt(sureInput.value || 0);
 
     for(let p of personeller){
 
