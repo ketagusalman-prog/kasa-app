@@ -2,12 +2,12 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Kişisel Panel</title>
+<title>Excel Yükleme</title>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 <style>
-body {  
+body {
     font-family: Arial;
     background:#1e1e2f;
     color:white;
@@ -15,16 +15,8 @@ body {
 }
 
 .container {
-    max-width:800px;
+    max-width:600px;
     margin:auto;
-}
-
-.kart {
-    background:#2a2a3d;
-    padding:15px;
-    margin:20px;
-    border-radius:10px;
-    box-shadow:0 0 10px #000;
 }
 
 button {
@@ -42,22 +34,29 @@ button {
 
 <div class="container">
 
-<h2>👤 Kişisel Panel</h2>
-
-<button onclick="window.location.href='index.html'">⬅️ Geri</button>
+<h2>📊 Excel Yükleme Paneli</h2>
 
 <input type="file" id="excelInput">
-
-<div id="sonuc"></div>
+<br>
+<button onclick="kaydet()">🔥 Firebase'e Kaydet</button>
 
 </div>
 
-<script>
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSy...",
+  authDomain: "ukasa1.firebaseapp.com",
+  projectId: "ukasa1"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 let excelData = [];
-
-/* 🔥 kullanıcı */
-let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase().trim();
 
 /* 📥 EXCEL OKU */
 document.getElementById("excelInput").addEventListener("change", function(e){
@@ -65,60 +64,31 @@ document.getElementById("excelInput").addEventListener("change", function(e){
     let file = e.target.files[0];
     let reader = new FileReader();
 
-    reader.onload = function(e){
-        let data = new Uint8Array(e.target.result);
+    reader.onload = function(evt){
+        let data = new Uint8Array(evt.target.result);
         let workbook = XLSX.read(data, {type: 'array'});
 
         let sheet = workbook.Sheets[workbook.SheetNames[0]];
         excelData = XLSX.utils.sheet_to_json(sheet);
 
-        /* 🔥 KAYDET */
-        localStorage.setItem("excelData", JSON.stringify(excelData));
-
-        goster();
+        alert("Excel yüklendi ✔");
+        console.log(excelData);
     }
 
     reader.readAsArrayBuffer(file);
 });
 
-/* 🔥 SAYFA AÇILINCA YÜKLE */
-window.onload = function(){
-    let kayit = localStorage.getItem("excelData");
-    if(kayit){
-        excelData = JSON.parse(kayit);
-        goster();
-    }
-}
+/* 🔥 FIREBASE KAYDET */
+window.kaydet = async function(){
 
-/* 📊 SADECE KENDİNİ GÖSTER */
-function goster(){
-
-    let div = document.getElementById("sonuc");
-    div.innerHTML = "";
-
-    let kisi = excelData.find(x => 
-        (x.isim || "").toLowerCase().trim() === kullanici
-    );
-
-    if(!kisi){
-        div.innerHTML = "Kayıt bulunamadı";
+    if(excelData.length === 0){
+        alert("Excel yükle!");
         return;
     }
 
-    let d = document.createElement("div");
-    d.className = "kart";
+    await setDoc(doc(db,"kasa","excel"), {liste: excelData});
 
-    d.innerHTML = `
-        <h3>${kisi.isim}</h3>
-        Fiş: ${kisi.fis || "-"}<br>
-        Kasa: ${kisi.kasa || "-"}<br>
-        Prim: ${kisi.prim || "-"}<br>
-        Departman: ${kisi.departman || "-"}<br>
-        Sicil: ${kisi.sicil || "-"}<br>
-        Telefon: ${kisi.telefon || "-"}
-    `;
-
-    div.appendChild(d);
+    alert("Firebase'e kaydedildi 🚀");
 }
 
 </script>
