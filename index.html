@@ -39,11 +39,9 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 .erkek { background:linear-gradient(135deg,#2196F3,#0d47a1); }
 .kadin { background:linear-gradient(135deg,#ff6ec7,#c2185b); }
 
-.aktif {
-    box-shadow:0 0 10px lime;
-}
+.aktif { box-shadow:0 0 10px lime; }
 
-/* 🔥 YANIP SÖNME */
+/* 🔥 MOLADA YANIP SÖNME */
 @keyframes yanipSonme {
     0%   { background:#8B0000; box-shadow:0 0 5px red; }
     50%  { background:#ff0000; box-shadow:0 0 20px red; }
@@ -71,7 +69,6 @@ input.molada {
 .panel.acik {
     max-height:400px;
     overflow-y:auto;
-    padding:10px;
 }
 
 .ustButonlar {
@@ -81,17 +78,6 @@ input.molada {
     display:flex;
     flex-direction:column;
     gap:8px;
-}
-
-.excelPanel{
-    position:fixed;
-    bottom:10px;
-    right:10px;
-    background:#111;
-    padding:10px;
-    border-radius:10px;
-    box-shadow:0 0 10px #000;
-    z-index:999;
 }
 </style>
 </head>
@@ -108,16 +94,17 @@ input.molada {
 <button onclick="giris()">Giriş</button>
 </div>
 
-<div id="app" class="hidden">
+<div id="appDiv" class="hidden">
 
 <h3 id="info"></h3>
 
+<!-- ✅ MOLA + ADMIN MESAJ BUTONU -->
+<div>
 <button onclick="window.location.href='mola.html'">☕ Mola Sayfası</button>
+<button id="mesajBtn" onclick="window.location.href='mesaj.html'" style="display:none;">📩 Mesaj</button>
+</div>
 
 <button id="panelBtn" onclick="panelToggle()" style="display:none;">👥 Personel Paneli</button>
-
-<!-- ✅ SADECE BURAYA EKLENDİ (EN GÜVENLİ YER) -->
-<button id="mesajBtn" onclick="window.location.href='mesaj.html'" style="display:none;">📩 Mesaj</button>
 
 <div class="ustButonlar">
 <button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
@@ -136,15 +123,7 @@ input.molada {
 </div>
 
 </div>
-
 </div>
-
-<div id="excelPanel" class="excelPanel" style="display:none;">
-    <div style="font-size:12px; margin-bottom:5px;">📊 Excel Yükle</div>
-    <input type="file" id="excelInput" accept=".xlsx,.xls">
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 <script type="module">
 
@@ -166,18 +145,15 @@ let adminMi = false;
 let inputs = [];
 let alan = document.getElementById("alan");
 
+/* MOLA DATA */
 let molaData = {};
 const molaRef = doc(db, "kasa", "mola");
+
 onSnapshot(molaRef, (snap)=>{
     molaData = snap.exists() ? snap.data().data : {};
 });
 
-function cinsiyet(isim){
-    isim = (isim || "").toLowerCase();
-    let kadin = ["ayşe","fatma","zeynep","elif","buse"];
-    return kadin.includes(isim) ? "kadin" : "erkek";
-}
-
+/* MOLADA MI */
 function moladaMi(isim){
     if(!isim) return false;
 
@@ -211,99 +187,152 @@ function moladaMi(isim){
     return false;
 }
 
-window.giris = function() {
+/* GİRİŞ */
+window.giris = function(){
 
     const ref = doc(db, "kasa", "personel");
 
-    onSnapshot(ref, (snap) => {
+    onSnapshot(ref, (snap)=>{
 
-        if (snap.exists()) {
-            personeller = snap.data().liste;
-        }
+        if(snap.exists()) personeller = snap.data().liste;
 
         let k = document.getElementById("kullanici").value.trim();
         let s = document.getElementById("sifre").value.trim();
 
-        if (k === admin.k && s === admin.s) {
+        if(k === admin.k && s === admin.s){
             adminMi = true;
-            document.getElementById("panelBtn").style.display = "block";
 
-            /* ✅ SADECE BURASI EKLENDİ */
-            document.getElementById("mesajBtn").style.display = "block";
-
-            document.getElementById("excelPanel").style.display = "block";
-        } else {
-            let bulundu = personeller.find(p => p.k === k && p.s === s);
-            if (!bulundu) {
-                alert("Hatalı giriş");
-                return;
-            }
+            document.getElementById("panelBtn").style.display="block";
+            document.getElementById("mesajBtn").style.display="inline-block";
+        }else{
+            let bulundu = personeller.find(p=>p.k===k && p.s===s);
+            if(!bulundu){ alert("Hatalı giriş"); return; }
         }
 
-        localStorage.setItem("kullanici", k);
-
         document.getElementById("login").classList.add("hidden");
-        document.getElementById("app").classList.remove("hidden");
+        document.getElementById("appDiv").classList.remove("hidden");
 
         olustur();
         listeGoster();
     });
 }
 
+/* PANEL */
 window.panelToggle = function(){
-    let p = document.getElementById("panel");
-    p.classList.toggle("acik");
+    document.getElementById("panel").classList.toggle("acik");
 }
 
-function olustur() {
-    const ref = doc(db, "kasa", "liste");
+/* KASA */
+function olustur(){
 
-    onSnapshot(ref, (snap) => {
+    const ref = doc(db,"kasa","liste");
+
+    onSnapshot(ref,(snap)=>{
 
         let kayit = snap.exists() ? snap.data().data : {};
 
-        alan.innerHTML = "";
-        inputs = [];
+        alan.innerHTML="";
+        inputs=[];
 
-        for (let i = 0; i < 6; i++) {
+        for(let i=0;i<6;i++){
 
             let div = document.createElement("div");
-            div.className = "kasa";
+            div.className="kasa aktif";
 
-            let i1 = document.createElement("input");
-            let i2 = document.createElement("input");
+            let i1=document.createElement("input");
+            let i2=document.createElement("input");
 
             let k = kayit["kasa"+(i+1)];
-            if (k) {
-                i1.value = k.sol;
-                i2.value = k.sag;
+            if(k){
+                i1.value=k.sol;
+                i2.value=k.sag;
             }
 
-            if (!adminMi) {
-                i1.disabled = true;
-                i2.disabled = true;
+            if(!adminMi){
+                i1.disabled=true;
+                i2.disabled=true;
             }
-
-            div.classList.add(cinsiyet(i1.value || i2.value));
 
             if(moladaMi(i1.value)) i1.classList.add("molada");
             if(moladaMi(i2.value)) i2.classList.add("molada");
-
-            div.classList.add("aktif");
 
             div.appendChild(i1);
             div.appendChild(i2);
             alan.appendChild(div);
 
-            inputs.push(i1, i2);
+            inputs.push(i1,i2);
         }
 
-        if (adminMi) {
-            document.getElementById("kaydetBtn").style.display = "block";
-            document.getElementById("kaydirBtn").style.display = "block";
-            document.getElementById("degistirBtn").style.display = "block";
+        if(adminMi){
+            document.getElementById("kaydetBtn").style.display="block";
+            document.getElementById("kaydirBtn").style.display="block";
+            document.getElementById("degistirBtn").style.display="block";
         }
     });
+}
+
+/* KAYDET */
+window.kaydet = async function(){
+    let data={};
+    for(let i=0;i<inputs.length;i+=2){
+        data["kasa"+(i/2+1)]={sol:inputs[i].value,sag:inputs[i+1].value};
+    }
+    await setDoc(doc(db,"kasa","liste"),{data});
+}
+
+/* KAYDIR */
+window.kaydir = async function(){
+    let arr=[];
+    for(let i=0;i<inputs.length;i+=2){
+        arr.push({sol:inputs[i].value,sag:inputs[i+1].value});
+    }
+    let son=arr.pop();
+    arr.unshift(son);
+
+    arr.forEach((k,i)=>{
+        inputs[i*2].value=k.sol;
+        inputs[i*2+1].value=k.sag;
+    });
+
+    let data={};
+    arr.forEach((k,i)=>data["kasa"+(i+1)]=k);
+    await setDoc(doc(db,"kasa","liste"),{data});
+}
+
+/* DEĞİŞTİR */
+window.degistir = async function(){
+    for(let i=0;i<inputs.length;i+=2){
+        let tmp=inputs[i].value;
+        inputs[i].value=inputs[i+1].value;
+        inputs[i+1].value=tmp;
+    }
+    kaydet();
+}
+
+/* PERSONEL EKLE */
+window.ekle = async function(){
+    let k=yeniK.value;
+    let s=yeniS.value;
+    personeller.push({k,s});
+    await setDoc(doc(db,"kasa","personel"),{liste:personeller});
+}
+
+/* LİSTE */
+function listeGoster(){
+    let div=document.getElementById("liste");
+    div.innerHTML="";
+
+    personeller.forEach((p,i)=>{
+        let d=document.createElement("div");
+        d.innerHTML = p.k + " <button onclick='sil("+i+")'>❌</button>";
+        div.appendChild(d);
+    });
+}
+
+/* SİL */
+window.sil = async function(i){
+    personeller.splice(i,1);
+    await setDoc(doc(db,"kasa","personel"),{liste:personeller});
 }
 
 </script>
