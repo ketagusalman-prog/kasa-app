@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Mesaj Panel</title>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<style>
+body { font-family: Arial; background:#1e1e2f; color:white; text-align:center;}
+.container { max-width:500px; margin:auto;}
+input { width:90%; padding:10px; margin:5px; border-radius:8px; border:none;}
+button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4CAF50; color:white;}
+.panel { background:#222; padding:10px; margin:10px; border-radius:10px;}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>📩 Mesaj Panel</h2>
+
+<button onclick="window.location.href='index.html'">⬅ Geri</button>
+<button onclick="window.location.href='excel.html'">📊 Excel</button>
+
+<div class="panel">
+
+<div id="kisiSec"></div>
+
+<input id="mesajText" placeholder="Mesaj yaz">
+<input id="sure" type="number" placeholder="Süre (dakika)">
+
+<button onclick="mesajGonder()">Gönder</button>
+<button onclick="tumuneGonder()">Tümüne</button>
+
+<hr>
+
+<input type="file" id="excelFile">
+<button onclick="excelMesaj()">📊 Excel'den Mesaj</button>
+
+<hr>
+
+<button onclick="akilliMesaj()">🤖 Akıllı Mesaj</button>
+
+</div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSy...",
+  authDomain: "ukasa1.firebaseapp.com",
+  projectId: "ukasa1"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let personeller = [];
+
+const ref = doc(db, "kasa", "personel");
+
+onSnapshot(ref, (snap)=>{
+    if(snap.exists()) personeller = snap.data().liste;
+    kisiListe();
+});
+
+function kisiListe(){
+
+    let div = document.getElementById("kisiSec");
+    div.innerHTML="";
+
+    personeller.forEach(p=>{
+        let label=document.createElement("label");
+        label.innerHTML=`<input type="checkbox" value="${p.k}"> ${p.k}`;
+        div.appendChild(label);
+        div.appendChild(document.createElement("br"));
+    });
+}
+
+/* NORMAL MESAJ */
+window.mesajGonder = async function(){
+
+    let msg = mesajText.value;
+    let dakika = sure.value || 0;
+
+    let secilen = [...document.querySelectorAll("#kisiSec input:checked")]
+                    .map(x=>x.value);
+
+    for(let kisi of secilen){
+
+        let ref = doc(db,"mesajlar",kisi);
+        let snap = await getDoc(ref);
+
+        let eski = snap.exists() ? snap.data().liste || [] : [];
+
+        eski.push({
+            text: msg,
+            okundu:false,
+            tarih: new Date().toISOString(),
+            silinecek: dakika > 0 ? Date.now() + (dakika*60000) : null
+        });
+
+        await setDoc(ref,{liste:eski});
+    }
+
+    alert("Gönderildi");
+}
+
+/* TÜMÜNE */
+window.tumuneGonder = async function(){
+
+    let msg = mesajText.value;
+    let dakika = sure.value || 0;
+
+    for(let p of personeller){
+
+        let ref = doc(db,"mesajlar",p.k);
+        let snap = await getDoc(ref);
+
+        let eski = snap.exists() ? snap.data().liste || [] : [];
+
+        eski.push({
+            text: msg,
+            okundu:false,
+            tarih: new Date().toISOString(),
+            silinecek: dakika > 0 ? Date.now() + (dakika*60000) : null
+        });
+
+        await setDoc(ref,{liste:eski});
+    }
+
+    alert("Herkese gönderildi");
+}
+
+/* EXCEL MESAJ */
+window.excelMesaj = function(){
+
+    let file = document.getElementById("excelFile").files[0];
+    if(!file){ alert("Dosya seç"); return; }
+
+    let reader = new FileReader();
+
+    reader.onload = async function(e){
+
+        let data = new Uint8Array(e.target.result);
+        let workbook = XLSX.read(data, {type: 'array'});
+
+        let sheet = workbook.Sheets[workbook.SheetNames[0]];
+        let json = XLSX.utils.sheet_to_json(sheet);
+
+        for(let row of json){
+
+            let kisi = (row.isim || "").toLowerCase();
+            let msg = row.mesaj || "";
+
+            if(!kisi || !msg) continue;
+
+            let ref = doc(db,"mesajlar",kisi);
+            let snap = await getDoc(ref);
+
+            let eski = snap.exists() ? snap.data().liste || [] : [];
+
+            eski.push({
+                text: msg,
+                okundu:false,
+                tarih: new Date().toISOString()
+            });
+
+            await setDoc(ref,{liste:eski});
+        }
+
+        alert("Excel mesajları gönderildi");
+    }
+
+    reader.readAsArrayBuffer(file);
+}
+
+/* AKILLI MESAJ */
+window.akilliMesaj = async function(){
+
+    let ref = doc(db,"kasa","excel");
+    let snap = await getDoc(ref);
+
+    if(!snap.exists()){
+        alert("Excel yok");
+        return;
+    }
+
+    let liste = snap.data().liste || [];
+
+    for(let kisi of liste){
+
+        let isim = (kisi.isim || "").toLowerCase();
+        let fis = Number(kisi.fis || 0);
+
+        if(!isim) continue;
+
+        let mesaj = "";
+
+        if(fis < 10) mesaj = "❌ Düşük performans ("+fis+")";
+        else if(fis <= 20) mesaj = "⚠️ Orta performans ("+fis+")";
+        else mesaj = "✅ İyi performans ("+fis+")";
+
+        let refMsg = doc(db,"mesajlar",isim);
+        let snapMsg = await getDoc(refMsg);
+
+        let eski = snapMsg.exists() ? snapMsg.data().liste || [] : [];
+
+        eski.push({
+            text: mesaj,
+            okundu:false,
+            tarih: new Date().toISOString()
+        });
+
+        await setDoc(refMsg,{liste:eski});
+    }
+
+    alert("Akıllı mesajlar gönderildi");
+}
+
+</script>
+
+</body>
+</html>
