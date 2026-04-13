@@ -12,13 +12,11 @@ body {
     text-align:center;
 }
 
-/* GENEL */
 .container {
     max-width:600px;
     margin:auto;
 }
 
-/* ÜST MENÜ */
 .menu {
     display:flex;
     flex-wrap:wrap;
@@ -27,7 +25,6 @@ body {
     margin-bottom:10px;
 }
 
-/* INPUT */
 input {
     width:90%;
     padding:10px;
@@ -39,7 +36,6 @@ input {
     font-weight:bold;
 }
 
-/* BUTTON */
 button {
     padding:10px;
     border-radius:8px;
@@ -49,7 +45,6 @@ button {
     cursor:pointer;
 }
 
-/* KASA */
 .kasa {
     display:flex;
     justify-content:space-between;
@@ -60,7 +55,6 @@ button {
     box-shadow:0 0 10px lime;
 }
 
-/* PANEL */
 .panel {
     background:#222;
     padding:10px;
@@ -68,7 +62,6 @@ button {
     border-radius:10px;
 }
 
-/* MESAJ PANEL */
 .mesajPanel {
     background:#111;
     padding:10px;
@@ -96,21 +89,21 @@ button {
 <!-- APP -->
 <div id="app" class="hidden">
 
-<!-- 🔥 MENÜ -->
 <div class="menu">
 <button onclick="window.location.href='mola.html'">☕ Mola</button>
 <button onclick="window.location.href='kisisel.html'">👤 Kişisel</button>
+
 <button id="panelBtn" onclick="panelToggle()" style="display:none;">👥 Personel</button>
 <button id="mesajBtn" onclick="mesajToggle()" style="display:none;">📩 Mesaj</button>
+
 <button id="kaydetBtn" onclick="kaydet()" style="display:none;">💾 Kaydet</button>
 <button id="kaydirBtn" onclick="kaydir()" style="display:none;">⬇️ Kaydır</button>
 <button id="degistirBtn" onclick="degistir()" style="display:none;">↔️ Değiştir</button>
 </div>
 
-<!-- KASA -->
 <div id="alan"></div>
 
-<!-- PERSONEL PANEL -->
+<!-- PERSONEL -->
 <div id="panel" class="panel hidden">
 <h4>👥 Personel</h4>
 
@@ -121,7 +114,7 @@ button {
 <div id="liste"></div>
 </div>
 
-<!-- MESAJ PANEL -->
+<!-- MESAJ -->
 <div id="mesajPanel" class="mesajPanel hidden">
 
 <h4>📩 Mesaj Gönder</h4>
@@ -130,9 +123,7 @@ button {
 
 <input id="mesajText" placeholder="Mesaj">
 
-<label>
-<input type="checkbox" id="onemli"> 📌 Önemli
-</label>
+<label><input type="checkbox" id="onemli"> 📌 Önemli</label><br>
 
 <input id="sureInput" type="number" placeholder="Süre (dk)">
 
@@ -174,22 +165,22 @@ window.giris = function(){
 
         if(snap.exists()) personeller = snap.data().liste || [];
 
-        let k = kullanici.value.trim();
-        let s = sifre.value.trim();
+        let k = document.getElementById("kullanici").value.trim();
+        let s = document.getElementById("sifre").value.trim();
 
         if(k === admin.k && s === admin.s){
             adminMi = true;
-            panelBtn.style.display="inline-block";
-            mesajBtn.style.display="inline-block";
+            document.getElementById("panelBtn").style.display="inline-block";
+            document.getElementById("mesajBtn").style.display="inline-block";
         }else{
             let bulundu = personeller.find(p=>p.k===k && p.s===s);
-            if(!bulundu){ alert("Hatalı"); return; }
+            if(!bulundu){ alert("Hatalı giriş"); return; }
         }
 
         localStorage.setItem("kullanici",k);
 
-        login.classList.add("hidden");
-        app.classList.remove("hidden");
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("app").classList.remove("hidden");
 
         olustur();
         listeGoster();
@@ -198,60 +189,43 @@ window.giris = function(){
 
 /* PANEL */
 window.panelToggle = function(){
-    panel.classList.toggle("hidden");
+    document.getElementById("panel").classList.toggle("hidden");
 }
 
-/* MESAJ PANEL */
 window.mesajToggle = function(){
-    mesajPanel.classList.toggle("hidden");
+    document.getElementById("mesajPanel").classList.toggle("hidden");
     kisiListe();
 }
 
-/* PERSONEL LİSTE */
+/* PERSONEL */
 function listeGoster(){
-
     let div = document.getElementById("liste");
     div.innerHTML="";
 
     personeller.forEach((p,i)=>{
-
         let d=document.createElement("div");
-
-        d.innerHTML = `
-            ${p.k}
-            <button onclick="sil(${i})">❌</button>
-        `;
-
+        d.innerHTML = `${p.k} <button onclick="sil(${i})">❌</button>`;
         div.appendChild(d);
     });
 }
 
-/* PERSONEL SİL */
 window.sil = async function(i){
-
     personeller.splice(i,1);
-
-    await setDoc(doc(db,"kasa","personel"),{
-        liste: personeller
-    });
+    await setDoc(doc(db,"kasa","personel"),{liste: personeller});
 }
 
-/* PERSONEL EKLE */
 window.ekle = async function(){
-
-    let k = yeniK.value;
-    let s = yeniS.value;
+    let k = document.getElementById("yeniK").value;
+    let s = document.getElementById("yeniS").value;
 
     if(!k || !s) return;
 
     personeller.push({k,s});
 
-    await setDoc(doc(db,"kasa","personel"),{
-        liste: personeller
-    });
+    await setDoc(doc(db,"kasa","personel"),{liste: personeller});
 
-    yeniK.value="";
-    yeniS.value="";
+    document.getElementById("yeniK").value="";
+    document.getElementById("yeniS").value="";
 }
 
 /* KASA */
@@ -293,9 +267,9 @@ function olustur(){
         }
 
         if(adminMi){
-            kaydetBtn.style.display="inline-block";
-            kaydirBtn.style.display="inline-block";
-            degistirBtn.style.display="inline-block";
+            document.getElementById("kaydetBtn").style.display="inline-block";
+            document.getElementById("kaydirBtn").style.display="inline-block";
+            document.getElementById("degistirBtn").style.display="inline-block";
         }
 
     });
@@ -303,51 +277,36 @@ function olustur(){
 
 /* KAYDET */
 window.kaydet = async function(){
-
     let data={};
-
     for(let i=0;i<inputs.length;i+=2){
-        data["kasa"+(i/2+1)]={
-            sol:inputs[i].value,
-            sag:inputs[i+1].value
-        };
+        data["kasa"+(i/2+1)]={sol:inputs[i].value,sag:inputs[i+1].value};
     }
-
     await setDoc(doc(db,"kasa","liste"),{data});
 }
 
 /* KİŞİ LİSTE */
 function kisiListe(){
-
     let div = document.getElementById("kisiSec");
     div.innerHTML="";
-
     personeller.forEach(p=>{
-
         let label=document.createElement("label");
-
-        label.innerHTML = `
-            <input type="checkbox" value="${p.k}">
-            ${p.k}
-        `;
-
+        label.innerHTML = `<input type="checkbox" value="${p.k}"> ${p.k}`;
         div.appendChild(label);
         div.appendChild(document.createElement("br"));
     });
 }
 
-/* MESAJ GÖNDER */
+/* MESAJ */
 window.mesajGonder = async function(){
 
-    let msg = mesajText.value;
-    let onemli = onemli.checked;
-    let dk = parseInt(sureInput.value || 0);
+    let msg = document.getElementById("mesajText").value;
+    let onemli = document.getElementById("onemli").checked;
+    let dk = parseInt(document.getElementById("sureInput").value || 0);
 
     let secilen = [...document.querySelectorAll("#kisiSec input:checked")]
                     .map(x=>x.value);
 
     for(let kisi of secilen){
-
         await setDoc(doc(db,"mesajlar",kisi),{
             text:msg,
             okundu:false,
@@ -359,14 +318,12 @@ window.mesajGonder = async function(){
     alert("Gönderildi");
 }
 
-/* TÜMÜNE */
 window.tumuneGonder = async function(){
 
-    let msg = mesajText.value;
-    let dk = parseInt(sureInput.value || 0);
+    let msg = document.getElementById("mesajText").value;
+    let dk = parseInt(document.getElementById("sureInput").value || 0);
 
     for(let p of personeller){
-
         await setDoc(doc(db,"mesajlar",p.k),{
             text:msg,
             okundu:false,
