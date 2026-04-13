@@ -24,15 +24,15 @@ body {
     border-radius:10px;
 }
 
-.yeniMesaj {
-    border-left:5px solid red;
-}
+.yeniMesaj { border-left:5px solid red; }
 
-.bildirim {
+.pin { border:2px solid gold; }
+
+.toast {
     position:fixed;
-    top:10px;
-    right:10px;
-    background:#4CAF50;
+    bottom:20px;
+    right:20px;
+    background:#333;
     padding:10px 15px;
     border-radius:8px;
     display:none;
@@ -57,7 +57,6 @@ body {
 
 <h3>📩 Mesajlar</h3>
 
-<!-- 🔥 YENİ BUTONLAR -->
 <div>
 <button onclick="tumunuSil()">🧹 Tüm Mesajları Sil</button>
 <button onclick="okunanlariSil()">✔ Okunmuşları Temizle</button>
@@ -67,7 +66,10 @@ body {
 
 </div>
 
-<div id="bildirim" class="bildirim">Yeni mesaj var!</div>
+<div id="toast" class="toast">Yeni mesaj geldi 🔔</div>
+
+<!-- 🔊 SES -->
+<audio id="ses" src="https://www.soundjay.com/buttons/sounds/button-3.mp3"></audio>
 
 <script type="module">
 
@@ -89,12 +91,8 @@ let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase();
 const ref = doc(db, "kasa", "excel");
 
 onSnapshot(ref, (snap)=>{
-
     let data = snap.exists() ? snap.data().liste : [];
-
-    let kisi = data.find(x =>
-        (x.isim || "").toLowerCase() === kullanici
-    );
+    let kisi = data.find(x => (x.isim || "").toLowerCase() === kullanici);
 
     let div = document.getElementById("bilgi");
 
@@ -117,6 +115,8 @@ onSnapshot(ref, (snap)=>{
 /* 📩 MESAJ */
 const mesajRef = doc(db, "mesajlar", kullanici);
 
+let oncekiMesajSayisi = 0;
+
 onSnapshot(mesajRef, (snap)=>{
 
     if(!snap.exists()) return;
@@ -130,20 +130,45 @@ onSnapshot(mesajRef, (snap)=>{
 
     let okunmamis = 0;
 
-    data.slice().reverse().forEach((m,index)=>{
+    // 🔥 YENİ MESAJ SES + TOAST
+    if(data.length > oncekiMesajSayisi){
+        document.getElementById("ses").play();
 
-        let realIndex = data.length - 1 - index;
+        let toast = document.getElementById("toast");
+        toast.style.display = "block";
+        setTimeout(()=> toast.style.display="none", 3000);
+    }
+
+    oncekiMesajSayisi = data.length;
+
+    // 📌 PIN'li mesajlar üste gelsin
+    let sirali = data.slice().sort((a,b)=>(b.pin===true)-(a.pin===true));
+
+    sirali.forEach((m,index)=>{
+
+        let realIndex = data.indexOf(m);
 
         if(!m.okundu) okunmamis++;
 
+        // ⏰ OTOMATİK SİLME
+        if(m.sure && Date.now() > m.sure){
+            silMesaj(realIndex);
+            return;
+        }
+
         let d = document.createElement("div");
-        d.className = "kart " + (!m.okundu ? "yeniMesaj" : "");
+        d.className = "kart "
+            + (!m.okundu ? "yeniMesaj " : "")
+            + (m.pin ? "pin" : "");
 
         d.innerHTML = `
             <p>${m.text}</p>
             <small>${new Date(m.tarih).toLocaleString()}</small><br>
+
             ${!m.okundu ? `<button onclick="okunduYap(${realIndex})">✔ Okundu</button>` : ""}
+
             <button onclick="silMesaj(${realIndex})">🗑️ Sil</button>
+            <button onclick="pinMesaj(${realIndex})">📌 Pin</button>
         `;
 
         div.appendChild(d);
@@ -151,59 +176,43 @@ onSnapshot(mesajRef, (snap)=>{
 
     sayac.innerText = okunmamis > 0 ? okunmamis : "";
 
-    if(okunmamis > 0){
-        let b = document.getElementById("bildirim");
-        b.style.display = "block";
-        setTimeout(()=> b.style.display="none", 3000);
-    }
-
 });
 
 /* ✔ OKUNDU */
 window.okunduYap = async function(index){
-
     let snap = await getDoc(mesajRef);
-    if(!snap.exists()) return;
-
     let liste = snap.data().liste || [];
-
     liste[index].okundu = true;
-
     await setDoc(mesajRef, {liste});
 }
 
-/* 🗑️ TEK SİL */
+/* 🗑️ SİL */
 window.silMesaj = async function(index){
-
     let snap = await getDoc(mesajRef);
-    if(!snap.exists()) return;
-
     let liste = snap.data().liste || [];
-
-    let yeniListe = liste.filter((_, i) => i !== index);
-
-    await setDoc(mesajRef, {liste: yeniListe});
+    liste.splice(index,1);
+    await setDoc(mesajRef, {liste});
 }
 
-/* 🔥 TÜMÜNÜ SİL */
+/* 📌 PIN */
+window.pinMesaj = async function(index){
+    let snap = await getDoc(mesajRef);
+    let liste = snap.data().liste || [];
+    liste[index].pin = !liste[index].pin;
+    await setDoc(mesajRef, {liste});
+}
+
+/* 🧹 TÜMÜNÜ SİL */
 window.tumunuSil = async function(){
-
-    if(!confirm("Tüm mesajlar silinsin mi?")) return;
-
     await setDoc(mesajRef, {liste: []});
 }
 
-/* 🔥 SADECE OKUNMUŞLARI SİL */
+/* ✔ OKUNANLARI SİL */
 window.okunanlariSil = async function(){
-
     let snap = await getDoc(mesajRef);
-    if(!snap.exists()) return;
-
     let liste = snap.data().liste || [];
-
-    let filtre = liste.filter(m => !m.okundu);
-
-    await setDoc(mesajRef, {liste: filtre});
+    liste = liste.filter(m => !m.okundu);
+    await setDoc(mesajRef, {liste});
 }
 
 </script>
