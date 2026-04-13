@@ -37,26 +37,12 @@ button {
     font-weight:bold;
 }
 
-.erkek { background:linear-gradient(135deg,#2196F3,#0d47a1); }
-.kadin { background:linear-gradient(135deg,#ff6ec7,#c2185b); }
-
 .aktif { box-shadow:0 0 10px lime; }
 
 .hidden { display:none; }
 
-.panel {
-    background:#222;
-    padding:10px;
-    margin:10px;
-    border-radius:10px;
-}
-
-.mesajPanel {
-    background:#111;
-    padding:10px;
-    margin:10px;
-    border-radius:10px;
-}
+.panel { background:#222; padding:10px; margin:10px; border-radius:10px; }
+.mesajPanel { background:#111; padding:10px; margin:10px; border-radius:10px; }
 </style>
 </head>
 
@@ -67,8 +53,8 @@ button {
 <h2>Kasa Sistem</h2>
 
 <div id="login">
-<input id="kullanici" placeholder="Kullanıcı adı">
-<input id="sifre" type="password" placeholder="Şifre">
+<input id="kullanici">
+<input id="sifre" type="password">
 <button onclick="giris()">Giriş</button>
 </div>
 
@@ -133,8 +119,14 @@ let admin = {k:"admin", s:"1234"};
 let personeller = [];
 let adminMi = false;
 let inputs = [];
-let alan = document.getElementById("alan");
 
+const alan = document.getElementById("alan");
+const loginDiv = document.getElementById("login");
+const appDiv = document.getElementById("app");
+const panel = document.getElementById("panel");
+const mesajPanel = document.getElementById("mesajPanel");
+
+/* GİRİŞ */
 window.giris = function(){
 
     const ref = doc(db, "kasa", "personel");
@@ -148,8 +140,8 @@ window.giris = function(){
 
         if(k === admin.k && s === admin.s){
             adminMi = true;
-            panelBtn.style.display="block";
-            mesajBtn.style.display="block";
+            document.getElementById("panelBtn").style.display="block";
+            document.getElementById("mesajBtn").style.display="block";
         }else{
             let bulundu = personeller.find(p=>p.k===k && p.s===s);
             if(!bulundu){ alert("Hatalı"); return; }
@@ -157,7 +149,7 @@ window.giris = function(){
 
         localStorage.setItem("kullanici",k);
 
-        login.classList.add("hidden");
+        loginDiv.classList.add("hidden");
         appDiv.classList.remove("hidden");
 
         olustur();
@@ -165,6 +157,7 @@ window.giris = function(){
     });
 }
 
+/* PANEL */
 window.panelToggle = function(){
     panel.classList.toggle("hidden");
 }
@@ -174,6 +167,7 @@ window.mesajToggle = function(){
     kisiListe();
 }
 
+/* KASA */
 function olustur(){
 
     const ref = doc(db,"kasa","liste");
@@ -212,70 +206,52 @@ function olustur(){
         }
 
         if(adminMi){
-            kaydetBtn.style.display="block";
-            kaydirBtn.style.display="block";
-            degistirBtn.style.display="block";
+            document.getElementById("kaydetBtn").style.display="block";
+            document.getElementById("kaydirBtn").style.display="block";
+            document.getElementById("degistirBtn").style.display="block";
         }
 
     });
 }
 
-/* 🔥 MESAJ GÖNDER */
+/* MESAJ GÖNDER */
 window.mesajGonder = async function(){
 
-    let msg = mesajText.value;
+    let msg = document.getElementById("mesajText").value;
     let onemli = document.getElementById("onemli").checked;
     let sureli = document.getElementById("sureli").checked;
 
     let secilen = [...document.querySelectorAll("#kisiSec input:checked")]
                     .map(x=>x.value);
 
-    let zaman = Date.now();
-
     for(let kisi of secilen){
 
         await setDoc(doc(db,"mesajlar",kisi),{
             text:msg,
             okundu:false,
-            okuyanlar:[],
-            onemli:onemli,
-            zaman:zaman
+            onemli:onemli
         });
 
         if(sureli){
             setTimeout(async ()=>{
                 await deleteDoc(doc(db,"mesajlar",kisi));
-            }, 300000); // 5 dk
+            },300000);
         }
     }
 
     alert("Gönderildi");
 }
 
-/* 🔥 TÜMÜNE */
+/* TÜMÜNE */
 window.tumuneGonder = async function(){
 
-    let msg = mesajText.value;
-    let onemli = document.getElementById("onemli").checked;
-    let sureli = document.getElementById("sureli").checked;
-
-    let zaman = Date.now();
+    let msg = document.getElementById("mesajText").value;
 
     for(let p of personeller){
-
         await setDoc(doc(db,"mesajlar",p.k),{
             text:msg,
-            okundu:false,
-            okuyanlar:[],
-            onemli:onemli,
-            zaman:zaman
+            okundu:false
         });
-
-        if(sureli){
-            setTimeout(async ()=>{
-                await deleteDoc(doc(db,"mesajlar",p.k));
-            }, 300000);
-        }
     }
 
     alert("Herkese gönderildi");
