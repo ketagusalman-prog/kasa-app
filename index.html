@@ -97,14 +97,19 @@ button {
 </div>
 
 <div id="mesajPanel" class="mesajPanel hidden">
+
 <h4>📩 Mesaj Gönder</h4>
 
 <div id="kisiSec"></div>
 
 <input id="mesajText" placeholder="Mesaj yaz">
 
+<label><input type="checkbox" id="onemli"> 📌 Önemli</label><br>
+<label><input type="checkbox" id="sureli"> ⏳ 5 dk sonra sil</label><br>
+
 <button onclick="mesajGonder()">Gönder</button>
 <button onclick="tumuneGonder()">Tümüne</button>
+
 </div>
 
 </div>
@@ -113,7 +118,7 @@ button {
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSy...",
@@ -130,7 +135,6 @@ let adminMi = false;
 let inputs = [];
 let alan = document.getElementById("alan");
 
-/* GİRİŞ */
 window.giris = function(){
 
     const ref = doc(db, "kasa", "personel");
@@ -144,9 +148,8 @@ window.giris = function(){
 
         if(k === admin.k && s === admin.s){
             adminMi = true;
-
-            document.getElementById("panelBtn").style.display="block";
-            document.getElementById("mesajBtn").style.display="block";
+            panelBtn.style.display="block";
+            mesajBtn.style.display="block";
         }else{
             let bulundu = personeller.find(p=>p.k===k && p.s===s);
             if(!bulundu){ alert("Hatalı"); return; }
@@ -154,25 +157,23 @@ window.giris = function(){
 
         localStorage.setItem("kullanici",k);
 
-        document.getElementById("login").classList.add("hidden");
-        document.getElementById("app").classList.remove("hidden");
+        login.classList.add("hidden");
+        appDiv.classList.remove("hidden");
 
         olustur();
         listeGoster();
     });
 }
 
-/* PANEL */
 window.panelToggle = function(){
-    document.getElementById("panel").classList.toggle("hidden");
+    panel.classList.toggle("hidden");
 }
 
 window.mesajToggle = function(){
-    document.getElementById("mesajPanel").classList.toggle("hidden");
+    mesajPanel.classList.toggle("hidden");
     kisiListe();
 }
 
-/* KASA */
 function olustur(){
 
     const ref = doc(db,"kasa","liste");
@@ -211,106 +212,41 @@ function olustur(){
         }
 
         if(adminMi){
-            document.getElementById("kaydetBtn").style.display="block";
-            document.getElementById("kaydirBtn").style.display="block";
-            document.getElementById("degistirBtn").style.display="block";
+            kaydetBtn.style.display="block";
+            kaydirBtn.style.display="block";
+            degistirBtn.style.display="block";
         }
 
     });
 }
 
-/* KAYDET */
-window.kaydet = async function(){
-    let data={};
-    for(let i=0;i<inputs.length;i+=2){
-        data["kasa"+(i/2+1)]={sol:inputs[i].value,sag:inputs[i+1].value};
-    }
-    await setDoc(doc(db,"kasa","liste"),{data});
-}
-
-/* KAYDIR */
-window.kaydir = async function(){
-    let arr=[];
-    for(let i=0;i<inputs.length;i+=2){
-        arr.push({sol:inputs[i].value,sag:inputs[i+1].value});
-    }
-    let son=arr.pop();
-    arr.unshift(son);
-
-    arr.forEach((k,i)=>{
-        inputs[i*2].value=k.sol;
-        inputs[i*2+1].value=k.sag;
-    });
-
-    let data={};
-    arr.forEach((k,i)=>data["kasa"+(i+1)]=k);
-    await setDoc(doc(db,"kasa","liste"),{data});
-}
-
-/* DEĞİŞTİR */
-window.degistir = async function(){
-    for(let i=0;i<inputs.length;i+=2){
-        let tmp=inputs[i].value;
-        inputs[i].value=inputs[i+1].value;
-        inputs[i+1].value=tmp;
-    }
-    kaydet();
-}
-
-/* PERSONEL */
-window.ekle = async function(){
-    let k=yeniK.value;
-    let s=yeniS.value;
-    personeller.push({k,s});
-    await setDoc(doc(db,"kasa","personel"),{liste:personeller});
-}
-
-function listeGoster(){
-    let div=document.getElementById("liste");
-    div.innerHTML="";
-    personeller.forEach((p)=>{
-        let d=document.createElement("div");
-        d.innerHTML=p.k;
-        div.appendChild(d);
-    });
-}
-
-/* KİŞİ SEÇ */
-function kisiListe(){
-    let div=document.getElementById("kisiSec");
-    div.innerHTML="";
-    personeller.forEach(p=>{
-        let label=document.createElement("label");
-        label.innerHTML=`<input type="checkbox" value="${p.k}"> ${p.k}`;
-        div.appendChild(label);
-        div.appendChild(document.createElement("br"));
-    });
-}
-
-/* 🔥 MESAJ GÖNDER (GEÇMİŞLİ) */
+/* 🔥 MESAJ GÖNDER */
 window.mesajGonder = async function(){
 
-    let msg = document.getElementById("mesajText").value;
+    let msg = mesajText.value;
+    let onemli = document.getElementById("onemli").checked;
+    let sureli = document.getElementById("sureli").checked;
 
     let secilen = [...document.querySelectorAll("#kisiSec input:checked")]
                     .map(x=>x.value);
 
+    let zaman = Date.now();
+
     for(let kisi of secilen){
 
-        let ref = doc(db,"mesajlar",kisi);
-
-        onSnapshot(ref, async (snap)=>{
-
-            let eski = snap.exists() ? snap.data().liste || [] : [];
-
-            eski.push({
-                text: msg,
-                okundu:false,
-                tarih: new Date().toISOString()
-            });
-
-            await setDoc(ref,{liste:eski});
+        await setDoc(doc(db,"mesajlar",kisi),{
+            text:msg,
+            okundu:false,
+            okuyanlar:[],
+            onemli:onemli,
+            zaman:zaman
         });
+
+        if(sureli){
+            setTimeout(async ()=>{
+                await deleteDoc(doc(db,"mesajlar",kisi));
+            }, 300000); // 5 dk
+        }
     }
 
     alert("Gönderildi");
@@ -319,24 +255,27 @@ window.mesajGonder = async function(){
 /* 🔥 TÜMÜNE */
 window.tumuneGonder = async function(){
 
-    let msg = document.getElementById("mesajText").value;
+    let msg = mesajText.value;
+    let onemli = document.getElementById("onemli").checked;
+    let sureli = document.getElementById("sureli").checked;
+
+    let zaman = Date.now();
 
     for(let p of personeller){
 
-        let ref = doc(db,"mesajlar",p.k);
-
-        onSnapshot(ref, async (snap)=>{
-
-            let eski = snap.exists() ? snap.data().liste || [] : [];
-
-            eski.push({
-                text: msg,
-                okundu:false,
-                tarih: new Date().toISOString()
-            });
-
-            await setDoc(ref,{liste:eski});
+        await setDoc(doc(db,"mesajlar",p.k),{
+            text:msg,
+            okundu:false,
+            okuyanlar:[],
+            onemli:onemli,
+            zaman:zaman
         });
+
+        if(sureli){
+            setTimeout(async ()=>{
+                await deleteDoc(doc(db,"mesajlar",p.k));
+            }, 300000);
+        }
     }
 
     alert("Herkese gönderildi");
