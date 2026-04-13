@@ -49,16 +49,31 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 }
 
 .hidden { display:none; }
-.panel { background:#222; padding:10px; margin:10px; border-radius:10px;}
 
-/* 🔥 BUTON KONUM DÜZELTME */
+.panel {
+    background:#222;
+    padding:10px;
+    margin:10px;
+    border-radius:10px;
+    max-height:0;
+    overflow:hidden;
+    transition:all 0.4s ease;
+}
+
+/* 🔥 AÇILINCA */
+.panel.acik {
+    max-height:300px;
+    padding:10px;
+}
+
+/* 🔥 BUTON KONUM */
 .ustButonlar {
     position:absolute;
-    top:120px;      /* üst sınırı geçmez */
-    right:-90px;    /* biraz daha sağa alındı */
+    top:120px;
+    right:-90px;
     display:flex;
     flex-direction:column;
-    gap:8px;        /* aralarında boşluk */
+    gap:8px;
 }
 </style>
 </head>
@@ -81,6 +96,9 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 
 <button onclick="window.location.href='mola.html'">☕ Mola Sayfası</button>
 
+<!-- 🔥 PERSONEL PANEL BUTONU -->
+<button id="panelBtn" onclick="panelToggle()" style="display:none;">👥 Personel Paneli</button>
+
 <!-- 🔥 BUTONLAR -->
 <div class="ustButonlar">
 <button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
@@ -90,7 +108,7 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
 
 <div id="alan"></div>
 
-<div id="panel" class="panel hidden">
+<div id="panel" class="panel">
 <h4>👥 Personel</h4>
 <input id="yeniK" placeholder="Kullanıcı">
 <input id="yeniS" placeholder="Şifre">
@@ -182,7 +200,7 @@ window.giris = function() {
 
         if (k === admin.k && s === admin.s) {
             adminMi = true;
-            document.getElementById("panel").classList.remove("hidden");
+            document.getElementById("panelBtn").style.display = "block";
         } else {
             let bulundu = personeller.find(p => p.k === k && p.s === s);
             if (!bulundu) {
@@ -197,6 +215,12 @@ window.giris = function() {
         olustur();
         listeGoster();
     });
+}
+
+/* 🔥 PANEL AÇ/KAPA */
+window.panelToggle = function(){
+    let p = document.getElementById("panel");
+    p.classList.toggle("acik");
 }
 
 function olustur() {
@@ -298,6 +322,31 @@ window.degistir = async function() {
     let data = {};
     yeni.forEach((k,i)=> data["kasa"+(i+1)] = k);
     await setDoc(doc(db, "kasa", "liste"), {data});
+}
+
+/* PERSONEL */
+window.ekle = async function() {
+    let k = document.getElementById("yeniK").value;
+    let s = document.getElementById("yeniS").value;
+
+    personeller.push({k,s});
+    await setDoc(doc(db, "kasa", "personel"), {liste: personeller});
+}
+
+function listeGoster() {
+    let div = document.getElementById("liste");
+    div.innerHTML = "";
+
+    personeller.forEach((p,i) => {
+        let d = document.createElement("div");
+        d.innerHTML = p.k + " <button onclick='sil("+i+")'>❌</button>";
+        div.appendChild(d);
+    });
+}
+
+window.sil = async function(i) {
+    personeller.splice(i,1);
+    await setDoc(doc(db, "kasa", "personel"), {liste: personeller});
 }
 
 </script>
