@@ -24,16 +24,28 @@ body {
     border-radius:10px;
 }
 
-/* 🔥 YENİ */
+/* 🔴 YENİ MESAJ */
 .yeniMesaj {
-    background:#8B0000;
-    animation: yanip 1s infinite;
+    border-left:5px solid red;
 }
 
-@keyframes yanip {
-    0% {box-shadow:0 0 5px red;}
-    50% {box-shadow:0 0 20px red;}
-    100% {box-shadow:0 0 5px red;}
+/* 🔔 BİLDİRİM */
+.bildirim {
+    position:fixed;
+    top:10px;
+    right:10px;
+    background:#4CAF50;
+    padding:10px 15px;
+    border-radius:8px;
+    display:none;
+}
+
+/* 🔢 SAYAC */
+#sayac {
+    background:red;
+    padding:5px 10px;
+    border-radius:50%;
+    font-size:12px;
 }
 </style>
 </head>
@@ -42,22 +54,21 @@ body {
 
 <div class="container">
 
-<h2>👤 Kişisel Panel</h2>
+<h2>👤 Kişisel Panel <span id="sayac"></span></h2>
 
 <div id="bilgi"></div>
 
-<!-- 🔥 YENİ -->
+<h3>📩 Mesajlar</h3>
 <div id="mesajAlani"></div>
 
-<h3>📜 Mesaj Geçmişi</h3>
-<div id="gecmis"></div>
-
 </div>
+
+<div id="bildirim" class="bildirim">Yeni mesaj var!</div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSy...",
@@ -68,10 +79,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* 🔥 KULLANICI */
 let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase();
 
-/* 📊 EXCEL VERİ */
+/* 📊 PERSONEL BİLGİ */
 const ref = doc(db, "kasa", "excel");
 
 onSnapshot(ref, (snap)=>{
@@ -100,94 +110,74 @@ onSnapshot(ref, (snap)=>{
     `;
 });
 
-/* 🔥 MESAJ SİSTEMİ */
-
-// aktif mesaj
+/* 📩 MESAJ SİSTEMİ */
 const mesajRef = doc(db, "mesajlar", kullanici);
 
-onSnapshot(mesajRef, async (snap)=>{
+onSnapshot(mesajRef, (snap)=>{
 
     if(!snap.exists()) return;
 
-    let m = snap.data();
+    let data = snap.data().liste || [];
 
     let div = document.getElementById("mesajAlani");
+    let sayac = document.getElementById("sayac");
 
-    // 🔔 popup
-    alert("📩 Yeni mesajın var!");
-
-    div.innerHTML = `
-        <div class="kart ${!m.okundu ? "yeniMesaj":""}">
-            <h3>📩 Mesaj</h3>
-            <p>${m.text}</p>
-            <button onclick="okunduYap()">Okundu</button>
-        </div>
-    `;
-
-});
-
-/* ✅ OKUNDU */
-window.okunduYap = async function(){
-
-    const mesajRef = doc(db, "mesajlar", kullanici);
-
-    let snap = await (await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js")).getDoc(mesajRef);
-
-    if(!snap.exists()) return;
-
-    let m = snap.data();
-
-    // geçmişe ekle
-    const gecmisRef = doc(db, "mesajGecmis", kullanici);
-
-    let eski = [];
-
-    let gSnap = await (await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js")).getDoc(gecmisRef);
-
-    if(gSnap.exists()) eski = gSnap.data().liste || [];
-
-    eski.push({
-        text: m.text,
-        tarih: new Date().toLocaleString()
-    });
-
-    await setDoc(gecmisRef, {liste: eski});
-
-    // mesajı okundu yap
-    await setDoc(mesajRef, {
-        text: m.text,
-        okundu: true
-    });
-
-    document.getElementById("mesajAlani").innerHTML = "";
-}
-
-/* 📜 GEÇMİŞ */
-const gecmisRef = doc(db, "mesajGecmis", kullanici);
-
-onSnapshot(gecmisRef, (snap)=>{
-
-    if(!snap.exists()) return;
-
-    let liste = snap.data().liste || [];
-
-    let div = document.getElementById("gecmis");
     div.innerHTML = "";
 
-    liste.reverse().forEach(m => {
+    let okunmamis = 0;
+
+    data.slice().reverse().forEach((m,index)=>{
+
+        let realIndex = data.length - 1 - index;
+
+        if(!m.okundu) okunmamis++;
 
         let d = document.createElement("div");
-        d.className="kart";
+        d.className = "kart " + (!m.okundu ? "yeniMesaj" : "");
 
         d.innerHTML = `
             <p>${m.text}</p>
-            <small>${m.tarih}</small>
+            <small>${new Date(m.tarih).toLocaleString()}</small><br>
+            ${!m.okundu ? `<button onclick="okunduYap(${realIndex})">✔ Okundu</button>` : ""}
+            <button onclick="silMesaj(${realIndex})">🗑️ Sil</button>
         `;
 
         div.appendChild(d);
     });
 
+    /* 🔢 SAYAC */
+    sayac.innerText = okunmamis > 0 ? okunmamis : "";
+
+    /* 🔔 BİLDİRİM */
+    if(okunmamis > 0){
+        let b = document.getElementById("bildirim");
+        b.style.display = "block";
+        setTimeout(()=> b.style.display="none", 3000);
+    }
+
 });
+
+/* ✔ OKUNDU */
+window.okunduYap = async function(index){
+
+    let snap = await getDoc(mesajRef);
+    let liste = snap.data().liste || [];
+
+    liste[index].okundu = true;
+
+    await setDoc(mesajRef, {liste});
+}
+
+/* 🗑️ SİL */
+window.silMesaj = async function(index){
+
+    let snap = await getDoc(mesajRef);
+    let liste = snap.data().liste || [];
+
+    liste.splice(index,1);
+
+    await setDoc(mesajRef, {liste});
+}
 
 </script>
 
