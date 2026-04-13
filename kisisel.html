@@ -24,12 +24,10 @@ body {
     border-radius:10px;
 }
 
-/* 🔴 YENİ MESAJ */
 .yeniMesaj {
     border-left:5px solid red;
 }
 
-/* 🔔 BİLDİRİM */
 .bildirim {
     position:fixed;
     top:10px;
@@ -40,7 +38,6 @@ body {
     display:none;
 }
 
-/* 🔢 SAYAC */
 #sayac {
     background:red;
     padding:5px 10px;
@@ -59,6 +56,13 @@ body {
 <div id="bilgi"></div>
 
 <h3>📩 Mesajlar</h3>
+
+<!-- 🔥 YENİ BUTONLAR -->
+<div>
+<button onclick="tumunuSil()">🧹 Tüm Mesajları Sil</button>
+<button onclick="okunanlariSil()">✔ Okunmuşları Temizle</button>
+</div>
+
 <div id="mesajAlani"></div>
 
 </div>
@@ -81,7 +85,7 @@ const db = getFirestore(app);
 
 let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase();
 
-/* 📊 PERSONEL BİLGİ */
+/* 📊 PERSONEL */
 const ref = doc(db, "kasa", "excel");
 
 onSnapshot(ref, (snap)=>{
@@ -110,7 +114,7 @@ onSnapshot(ref, (snap)=>{
     `;
 });
 
-/* 📩 MESAJ SİSTEMİ */
+/* 📩 MESAJ */
 const mesajRef = doc(db, "mesajlar", kullanici);
 
 onSnapshot(mesajRef, (snap)=>{
@@ -145,10 +149,8 @@ onSnapshot(mesajRef, (snap)=>{
         div.appendChild(d);
     });
 
-    /* 🔢 SAYAC */
     sayac.innerText = okunmamis > 0 ? okunmamis : "";
 
-    /* 🔔 BİLDİRİM */
     if(okunmamis > 0){
         let b = document.getElementById("bildirim");
         b.style.display = "block";
@@ -161,6 +163,8 @@ onSnapshot(mesajRef, (snap)=>{
 window.okunduYap = async function(index){
 
     let snap = await getDoc(mesajRef);
+    if(!snap.exists()) return;
+
     let liste = snap.data().liste || [];
 
     liste[index].okundu = true;
@@ -168,15 +172,38 @@ window.okunduYap = async function(index){
     await setDoc(mesajRef, {liste});
 }
 
-/* 🗑️ SİL */
+/* 🗑️ TEK SİL */
 window.silMesaj = async function(index){
 
     let snap = await getDoc(mesajRef);
+    if(!snap.exists()) return;
+
     let liste = snap.data().liste || [];
 
-    liste.splice(index,1);
+    let yeniListe = liste.filter((_, i) => i !== index);
 
-    await setDoc(mesajRef, {liste});
+    await setDoc(mesajRef, {liste: yeniListe});
+}
+
+/* 🔥 TÜMÜNÜ SİL */
+window.tumunuSil = async function(){
+
+    if(!confirm("Tüm mesajlar silinsin mi?")) return;
+
+    await setDoc(mesajRef, {liste: []});
+}
+
+/* 🔥 SADECE OKUNMUŞLARI SİL */
+window.okunanlariSil = async function(){
+
+    let snap = await getDoc(mesajRef);
+    if(!snap.exists()) return;
+
+    let liste = snap.data().liste || [];
+
+    let filtre = liste.filter(m => !m.okundu);
+
+    await setDoc(mesajRef, {liste: filtre});
 }
 
 </script>
