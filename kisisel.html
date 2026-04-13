@@ -23,6 +23,18 @@ body {
     margin:10px;
     border-radius:10px;
 }
+
+/* 🔥 YENİ */
+.yeniMesaj {
+    background:#8B0000;
+    animation: yanip 1s infinite;
+}
+
+@keyframes yanip {
+    0% {box-shadow:0 0 5px red;}
+    50% {box-shadow:0 0 20px red;}
+    100% {box-shadow:0 0 5px red;}
+}
 </style>
 </head>
 
@@ -34,12 +46,18 @@ body {
 
 <div id="bilgi"></div>
 
+<!-- 🔥 YENİ -->
+<div id="mesajAlani"></div>
+
+<h3>📜 Mesaj Geçmişi</h3>
+<div id="gecmis"></div>
+
 </div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSy...",
@@ -50,9 +68,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* 🔥 GİRİŞ YAPAN KULLANICI */
+/* 🔥 KULLANICI */
 let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase();
 
+/* 📊 EXCEL VERİ */
 const ref = doc(db, "kasa", "excel");
 
 onSnapshot(ref, (snap)=>{
@@ -79,6 +98,95 @@ onSnapshot(ref, (snap)=>{
             <p>Fiş Sayısı: ${kisi.fis || "-"}</p>
         </div>
     `;
+});
+
+/* 🔥 MESAJ SİSTEMİ */
+
+// aktif mesaj
+const mesajRef = doc(db, "mesajlar", kullanici);
+
+onSnapshot(mesajRef, async (snap)=>{
+
+    if(!snap.exists()) return;
+
+    let m = snap.data();
+
+    let div = document.getElementById("mesajAlani");
+
+    // 🔔 popup
+    alert("📩 Yeni mesajın var!");
+
+    div.innerHTML = `
+        <div class="kart ${!m.okundu ? "yeniMesaj":""}">
+            <h3>📩 Mesaj</h3>
+            <p>${m.text}</p>
+            <button onclick="okunduYap()">Okundu</button>
+        </div>
+    `;
+
+});
+
+/* ✅ OKUNDU */
+window.okunduYap = async function(){
+
+    const mesajRef = doc(db, "mesajlar", kullanici);
+
+    let snap = await (await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js")).getDoc(mesajRef);
+
+    if(!snap.exists()) return;
+
+    let m = snap.data();
+
+    // geçmişe ekle
+    const gecmisRef = doc(db, "mesajGecmis", kullanici);
+
+    let eski = [];
+
+    let gSnap = await (await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js")).getDoc(gecmisRef);
+
+    if(gSnap.exists()) eski = gSnap.data().liste || [];
+
+    eski.push({
+        text: m.text,
+        tarih: new Date().toLocaleString()
+    });
+
+    await setDoc(gecmisRef, {liste: eski});
+
+    // mesajı okundu yap
+    await setDoc(mesajRef, {
+        text: m.text,
+        okundu: true
+    });
+
+    document.getElementById("mesajAlani").innerHTML = "";
+}
+
+/* 📜 GEÇMİŞ */
+const gecmisRef = doc(db, "mesajGecmis", kullanici);
+
+onSnapshot(gecmisRef, (snap)=>{
+
+    if(!snap.exists()) return;
+
+    let liste = snap.data().liste || [];
+
+    let div = document.getElementById("gecmis");
+    div.innerHTML = "";
+
+    liste.reverse().forEach(m => {
+
+        let d = document.createElement("div");
+        d.className="kart";
+
+        d.innerHTML = `
+            <p>${m.text}</p>
+            <small>${m.tarih}</small>
+        `;
+
+        div.appendChild(d);
+    });
+
 });
 
 </script>
