@@ -54,6 +54,17 @@ button {
     margin:10px;
     border-radius:10px;
 }
+
+/* 🔥 YENİ: MOLA EFEKT */
+.molaAktif {
+    animation: yanipSon 1s infinite;
+}
+
+@keyframes yanipSon {
+    0% { box-shadow: 0 0 5px red; }
+    50% { box-shadow: 0 0 25px red; }
+    100% { box-shadow: 0 0 5px red; }
+}
 </style>
 </head>
 
@@ -126,6 +137,29 @@ let personeller = [];
 let adminMi = false;
 let inputs = [];
 let alan = document.getElementById("alan");
+
+/* 🔥 YENİ */
+let moladakiler = [];
+
+/* 🔥 MOLA VERİSİ */
+const molaRef = doc(db, "kasa", "mola");
+
+onSnapshot(molaRef, (snap) => {
+
+    moladakiler = [];
+
+    if(!snap.exists()) return;
+
+    let data = snap.data().data || {};
+
+    Object.keys(data).forEach(k => {
+        if(data[k]?.kisiler){
+            data[k].kisiler.forEach(isim => {
+                if(isim) moladakiler.push(isim.toLowerCase());
+            });
+        }
+    });
+});
 
 /* GİRİŞ */
 window.giris = function(){
@@ -203,6 +237,20 @@ function olustur(){
             alan.appendChild(div);
 
             inputs.push(i1,i2);
+
+            /* 🔥 MOLA KONTROL */
+            setInterval(()=>{
+
+                let isim1 = (i1.value || "").toLowerCase();
+                let isim2 = (i2.value || "").toLowerCase();
+
+                if(moladakiler.includes(isim1) || moladakiler.includes(isim2)){
+                    div.classList.add("molaAktif");
+                }else{
+                    div.classList.remove("molaAktif");
+                }
+
+            },1000);
         }
 
         if(adminMi){
@@ -226,7 +274,7 @@ function kisiListe(){
     });
 }
 
-/* ✅ DÜZELTİLMİŞ MESAJ GÖNDER */
+/* MESAJ */
 window.mesajGonder = async function(){
 
     let msg = mesajText.value;
@@ -253,7 +301,6 @@ window.mesajGonder = async function(){
     alert("Gönderildi");
 }
 
-/* ✅ TÜMÜNE */
 window.tumuneGonder = async function(){
 
     let msg = mesajText.value;
