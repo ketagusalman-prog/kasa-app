@@ -113,7 +113,7 @@ button {
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSy...",
@@ -219,62 +219,6 @@ function olustur(){
     });
 }
 
-/* KAYDET */
-window.kaydet = async function(){
-    let data={};
-    for(let i=0;i<inputs.length;i+=2){
-        data["kasa"+(i/2+1)]={sol:inputs[i].value,sag:inputs[i+1].value};
-    }
-    await setDoc(doc(db,"kasa","liste"),{data});
-}
-
-/* KAYDIR */
-window.kaydir = async function(){
-    let arr=[];
-    for(let i=0;i<inputs.length;i+=2){
-        arr.push({sol:inputs[i].value,sag:inputs[i+1].value});
-    }
-    let son=arr.pop();
-    arr.unshift(son);
-
-    arr.forEach((k,i)=>{
-        inputs[i*2].value=k.sol;
-        inputs[i*2+1].value=k.sag;
-    });
-
-    let data={};
-    arr.forEach((k,i)=>data["kasa"+(i+1)]=k);
-    await setDoc(doc(db,"kasa","liste"),{data});
-}
-
-/* DEĞİŞTİR */
-window.degistir = async function(){
-    for(let i=0;i<inputs.length;i+=2){
-        let tmp=inputs[i].value;
-        inputs[i].value=inputs[i+1].value;
-        inputs[i+1].value=tmp;
-    }
-    kaydet();
-}
-
-/* PERSONEL */
-window.ekle = async function(){
-    let k=yeniK.value;
-    let s=yeniS.value;
-    personeller.push({k,s});
-    await setDoc(doc(db,"kasa","personel"),{liste:personeller});
-}
-
-function listeGoster(){
-    let div=document.getElementById("liste");
-    div.innerHTML="";
-    personeller.forEach((p)=>{
-        let d=document.createElement("div");
-        d.innerHTML=p.k;
-        div.appendChild(d);
-    });
-}
-
 /* KİŞİ SEÇ */
 function kisiListe(){
     let div=document.getElementById("kisiSec");
@@ -287,7 +231,7 @@ function kisiListe(){
     });
 }
 
-/* 🔥 MESAJ GÖNDER (GEÇMİŞLİ) */
+/* ✅ DÜZELTİLMİŞ MESAJ GÖNDER */
 window.mesajGonder = async function(){
 
     let msg = document.getElementById("mesajText").value;
@@ -299,24 +243,22 @@ window.mesajGonder = async function(){
 
         let ref = doc(db,"mesajlar",kisi);
 
-        onSnapshot(ref, async (snap)=>{
+        let snap = await getDoc(ref);
+        let eski = snap.exists() ? snap.data().liste || [] : [];
 
-            let eski = snap.exists() ? snap.data().liste || [] : [];
-
-            eski.push({
-                text: msg,
-                okundu:false,
-                tarih: new Date().toISOString()
-            });
-
-            await setDoc(ref,{liste:eski});
+        eski.push({
+            text: msg,
+            okundu:false,
+            tarih: new Date().toISOString()
         });
+
+        await setDoc(ref,{liste:eski});
     }
 
     alert("Gönderildi");
 }
 
-/* 🔥 TÜMÜNE */
+/* ✅ TÜMÜNE */
 window.tumuneGonder = async function(){
 
     let msg = document.getElementById("mesajText").value;
@@ -325,18 +267,16 @@ window.tumuneGonder = async function(){
 
         let ref = doc(db,"mesajlar",p.k);
 
-        onSnapshot(ref, async (snap)=>{
+        let snap = await getDoc(ref);
+        let eski = snap.exists() ? snap.data().liste || [] : [];
 
-            let eski = snap.exists() ? snap.data().liste || [] : [];
-
-            eski.push({
-                text: msg,
-                okundu:false,
-                tarih: new Date().toISOString()
-            });
-
-            await setDoc(ref,{liste:eski});
+        eski.push({
+            text: msg,
+            okundu:false,
+            tarih: new Date().toISOString()
         });
+
+        await setDoc(ref,{liste:eski});
     }
 
     alert("Herkese gönderildi");
