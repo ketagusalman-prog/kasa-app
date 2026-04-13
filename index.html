@@ -130,6 +130,7 @@ let adminMi = false;
 let inputs = [];
 let alan = document.getElementById("alan");
 
+/* GİRİŞ */
 window.giris = function(){
 
     const ref = doc(db, "kasa", "personel");
@@ -161,6 +162,7 @@ window.giris = function(){
     });
 }
 
+/* PANEL */
 window.panelToggle = function(){
     document.getElementById("panel").classList.toggle("hidden");
 }
@@ -170,6 +172,7 @@ window.mesajToggle = function(){
     kisiListe();
 }
 
+/* KASA */
 function olustur(){
 
     const ref = doc(db,"kasa","liste");
@@ -216,6 +219,7 @@ function olustur(){
     });
 }
 
+/* KAYDET */
 window.kaydet = async function(){
     let data={};
     for(let i=0;i<inputs.length;i+=2){
@@ -224,6 +228,7 @@ window.kaydet = async function(){
     await setDoc(doc(db,"kasa","liste"),{data});
 }
 
+/* KAYDIR */
 window.kaydir = async function(){
     let arr=[];
     for(let i=0;i<inputs.length;i+=2){
@@ -242,6 +247,7 @@ window.kaydir = async function(){
     await setDoc(doc(db,"kasa","liste"),{data});
 }
 
+/* DEĞİŞTİR */
 window.degistir = async function(){
     for(let i=0;i<inputs.length;i+=2){
         let tmp=inputs[i].value;
@@ -251,6 +257,7 @@ window.degistir = async function(){
     kaydet();
 }
 
+/* PERSONEL */
 window.ekle = async function(){
     let k=yeniK.value;
     let s=yeniS.value;
@@ -268,6 +275,7 @@ function listeGoster(){
     });
 }
 
+/* KİŞİ SEÇ */
 function kisiListe(){
     let div=document.getElementById("kisiSec");
     div.innerHTML="";
@@ -279,6 +287,7 @@ function kisiListe(){
     });
 }
 
+/* 🔥 MESAJ GÖNDER (GEÇMİŞLİ) */
 window.mesajGonder = async function(){
 
     let msg = document.getElementById("mesajText").value;
@@ -287,22 +296,46 @@ window.mesajGonder = async function(){
                     .map(x=>x.value);
 
     for(let kisi of secilen){
-        await setDoc(doc(db,"mesajlar",kisi),{
-            text:msg,
-            okundu:false
+
+        let ref = doc(db,"mesajlar",kisi);
+
+        onSnapshot(ref, async (snap)=>{
+
+            let eski = snap.exists() ? snap.data().liste || [] : [];
+
+            eski.push({
+                text: msg,
+                okundu:false,
+                tarih: new Date().toISOString()
+            });
+
+            await setDoc(ref,{liste:eski});
         });
     }
 
     alert("Gönderildi");
 }
 
+/* 🔥 TÜMÜNE */
 window.tumuneGonder = async function(){
+
     let msg = document.getElementById("mesajText").value;
 
     for(let p of personeller){
-        await setDoc(doc(db,"mesajlar",p.k),{
-            text:msg,
-            okundu:false
+
+        let ref = doc(db,"mesajlar",p.k);
+
+        onSnapshot(ref, async (snap)=>{
+
+            let eski = snap.exists() ? snap.data().liste || [] : [];
+
+            eski.push({
+                text: msg,
+                okundu:false,
+                tarih: new Date().toISOString()
+            });
+
+            await setDoc(ref,{liste:eski});
         });
     }
 
