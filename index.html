@@ -53,8 +53,8 @@ button {
 <h2>Kasa Sistem</h2>
 
 <div id="login">
-<input id="kullanici">
-<input id="sifre" type="password">
+<input id="kullanici" placeholder="Kullanıcı">
+<input id="sifre" type="password" placeholder="Şifre">
 <button onclick="giris()">Giriş</button>
 </div>
 
@@ -74,14 +74,16 @@ button {
 
 <div id="alan"></div>
 
+<!-- PERSONEL PANEL -->
 <div id="panel" class="panel hidden">
 <h4>Personel</h4>
-<input id="yeniK">
-<input id="yeniS">
+<input id="yeniK" placeholder="Kullanıcı">
+<input id="yeniS" placeholder="Şifre">
 <button onclick="ekle()">Ekle</button>
 <div id="liste"></div>
 </div>
 
+<!-- MESAJ PANEL -->
 <div id="mesajPanel" class="mesajPanel hidden">
 
 <h4>📩 Mesaj Gönder</h4>
@@ -91,7 +93,8 @@ button {
 <input id="mesajText" placeholder="Mesaj yaz">
 
 <label><input type="checkbox" id="onemli"> 📌 Önemli</label><br>
-<label><input type="checkbox" id="sureli"> ⏳ 5 dk sonra sil</label><br>
+
+<input id="sureInput" type="number" placeholder="Süre (dk)">
 
 <button onclick="mesajGonder()">Gönder</button>
 <button onclick="tumuneGonder()">Tümüne</button>
@@ -104,7 +107,7 @@ button {
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSy...",
@@ -121,10 +124,6 @@ let adminMi = false;
 let inputs = [];
 
 const alan = document.getElementById("alan");
-const loginDiv = document.getElementById("login");
-const appDiv = document.getElementById("app");
-const panel = document.getElementById("panel");
-const mesajPanel = document.getElementById("mesajPanel");
 
 /* GİRİŞ */
 window.giris = function(){
@@ -133,15 +132,15 @@ window.giris = function(){
 
     onSnapshot(ref, (snap)=>{
 
-        if(snap.exists()) personeller = snap.data().liste;
+        if(snap.exists()) personeller = snap.data().liste || [];
 
         let k = document.getElementById("kullanici").value.trim();
         let s = document.getElementById("sifre").value.trim();
 
         if(k === admin.k && s === admin.s){
             adminMi = true;
-            document.getElementById("panelBtn").style.display="block";
-            document.getElementById("mesajBtn").style.display="block";
+            panelBtn.style.display="block";
+            mesajBtn.style.display="block";
         }else{
             let bulundu = personeller.find(p=>p.k===k && p.s===s);
             if(!bulundu){ alert("Hatalı"); return; }
@@ -149,8 +148,8 @@ window.giris = function(){
 
         localStorage.setItem("kullanici",k);
 
-        loginDiv.classList.add("hidden");
-        appDiv.classList.remove("hidden");
+        login.classList.add("hidden");
+        app.classList.remove("hidden");
 
         olustur();
         listeGoster();
@@ -162,9 +161,57 @@ window.panelToggle = function(){
     panel.classList.toggle("hidden");
 }
 
+/* MESAJ PANEL */
 window.mesajToggle = function(){
     mesajPanel.classList.toggle("hidden");
     kisiListe();
+}
+
+/* PERSONEL LİSTE */
+function listeGoster(){
+
+    let div = document.getElementById("liste");
+    div.innerHTML="";
+
+    personeller.forEach((p,i)=>{
+
+        let d=document.createElement("div");
+
+        d.innerHTML = `
+            ${p.k}
+            <button onclick="sil(${i})">❌</button>
+        `;
+
+        div.appendChild(d);
+    });
+}
+
+/* PERSONEL SİL */
+window.sil = async function(i){
+
+    personeller.splice(i,1);
+
+    await setDoc(doc(db,"kasa","personel"),{
+        liste: personeller
+    });
+}
+
+/* PERSONEL EKLE */
+window.ekle = async function(){
+
+    let k = yeniK.value;
+    let s = yeniS.value;
+
+    if(!k || !s) return;
+
+    personeller.push({k,s});
+
+    await setDoc(doc(db,"kasa","personel"),{
+        liste: personeller
+    });
+
+    yeniK.value="";
+    yeniS.value="";
 }
 
 /* KASA */
@@ -205,21 +252,60 @@ function olustur(){
             inputs.push(i1,i2);
         }
 
-        if(adminMi){
-            document.getElementById("kaydetBtn").style.display="block";
-            document.getElementById("kaydirBtn").style.display="block";
-            document.getElementById("degistirBtn").style.display="block";
-        }
+    });
+}
 
+/* KASA KAYDET */
+window.kaydet = async function(){
+
+    let data={};
+
+    for(let i=0;i<inputs.length;i+=2){
+        data["kasa"+(i/2+1)]={
+            sol:inputs[i].value,
+            sag:inputs[i+1].value
+        };
+    }
+
+    await setDoc(doc(db,"kasa","liste"),{data});
+}
+
+/* KAYDIR */
+window.kaydir = function(){
+    alert("Kaydır aktif (isteğe bağlı geliştiririz)");
+}
+
+/* DEĞİŞTİR */
+window.degistir = function(){
+    alert("Değiştir aktif (isteğe bağlı geliştiririz)");
+}
+
+/* KİŞİ LİSTE */
+function kisiListe(){
+
+    let div = document.getElementById("kisiSec");
+    div.innerHTML="";
+
+    personeller.forEach(p=>{
+
+        let label=document.createElement("label");
+
+        label.innerHTML = `
+            <input type="checkbox" value="${p.k}">
+            ${p.k}
+        `;
+
+        div.appendChild(label);
+        div.appendChild(document.createElement("br"));
     });
 }
 
 /* MESAJ GÖNDER */
 window.mesajGonder = async function(){
 
-    let msg = document.getElementById("mesajText").value;
-    let onemli = document.getElementById("onemli").checked;
-    let sureli = document.getElementById("sureli").checked;
+    let msg = mesajText.value;
+    let onemli = onemli.checked;
+    let dk = parseInt(document.getElementById("sureInput").value || 0);
 
     let secilen = [...document.querySelectorAll("#kisiSec input:checked")]
                     .map(x=>x.value);
@@ -229,14 +315,9 @@ window.mesajGonder = async function(){
         await setDoc(doc(db,"mesajlar",kisi),{
             text:msg,
             okundu:false,
-            onemli:onemli
+            onemli:onemli,
+            silme: dk ? Date.now() + (dk*60000) : null
         });
-
-        if(sureli){
-            setTimeout(async ()=>{
-                await deleteDoc(doc(db,"mesajlar",kisi));
-            },300000);
-        }
     }
 
     alert("Gönderildi");
@@ -245,12 +326,15 @@ window.mesajGonder = async function(){
 /* TÜMÜNE */
 window.tumuneGonder = async function(){
 
-    let msg = document.getElementById("mesajText").value;
+    let msg = mesajText.value;
+    let dk = parseInt(document.getElementById("sureInput").value || 0);
 
     for(let p of personeller){
+
         await setDoc(doc(db,"mesajlar",p.k),{
             text:msg,
-            okundu:false
+            okundu:false,
+            silme: dk ? Date.now() + (dk*60000) : null
         });
     }
 
