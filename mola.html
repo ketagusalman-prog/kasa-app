@@ -6,6 +6,8 @@
 <title>Mola Sistemi</title>
 
 <style>
+
+/* 🔥 GENEL */
 body {
     margin:0;
     background:linear-gradient(135deg,#0f172a,#020617);
@@ -16,6 +18,7 @@ body {
     font-family:"Segoe UI";
 }
 
+/* 📱 TELEFON */
 .phone {
     width:390px;
     height:800px;
@@ -33,25 +36,107 @@ body {
     overflow-y:auto;
     color:white;
     padding:15px;
-    padding-bottom:90px;
 }
 
+/* 🔝 ÜST BAR */
+.topbar {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+}
+
+.topbar button {
+    width:auto;
+    padding:6px 10px;
+}
+
+/* BAŞLIK */
+.baslik {
+    margin-top:15px;
+    font-size:16px;
+    font-weight:bold;
+    color:#FFD700;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+/* GRID */
 .grid {
     display:grid;
     grid-template-columns: repeat(2, 1fr);
     gap:8px;
 }
 
+/* BLOK */
 .blok {
     background:#1e293b;
     padding:8px;
     border-radius:12px;
+    border:1px solid #334155;
+    position:relative;
 }
 
+/* AKTİF */
 .aktif {
     background:#8B0000 !important;
+    box-shadow:0 0 10px red,0 0 20px red;
 }
 
+/* BİTTİ */
+.bitti {
+    background:#166534 !important;
+    box-shadow:0 0 10px lime,0 0 20px lime;
+}
+
+h4 {
+    margin:5px 0;
+    font-size:13px;
+    color:#38bdf8;
+}
+
+/* INPUT */
+input {
+    padding:6px;
+    margin:3px;
+    border-radius:8px;
+    border:none;
+    font-size:12px;
+    font-weight:bold;
+}
+
+input:disabled {
+    background:#444;
+    color:#fff;
+}
+
+.kisiInput { width:90%; }
+.sureInput { width:50px; }
+
+/* BUTON */
+button {
+    padding:10px;
+    margin:5px;
+    border-radius:10px;
+    border:none;
+    background:#4CAF50;
+    color:white;
+    font-weight:bold;
+    width:100%;
+}
+
+/* ALT BUTON */
+.altBtn {
+    display:flex;
+    gap:5px;
+}
+
+.altBtn button {
+    flex:1;
+}
+
+/* 🔥 BÜYÜK SAYAÇ */
 .buyukSayac {
     position:fixed;
     bottom:15px;
@@ -60,12 +145,15 @@ body {
     width:320px;
     background:black;
     text-align:center;
-    font-size:28px;
+    font-size:26px;
     font-weight:bold;
     padding:10px;
     color:#22c55e;
     border-radius:10px;
+    border:1px solid #334155;
+    z-index:9999;
 }
+
 </style>
 </head>
 
@@ -73,89 +161,188 @@ body {
 
 <div class="phone">
 <div class="app">
-<div id="alan"></div>
+
+<div class="topbar">
+    <h3>☕ Mola</h3>
+    <div>
+        <button onclick="window.location.href='index.html'">⬅️</button>
+        <button onclick="window.location.href='kisisel.html'">👤</button>
+    </div>
 </div>
 
-<div id="buyukSayac" class="buyukSayac">--:--</div>
+<div id="alan"></div>
+
+<div class="altBtn">
+<button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
+<button id="kaydirBtn" onclick="kaydir()" style="display:none;">Kaydır</button>
 </div>
+
+</div>
+</div>
+
+<!-- 🔥 EKLENEN BÜYÜK SAYAÇ -->
+<div id="buyukSayac" class="buyukSayac">--:--</div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-const app = initializeApp({
- apiKey:"AIzaSy...",
- projectId:"ukasa1"
-});
+const firebaseConfig = {
+  apiKey: "AIzaSy...",
+  authDomain: "ukasa1.firebaseapp.com",
+  projectId: "ukasa1"
+};
 
+const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase();
+let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase().trim();
+let adminMi = (kullanici === "admin");
+
+document.getElementById("kaydetBtn").style.display = adminMi ? "block" : "none";
+document.getElementById("kaydirBtn").style.display = adminMi ? "block" : "none";
+
 let alan = document.getElementById("alan");
 let state = {};
 
-onSnapshot(doc(db,"kasa","mola"), snap=>{
-    state = snap.exists()?snap.data().data:{};
-    ciz();
+const ref = doc(db, "kasa", "mola");
+
+onSnapshot(ref, (snap) => {
+
+    state = snap.exists() ? snap.data().data : {};
+
+    alan.innerHTML = "";
+
+    alan.appendChild(baslik("caySure","☕ Çay Molası"));
+    alan.appendChild(grid("cay",4,"caySure"));
+
+    alan.appendChild(baslik("yemekSure","🍽️ Yemek Molası"));
+    alan.appendChild(grid("yemek",4,"yemekSure"));
+
+    alan.appendChild(baslik("sonSure","🕓 Son Mola"));
+    alan.appendChild(grid("son",4,"sonSure"));
 });
 
-function ciz(){
-    alan.innerHTML="";
+function baslik(key,text){
 
-    ["cay","yemek","son"].forEach(g=>{
-        let grid = document.createElement("div");
-        grid.className="grid";
+    let d = document.createElement("div");
+    d.className = "baslik";
 
-        for(let i=1;i<=4;i++){
-            grid.appendChild(blok(g+i,g+"Sure"));
-        }
+    let span = document.createElement("span");
+    span.innerText = text;
+    d.appendChild(span);
 
-        alan.appendChild(grid);
-    });
+    let inp = document.createElement("input");
+    inp.type="number";
+    inp.className="sureInput";
+    inp.value = state[key]?.sure || "";
+
+    inp.disabled = !adminMi;
+
+    inp.oninput = () => {
+        if(!adminMi) return;
+        state[key] = { sure: inp.value };
+    }
+
+    d.appendChild(inp);
+
+    return d;
+}
+
+function grid(prefix,adet,sureKey){
+    let g = document.createElement("div");
+    g.className="grid";
+
+    for(let i=1;i<=adet;i++){
+        g.appendChild(blok(prefix+i,sureKey));
+    }
+
+    return g;
 }
 
 function blok(key,sureKey){
 
-    let b=document.createElement("div");
+    let b = document.createElement("div");
     b.className="blok";
+
+    let t = document.createElement("h4");
+    t.innerText=key;
+    b.appendChild(t);
+
+    let saat = document.createElement("input");
+    saat.type="time";
+    saat.value = state[key]?.saat || "";
+    saat.disabled = !adminMi;
+
+    saat.oninput = () => {
+        if(!adminMi) return;
+        state[key] = state[key] || {};
+        state[key].saat = saat.value;
+    }
+
+    b.appendChild(saat);
+
+    let kisiler=[];
+
+    for(let i=0;i<6;i++){
+        let inp = document.createElement("input");
+        inp.className="kisiInput";
+        inp.value = state[key]?.kisiler?.[i] || "";
+        inp.disabled = !adminMi;
+
+        inp.oninput = () => {
+            if(!adminMi) return;
+            state[key] = state[key] || {};
+            state[key].kisiler = state[key].kisiler || [];
+            state[key].kisiler[i] = inp.value;
+        }
+
+        b.appendChild(inp);
+        kisiler.push(inp);
+    }
 
     let sayac=document.createElement("div");
     b.appendChild(sayac);
 
     setInterval(()=>{
 
-        let data=state[key];
-        if(!data || !data.saat) return;
+        if(!saat.value) return;
 
-        let dk=parseInt(state[sureKey]?.sure||15);
-        let sure=dk*60;
+        let dk = parseInt(state[sureKey]?.sure || 15);
+        let sure = dk*60;
 
-        let now=new Date();
-        let [h,m]=data.saat.split(":");
+        let now = new Date();
+        let [h,m]=saat.value.split(":");
 
         let hedef=new Date();
         hedef.setHours(h,m,0);
 
-        let fark=(hedef-now)/1000;
+        let fark=Math.floor((hedef-now)/1000);
+
+        if(fark > 43200){
+            hedef.setDate(hedef.getDate()-1);
+            fark = Math.floor((hedef-now)/1000);
+        }
 
         if(fark<=0 && fark>-sure){
-
             b.classList.add("aktif");
+            b.classList.remove("bitti");
 
             let kalan=sure+fark;
-
             let d=Math.floor(kalan/60);
-            let s=Math.floor(kalan%60);
+            let s=kalan%60;
 
-            let text =
-                String(d).padStart(2,"0")+":"+
-                String(s).padStart(2,"0");
-
-            sayac.innerText=text;
-
-        }else{
+            sayac.innerText=`Mola: ${d}dk ${s}sn`;
+        }
+        else if(fark<=-sure){
+            b.classList.add("bitti");
             b.classList.remove("aktif");
+
+            sayac.innerText="Mola bitti";
+        }
+        else{
+            b.classList.remove("aktif","bitti");
             sayac.innerText="";
         }
 
@@ -164,47 +351,44 @@ function blok(key,sureKey){
     return b;
 }
 
-/* 🔥 TEK GLOBAL BÜYÜK SAYAÇ */
+/* 🔥 BÜYÜK SAYAÇ */
 setInterval(()=>{
 
-    let bulundu=false;
+    let bulundu = false;
 
     ["cay","yemek","son"].forEach(g=>{
         for(let i=1;i<=4;i++){
 
-            let key=g+i;
-            let d=state[key];
+            let key = g+i;
+            let d = state[key];
 
             if(!d || !d.saat) continue;
 
-            let kisiler=(d.kisiler||[]).map(x=>x.toLowerCase());
+            let kisiler = (d.kisiler||[]).map(x=>x.toLowerCase());
             if(!kisiler.includes(kullanici)) continue;
 
-            let dk=parseInt(state[g+"Sure"]?.sure||15);
-            let sure=dk*60;
+            let dk = parseInt(state[g+"Sure"]?.sure || 15);
+            let sure = dk*60;
 
-            let now=new Date();
+            let now = new Date();
             let [h,m]=d.saat.split(":");
 
             let hedef=new Date();
             hedef.setHours(h,m,0);
 
-            let fark=Math.floor((hedef-now)/1000);
+            let fark = Math.floor((hedef-now)/1000);
 
             if(fark<=0 && fark>-sure){
 
-                let kalan=sure+fark;
+                let kalan = sure + fark;
 
-                let dkk=Math.floor(kalan/60);
-                let sn=kalan%60;
+                let dakika = Math.floor(kalan/60);
+                let saniye = kalan % 60;
 
-                let text =
-                    String(dkk).padStart(2,"0")+":"+
-                    String(sn).padStart(2,"0");
+                document.getElementById("buyukSayac").innerText =
+                    dakika + "dk " + saniye + "sn";
 
-                document.getElementById("buyukSayac").innerText=text;
-
-                bulundu=true;
+                bulundu = true;
             }
         }
     });
