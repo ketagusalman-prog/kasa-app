@@ -5,8 +5,40 @@
 <title>Kasa Sistem</title>
 
 <style>
-body { font-family: Arial; background:#1e1e2f; color:white; text-align:center;}
-.container { max-width:400px; margin:auto; position:relative; }
+
+/* 🌌 ARKA PLAN */
+body {
+    font-family: Arial;
+    background:linear-gradient(135deg,#0f172a,#020617);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    margin:0;
+}
+
+/* 📱 TELEFON ÇERÇEVESİ */
+.phone {
+    width:390px;
+    height:800px;
+    background:black;
+    border-radius:35px;
+    padding:10px;
+    box-shadow:0 0 40px rgba(0,0,0,0.8);
+}
+
+/* 📲 UYGULAMA İÇİ */
+.app {
+    width:100%;
+    height:100%;
+    background:#1e1e2f;
+    border-radius:25px;
+    overflow-y:auto;
+    color:white;
+}
+
+/* 🔧 ESKİ SİSTEM AYNI */
+.container { max-width:400px; margin:auto; position:relative; padding:10px; }
 
 input {
     width:90%;
@@ -25,7 +57,14 @@ input:disabled {
     opacity:1;
 }
 
-button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4CAF50; color:white;}
+button {
+    padding:10px;
+    margin:5px;
+    border-radius:8px;
+    border:none;
+    background:#4CAF50;
+    color:white;
+}
 
 .kasa {
     display:flex;
@@ -43,7 +82,7 @@ button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4
     box-shadow:0 0 10px lime;
 }
 
-/* 🔥 YANIP SÖNME */
+/* 🔥 YANIP SÖNME (DOKUNULMADI) */
 @keyframes yanipSonme {
     0%   { background:#8B0000; box-shadow:0 0 5px red; }
     50%  { background:#ff0000; box-shadow:0 0 20px red; }
@@ -82,10 +121,14 @@ input.molada {
     flex-direction:column;
     gap:8px;
 }
+
 </style>
 </head>
 
 <body>
+
+<div class="phone">
+<div class="app">
 
 <div class="container">
 
@@ -103,7 +146,6 @@ input.molada {
 
 <button onclick="window.location.href='mola.html'">☕ Mola Sayfası</button>
 
-<!-- 🔥 SADECE ADMİN -->
 <button id="mesajBtn" onclick="window.location.href='mesaj.html'" style="display:none;">📩 Mesaj</button>
 
 <button id="panelBtn" onclick="panelToggle()" style="display:none;">👥 Personel Paneli</button>
@@ -122,6 +164,10 @@ input.molada {
 <input id="yeniS" placeholder="Şifre">
 <button onclick="ekle()">Ekle</button>
 <div id="liste"></div>
+</div>
+
+</div>
+
 </div>
 
 </div>
@@ -154,7 +200,6 @@ const molaRef = doc(db, "kasa", "mola");
 onSnapshot(molaRef, (snap)=>{
     molaData = snap.exists() ? snap.data().data : {};
 
-    // ✅ FIX: mola değişince kasayı yeniden çiz
     if(!document.getElementById("app").classList.contains("hidden")){
         olustur();
     }
