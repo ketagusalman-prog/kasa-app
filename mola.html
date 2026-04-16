@@ -154,6 +154,13 @@ button {
     z-index:9999;
 }
 
+/* 🔥 YANIP SÖNME */
+@keyframes yanip {
+    0% { opacity:1; }
+    50% { opacity:0.3; }
+    100% { opacity:1; }
+}
+
 </style>
 </head>
 
@@ -180,7 +187,6 @@ button {
 </div>
 </div>
 
-<!-- 🔥 EKLENDİ -->
 <div id="buyukSayac" class="buyukSayac">--:--</div>
 
 <script type="module">
@@ -283,8 +289,6 @@ function blok(key,sureKey){
 
     b.appendChild(saat);
 
-    let kisiler=[];
-
     for(let i=0;i<6;i++){
         let inp = document.createElement("input");
         inp.className="kisiInput";
@@ -299,7 +303,6 @@ function blok(key,sureKey){
         }
 
         b.appendChild(inp);
-        kisiler.push(inp);
     }
 
     let sayac=document.createElement("div");
@@ -351,33 +354,57 @@ function blok(key,sureKey){
     return b;
 }
 
-/* 🔥 SADECE OKUYAN BÜYÜK SAYAÇ */
+/* 🔥 GELİŞMİŞ BÜYÜK SAYAÇ */
+let sonCalan = false;
+
 setInterval(()=>{
 
-    let aktifBlok = document.querySelector(".blok.aktif");
+    let aktifBloklar = document.querySelectorAll(".blok.aktif");
 
-    if(!aktifBlok){
-        document.getElementById("buyukSayac").innerText="--:--";
+    if(aktifBloklar.length === 0){
+        buyukSayac.innerText="--:--";
+        buyukSayac.style.background="black";
+        sonCalan=false;
         return;
     }
 
-    let sayac = aktifBlok.querySelector("div");
+    let enKucuk = 999999;
+    let secilen = "";
 
-    if(!sayac){
-        document.getElementById("buyukSayac").innerText="--:--";
-        return;
+    aktifBloklar.forEach(blok=>{
+
+        let text = blok.querySelector("div")?.innerText;
+        if(!text) return;
+
+        let temiz = text.replace("Mola:", "").trim();
+
+        let dk = parseInt(temiz.split("dk")[0]) || 0;
+        let sn = parseInt(temiz.split("dk")[1]) || 0;
+
+        let toplam = dk*60 + sn;
+
+        if(toplam < enKucuk){
+            enKucuk = toplam;
+            secilen = temiz;
+        }
+    });
+
+    buyukSayac.innerText = secilen;
+
+    if(enKucuk <= 30){
+        buyukSayac.style.background="#8B0000";
+        buyukSayac.style.color="white";
+        buyukSayac.style.animation="yanip 1s infinite";
+    }else{
+        buyukSayac.style.background="black";
+        buyukSayac.style.color="#22c55e";
+        buyukSayac.style.animation="none";
     }
 
-    let text = sayac.innerText;
-
-    if(!text){
-        document.getElementById("buyukSayac").innerText="--:--";
-        return;
+    if(enKucuk <= 1 && !sonCalan){
+        sonCalan = true;
+        new Audio("https://www.soundjay.com/buttons/sounds/beep-07.mp3").play();
     }
-
-    let temiz = text.replace("Mola:", "").trim();
-
-    document.getElementById("buyukSayac").innerText = temiz;
 
 },500);
 
