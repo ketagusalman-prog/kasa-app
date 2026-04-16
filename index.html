@@ -47,6 +47,22 @@ input.molada{animation:yanipSonme 1s infinite;color:white;}
 
 .panel{background:#1f2937;margin:10px;padding:10px;border-radius:12px;max-height:0;overflow:hidden;transition:0.3s;}
 .panel.acik{max-height:300px;overflow:auto;}
+
+/* 🔥 BÜYÜK SAYAÇ */
+#buyukSayac{
+position:fixed;
+bottom:80px;
+left:50%;
+transform:translateX(-50%);
+width:260px;
+background:black;
+color:#22c55e;
+text-align:center;
+font-size:22px;
+padding:10px;
+border-radius:12px;
+z-index:9999;
+}
 </style>
 </head>
 
@@ -94,6 +110,9 @@ input.molada{animation:yanipSonme 1s infinite;color:white;}
 <button onclick="location.href='mola.html'">☕</button>
 </div>
 
+<!-- 🔥 SAYAÇ -->
+<div id="buyukSayac">--:--</div>
+
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -126,33 +145,26 @@ molaData=snap.exists()?snap.data().data:{};
 olustur();
 });
 
-/* 🔥 DÜZELTİLMİŞ GİRİŞ */
+/* GİRİŞ */
 window.giris=function(){
-
 let k=kullanici.value.trim();
 let s=sifre.value.trim();
 
-/* eski kullanıcıyı sil */
 localStorage.removeItem("kullanici");
 
 if(k===admin.k && s===admin.s){
 adminMi=true;
-
-/* admin UI aç */
 mesajBtn.style.display="block";
 panelBtn.style.display="block";
 kaydetBtn.style.display="block";
 kaydirBtn.style.display="block";
 degistirBtn.style.display="block";
-
 }else{
 let bulundu=personeller.find(p=>p.k===k && p.s===s);
 if(!bulundu){alert("Hatalı giriş");return;}
 }
 
-/* 🔥 KULLANICIYI KAYDET */
 localStorage.setItem("kullanici",k);
-
 document.body.classList.add("girisYapildi");
 login.style.display="none";
 
@@ -233,6 +245,65 @@ inputs.push(i1,i2);
 }
 });
 }
+
+/* 🔥 BÜYÜK SAYAÇ */
+setInterval(()=>{
+
+let aktifIsimler=[];
+
+document.querySelectorAll("input").forEach(inp=>{
+if(inp.classList.contains("molada") && inp.value){
+aktifIsimler.push(inp.value);
+}
+});
+
+if(aktifIsimler.length===0){
+buyukSayac.innerText="--:--";
+return;
+}
+
+let now=new Date();
+let enKucuk=999999;
+let secilen="--:--";
+
+let gruplar=["cay","yemek","son"];
+
+for(let g of gruplar){
+for(let i=1;i<=4;i++){
+
+let key=g+i;
+let saat=molaData[key]?.saat;
+let kisiler=molaData[key]?.kisiler||[];
+
+if(!saat)continue;
+
+let varMi=kisiler.some(k=>aktifIsimler.map(x=>x.toLowerCase()).includes(k.toLowerCase()));
+if(!varMi) continue;
+
+let [h,m]=saat.split(":");
+let hedef=new Date();
+hedef.setHours(h,m,0);
+
+let sure=(molaData[g+"Sure"]?.sure||15)*60;
+let fark=Math.floor((hedef-now)/1000);
+
+if(fark<=0 && fark>-sure){
+
+let kalan=sure+fark;
+
+if(kalan<enKucuk){
+enKucuk=kalan;
+let d=Math.floor(kalan/60);
+let s=kalan%60;
+secilen=d+"dk "+s+"sn";
+}
+}
+}
+}
+
+buyukSayac.innerText=secilen;
+
+},1000);
 
 /* ADMIN */
 window.kaydet=async function(){
