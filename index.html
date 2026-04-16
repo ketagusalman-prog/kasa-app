@@ -41,32 +41,11 @@ input.molada{animation:yanipSonme 1s infinite;color:white;}
 
 #alan{overflow-y:auto;height:calc(100vh - 140px);}
 
-/* ADMIN BUTONLAR */
-.ustButonlar{
-position:fixed;
-right:10px;
-bottom:90px;
-display:flex;
-flex-direction:column;
-gap:8px;
-}
+/* ADMIN */
+.ustButonlar{position:fixed;right:10px;bottom:90px;display:flex;flex-direction:column;gap:8px;}
+.ustButonlar button{width:55px;height:55px;border-radius:50%;}
 
-.ustButonlar button{
-width:55px;
-height:55px;
-border-radius:50%;
-}
-
-/* PANEL */
-.panel{
-background:#1f2937;
-margin:10px;
-padding:10px;
-border-radius:12px;
-max-height:0;
-overflow:hidden;
-transition:0.3s;
-}
+.panel{background:#1f2937;margin:10px;padding:10px;border-radius:12px;max-height:0;overflow:hidden;transition:0.3s;}
 .panel.acik{max-height:300px;overflow:auto;}
 </style>
 </head>
@@ -147,16 +126,19 @@ molaData=snap.exists()?snap.data().data:{};
 olustur();
 });
 
-/* GİRİŞ */
+/* 🔥 DÜZELTİLMİŞ GİRİŞ */
 window.giris=function(){
 
 let k=kullanici.value.trim();
 let s=sifre.value.trim();
 
+/* eski kullanıcıyı sil */
+localStorage.removeItem("kullanici");
+
 if(k===admin.k && s===admin.s){
 adminMi=true;
 
-/* ADMIN UI AÇ */
+/* admin UI aç */
 mesajBtn.style.display="block";
 panelBtn.style.display="block";
 kaydetBtn.style.display="block";
@@ -165,8 +147,11 @@ degistirBtn.style.display="block";
 
 }else{
 let bulundu=personeller.find(p=>p.k===k && p.s===s);
-if(!bulundu){alert("Hatalı");return;}
+if(!bulundu){alert("Hatalı giriş");return;}
 }
+
+/* 🔥 KULLANICIYI KAYDET */
+localStorage.setItem("kullanici",k);
 
 document.body.classList.add("girisYapildi");
 login.style.display="none";
@@ -249,7 +234,7 @@ inputs.push(i1,i2);
 });
 }
 
-/* ADMIN ACTIONS */
+/* ADMIN */
 window.kaydet=async function(){
 let data={};
 for(let i=0;i<inputs.length;i+=2){
