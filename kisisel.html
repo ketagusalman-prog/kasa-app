@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kişisel Panel</title>
+<title>Giriş Paneli</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -16,44 +16,34 @@ body {
     justify-content: center;
 }
 
-/* telefon görünümü */
+/* telefon görünüm */
 .container {
     width: 360px;
     min-height: 100vh;
     background: #020617;
     border-radius: 25px;
     padding: 15px;
-    box-shadow: 0 0 40px rgba(0,0,0,0.7);
-}
-
-/* üst bar */
-.topbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     color: white;
 }
 
-/* mesaj uyarı */
-.alert {
-    background: red;
-    padding: 6px 12px;
-    border-radius: 10px;
-    animation: blink 1s infinite;
-}
-
-@keyframes blink {
-    0% {opacity:1;}
-    50% {opacity:0.2;}
-    100% {opacity:1;}
-}
-
+/* input */
 input {
     width: 100%;
     padding: 10px;
-    margin: 15px 0;
+    margin: 10px 0;
     border-radius: 10px;
     border: none;
+}
+
+/* buton */
+button {
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    background: #22c55e;
+    color: white;
+    font-weight: bold;
 }
 
 /* kart */
@@ -61,27 +51,29 @@ input {
     background: #1e293b;
     padding: 20px;
     border-radius: 20px;
-    color: white;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    animation: fadeIn 0.6s ease;
-}
-
-@keyframes fadeIn {
-    from {opacity:0; transform:translateY(20px);}
-    to {opacity:1; transform:translateY(0);}
+    margin-top: 15px;
 }
 
 .kart p {
     display: flex;
     justify-content: space-between;
-    margin: 6px 0;
 }
 
 .high { color: #22c55e; }
 .low { color: #ef4444; }
 
-canvas {
-    margin-top: 20px;
+/* mesaj */
+.alert {
+    background: red;
+    padding: 6px;
+    border-radius: 8px;
+    animation: blink 1s infinite;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+@keyframes blink {
+    0%{opacity:1;}50%{opacity:0.3;}100%{opacity:1;}
 }
 </style>
 </head>
@@ -90,90 +82,102 @@ canvas {
 
 <div class="container">
 
-    <div class="topbar">
-        <h3>⚡ Panel</h3>
-        <div id="alertBox" class="alert" style="display:none;">Yeni Mesaj</div>
-    </div>
+<div id="login">
+    <h2>🔐 Giriş</h2>
+    <input type="text" id="username" placeholder="Kullanıcı adı">
+    <input type="password" id="password" placeholder="Şifre">
+    <button onclick="login()">Giriş Yap</button>
+</div>
 
-    <input type="text" id="myName" placeholder="İsmini yaz...">
-
-    <div id="kart"></div>
+<div id="panel" style="display:none;">
+    <div id="alertBox" class="alert" style="display:none;">Yeni Mesaj</div>
+    <div id="content"></div>
     <canvas id="grafik"></canvas>
+</div>
 
 </div>
 
 <script>
 
-// GOOGLE SHEET LINK
-const SHEET_URL = "BURAYA_LINK";
+// kullanıcılar (örnek)
+const users = [
+    { username: "admin", password: "1234", role: "admin" },
+    { username: "ahmet", password: "111", role: "user" },
+    { username: "mehmet", password: "222", role: "user" }
+];
 
-// mesaj animasyonu
-setInterval(() => {
-    const box = document.getElementById("alertBox");
-    box.style.display = "block";
-    setTimeout(() => box.style.display = "none", 3000);
-}, 15000);
+// veri
+const data = [
+    { isim:"ahmet", departman:"Kasa", sicil:123, fis:50, satirSayisi:200, fisBasiSure:2, kpuan:80 },
+    { isim:"mehmet", departman:"Reyon", sicil:124, fis:30, satirSayisi:120, fisBasiSure:3, kpuan:60 }
+];
 
-// veri çekme
-async function loadData() {
-    const res = await fetch(SHEET_URL);
-    const text = await res.text();
+// login
+function login(){
+    const u = document.getElementById("username").value;
+    const p = document.getElementById("password").value;
 
-    const rows = text.split("\n").map(r => r.split(","));
-    const headers = rows[0];
+    const user = users.find(x => x.username===u && x.password===p);
 
-    return rows.slice(1).map(row => {
-        let obj = {};
-        headers.forEach((h,i)=> obj[h.trim()] = row[i]);
-        return obj;
-    });
+    if(!user) return alert("Hatalı giriş");
+
+    document.getElementById("login").style.display="none";
+    document.getElementById("panel").style.display="block";
+
+    render(user);
 }
 
-let allData = [];
-
-loadData().then(d => allData = d);
-
 // render
-function render() {
-    const name = document.getElementById("myName").value.toLowerCase();
-    const kisi = allData.find(x => x.isim?.toLowerCase() === name);
+function render(user){
+    let html = "";
 
-    if (!kisi) return;
+    const avg = data.reduce((a,b)=>a+b.kpuan,0)/data.length;
 
-    const avg = allData.reduce((a,b)=>a+Number(b.kpuan||0),0)/allData.length;
+    if(user.role==="admin"){
+        data.forEach(kisi=>{
+            html += card(kisi, avg);
+        });
+    } else {
+        const kisi = data.find(x=>x.isim===user.username);
+        html = card(kisi, avg);
+    }
 
-    document.getElementById("kart").innerHTML = `
+    document.getElementById("content").innerHTML = html;
+
+    drawChart(avg);
+}
+
+// kart
+function card(kisi, avg){
+    return `
     <div class="kart">
-        <h2>${kisi.isim}</h2>
-
-        <p>🏢 Departman: <b>${kisi.departman || "-"}</b></p>
-        <p>🆔 Sicil: <b>${kisi.sicil || "-"}</b></p>
-        <p>🧾 Fiş Sayısı: <b>${kisi.fis || "-"}</b></p>
-        <p>📊 Satır Sayısı: <b>${kisi.satirSayisi || "-"}</b></p>
-        <p>⏱️ Fiş Başı Süre: <b>${kisi.fisBasiSure || "-"}</b></p>
-        <p>⭐ Kpuan: <b class="${kisi.kpuan>=avg?'high':'low'}">${kisi.kpuan || "-"}</b></p>
-
-        <p>📈 Ortalama: <b>${avg.toFixed(1)}</b></p>
-    </div>
-    `;
-
-    drawChart(kisi, avg);
+        <h3>${kisi.isim}</h3>
+        <p>🏢 Departman <b>${kisi.departman}</b></p>
+        <p>🆔 Sicil <b>${kisi.sicil}</b></p>
+        <p>🧾 Fiş <b>${kisi.fis}</b></p>
+        <p>📊 Satır <b>${kisi.satirSayisi}</b></p>
+        <p>⏱️ Süre <b>${kisi.fisBasiSure}</b></p>
+        <p>⭐ Kpuan <b class="${kisi.kpuan>=avg?'high':'low'}">${kisi.kpuan}</b></p>
+    </div>`;
 }
 
 // grafik
-function drawChart(kisi, avg){
-    new Chart(document.getElementById('grafik'), {
-        type: 'doughnut',
-        data: {
-            labels: ['Sen', 'Ortalama'],
-            datasets: [{
-                data: [Number(kisi.kpuan), avg]
-            }]
+function drawChart(avg){
+    new Chart(document.getElementById("grafik"), {
+        type:"bar",
+        data:{
+            labels:["Ortalama"],
+            datasets:[{data:[avg]}]
         }
     });
 }
 
-document.getElementById("myName").addEventListener("input", render);
+// mesaj efekti
+setInterval(()=>{
+    const box = document.getElementById("alertBox");
+    box.style.display="block";
+    setTimeout(()=>box.style.display="none",3000);
+},15000);
 
 </script>
 
