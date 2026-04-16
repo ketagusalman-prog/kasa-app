@@ -7,7 +7,6 @@
 
 <style>
 
-/* 🔥 GENEL */
 body {
     margin:0;
     background:linear-gradient(135deg,#0f172a,#020617);
@@ -18,7 +17,6 @@ body {
     font-family:"Segoe UI";
 }
 
-/* 📱 TELEFON */
 .phone {
     width:390px;
     height:800px;
@@ -36,9 +34,11 @@ body {
     overflow-y:auto;
     color:white;
     padding:15px;
+    
+    /* 🔥 FIX BURADA */
+    padding-bottom:90px;
 }
 
-/* 🔝 ÜST BAR */
 .topbar {
     display:flex;
     justify-content:space-between;
@@ -51,7 +51,6 @@ body {
     padding:6px 10px;
 }
 
-/* BAŞLIK */
 .baslik {
     margin-top:15px;
     font-size:16px;
@@ -62,14 +61,12 @@ body {
     align-items:center;
 }
 
-/* GRID */
 .grid {
     display:grid;
     grid-template-columns: repeat(2, 1fr);
     gap:8px;
 }
 
-/* BLOK */
 .blok {
     background:#1e293b;
     padding:8px;
@@ -78,13 +75,11 @@ body {
     position:relative;
 }
 
-/* AKTİF */
 .aktif {
     background:#8B0000 !important;
     box-shadow:0 0 10px red,0 0 20px red;
 }
 
-/* BİTTİ */
 .bitti {
     background:#166534 !important;
     box-shadow:0 0 10px lime,0 0 20px lime;
@@ -96,7 +91,6 @@ h4 {
     color:#38bdf8;
 }
 
-/* INPUT */
 input {
     padding:6px;
     margin:3px;
@@ -114,7 +108,6 @@ input:disabled {
 .kisiInput { width:90%; }
 .sureInput { width:50px; }
 
-/* BUTON */
 button {
     padding:10px;
     margin:5px;
@@ -126,7 +119,6 @@ button {
     width:100%;
 }
 
-/* ALT BUTON */
 .altBtn {
     display:flex;
     gap:5px;
@@ -136,18 +128,21 @@ button {
     flex:1;
 }
 
-/* 🔥 BÜYÜK SAYAÇ */
+/* 🔥 SAYAC */
 .buyukSayac {
-    position:sticky;
-    bottom:0;
-    width:100%;
+    position:absolute;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    width:85%;
     background:black;
     text-align:center;
-    font-size:32px;
+    font-size:30px;
     font-weight:bold;
     padding:12px;
     color:#22c55e;
-    border-top:2px solid #334155;
+    border-radius:12px;
+    border:1px solid #334155;
 }
 
 </style>
@@ -168,15 +163,16 @@ button {
 
 <div id="alan"></div>
 
-<!-- 🔥 BÜYÜK SAYAÇ -->
-<div id="buyukSayac" class="buyukSayac">--:--</div>
-
 <div class="altBtn">
 <button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
 <button id="kaydirBtn" onclick="kaydir()" style="display:none;">Kaydır</button>
 </div>
 
 </div>
+
+<!-- 🔥 SAYAC DIŞARI ALINDI -->
+<div id="buyukSayac" class="buyukSayac">--:--</div>
+
 </div>
 
 <script type="module">
@@ -230,7 +226,6 @@ setInterval(()=>{
             if(!d || !d.saat) continue;
 
             let kisiler=(d.kisiler||[]).map(x=>x.toLowerCase());
-
             if(!kisiler.includes(kullanici)) continue;
 
             let [h,m]=d.saat.split(":");
