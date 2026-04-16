@@ -7,17 +7,15 @@
 <style>
 body {
     font-family: 'Segoe UI', Arial;
-    background:#151521;
+    background:#0f172a;
     color:white;
     margin:0;
 }
 
-/* ÜST BAR */
+/* HEADER */
 .header {
-    background:#1f1f2e;
+    background:#1e293b;
     padding:15px;
-    font-size:20px;
-    font-weight:bold;
     display:flex;
     justify-content:space-between;
     align-items:center;
@@ -28,10 +26,9 @@ body {
     background:red;
     padding:5px 10px;
     border-radius:50%;
-    font-size:12px;
 }
 
-/* ANA ALAN */
+/* CONTAINER */
 .container {
     max-width:700px;
     margin:20px auto;
@@ -40,38 +37,45 @@ body {
 
 /* KART */
 .kart {
-    background:linear-gradient(145deg,#1f1f2e,#2c2c3f);
+    background:#1e293b;
     padding:18px;
     margin:12px 0;
     border-radius:14px;
-    box-shadow:0 4px 15px rgba(0,0,0,0.5);
-    transition:0.3s;
+    box-shadow:0 4px 15px rgba(0,0,0,0.4);
 }
 
-.kart:hover {
-    transform:scale(1.02);
+/* DURUM RENK */
+.iyi { color:#22c55e; }
+.orta { color:#facc15; }
+.kotu { color:#ef4444; }
+
+/* PROGRESS */
+.bar {
+    height:8px;
+    background:#334155;
+    border-radius:10px;
+    overflow:hidden;
+    margin-top:8px;
+}
+.bar-inner {
+    height:100%;
+    background:#22c55e;
 }
 
 /* MESAJ */
 .yeniMesaj {
-    border-left:5px solid #ff3b3b;
+    border-left:5px solid red;
 }
 
 /* BUTON */
 button {
-    padding:8px 14px;
+    padding:8px 12px;
     margin:5px;
-    border-radius:8px;
     border:none;
+    border-radius:8px;
     background:#4CAF50;
     color:white;
     cursor:pointer;
-    transition:0.2s;
-}
-
-button:hover {
-    background:#45a049;
-    transform:scale(1.05);
 }
 
 /* BİLDİRİM */
@@ -80,16 +84,9 @@ button:hover {
     top:20px;
     right:20px;
     background:#4CAF50;
-    padding:12px 18px;
+    padding:10px 15px;
     border-radius:10px;
     display:none;
-    box-shadow:0 0 10px rgba(0,0,0,0.5);
-    animation:fadeIn 0.5s;
-}
-
-@keyframes fadeIn {
-    from {opacity:0; transform:translateY(-10px);}
-    to {opacity:1; transform:translateY(0);}
 }
 </style>
 </head>
@@ -104,6 +101,8 @@ button:hover {
 <div class="container">
 
 <div id="bilgi"></div>
+
+<div id="lider"></div>
 
 <h3>📩 Mesajlar</h3>
 
@@ -134,40 +133,53 @@ const db = getFirestore(app);
 
 let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase().trim();
 
-/* GOOGLE SHEETS */
+/* 🔥 GOOGLE SHEETS */
 fetch("https://script.google.com/macros/s/AKfycbxODlNf0yl2oAtkd5oMw1ghWavKSOO8TmT81uAUN8Oiqbj8yzx81x7iRexwcAHo7ecv4g/exec")
 .then(res => res.json())
 .then(data => {
 
-    let div = document.getElementById("bilgi");
+    let temiz = data.filter(x => x.isim && x.isim.trim() !== "");
 
-    let temizData = data.filter(x =>
-        x.isim && x.isim.toString().trim() !== ""
-    );
+    /* 🔥 TOP 3 */
+    let top3 = [...temiz].sort((a,b)=>(b.kpuan||0)-(a.kpuan||0)).slice(0,3);
 
-    let kisi = temizData.find(x =>
-        x.isim.toString().toLowerCase().trim() === kullanici
+    document.getElementById("lider").innerHTML = `
+        <div class="kart">
+            🏆 En İyi 3<br>
+            ${top3.map((x,i)=>`${i+1}. ${x.isim} (${x.kpuan})`).join("<br>")}
+        </div>
+    `;
+
+    let kisi = temiz.find(x =>
+        x.isim.toLowerCase().trim() === kullanici
     );
 
     if(!kisi){
-        div.innerHTML = "Veri bulunamadı ❌";
+        document.getElementById("bilgi").innerHTML = "Veri bulunamadı ❌";
         return;
     }
 
-    div.innerHTML = `
+    let puan = Number(kisi.kpuan || 0);
+
+    let durum = puan >= 80 ? "iyi" : puan >= 50 ? "orta" : "kotu";
+    let durumText = puan >= 80 ? "İyi" : puan >= 50 ? "Orta" : "Düşük";
+
+    document.getElementById("bilgi").innerHTML = `
         <div class="kart">
-    <h3>${kisi.isim || "İsimsiz"}</h3> 
-    <p>🏢 Departman: ${kisi.departman || "-"}</p>
-    <p>🆔 Sicil: ${kisi.sicil || "-"}</p>
-    <p>🧾 Fiş Sayısı: ${kisi.fis || "-"}</p>
-    <p>📊 Satır Sayısı: ${kisi.satirSayisi || "-"}</p>
-    <p>⏱️ Fiş Başı Süre: ${kisi.fisBasiSure || "-"}</p>
-    <p>⭐ Kpuan: ${kisi.kpuan || "-"}</p>
-</div>
+            <h2>${kisi.isim}</h2>
+            <p>Departman: ${kisi.departman || "-"}</p>
+            <p>Fiş: ${kisi.fis || "-"}</p>
+            <p>Kpuan: <b class="${durum}">${puan}</b></p>
+            <p>Durum: <b class="${durum}">${durumText}</b></p>
+
+            <div class="bar">
+                <div class="bar-inner" style="width:${puan}%"></div>
+            </div>
+        </div>
     `;
 });
 
-/* MESAJ */
+/* 📩 MESAJ (DEĞİŞMEDİ) */
 const mesajRef = doc(db, "mesajlar", kullanici);
 
 onSnapshot(mesajRef, (snap)=>{
@@ -212,7 +224,7 @@ onSnapshot(mesajRef, (snap)=>{
 
 });
 
-/* FONKSİYONLAR AYNI */
+/* MESAJ FONKSİYONLARI */
 window.okunduYap = async function(index){
     let snap = await getDoc(mesajRef);
     let liste = snap.data().liste || [];
