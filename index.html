@@ -5,14 +5,40 @@
 <title>Kasa Sistem</title>
 
 <style>
-body { font-family: Arial; background:#1e1e2f; color:white; text-align:center;}
-.container { max-width:400px; margin:auto; position:relative; }
+body {
+    font-family: Arial;
+    background:#0b1020;
+    color:white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    margin:0;
+}
 
+/* 📱 TELEFON GÖRÜNÜM */
+.container {
+    width:100%;
+    max-width:390px;
+    height:100vh;
+    background:#111827;
+    border-radius:30px;
+    overflow:hidden;
+    box-shadow:0 0 40px rgba(0,0,0,0.8);
+    position:relative;
+    padding:15px;
+}
+
+h2 {
+    margin-top:10px;
+}
+
+/* INPUT */
 input {
-    width:90%;
-    padding:10px;
-    margin:5px;
-    border-radius:8px;
+    width:100%;
+    padding:12px;
+    margin:6px 0;
+    border-radius:12px;
     border:none;
     background:#fff;
     color:#000;
@@ -25,25 +51,37 @@ input:disabled {
     opacity:1;
 }
 
-button { padding:10px; margin:5px; border-radius:8px; border:none; background:#4CAF50; color:white;}
+/* BUTTON */
+button {
+    width:100%;
+    padding:12px;
+    margin:6px 0;
+    border-radius:12px;
+    border:none;
+    background:#22c55e;
+    color:white;
+    font-weight:bold;
+    font-size:15px;
+}
 
+/* KASA */
 .kasa {
     display:flex;
-    justify-content:space-between;
-    margin:10px;
+    gap:10px;
+    margin:10px 0;
     padding:12px;
-    border-radius:12px;
+    border-radius:16px;
     font-weight:bold;
 }
 
-.erkek { background:linear-gradient(135deg,#2196F3,#0d47a1); }
+.erkek { background:linear-gradient(135deg,#3b82f6,#1e3a8a); }
 .kadin { background:linear-gradient(135deg,#ff6ec7,#c2185b); }
 
 .aktif {
-    box-shadow:0 0 10px lime;
+    box-shadow:0 0 12px lime;
 }
 
-/* 🔥 YANIP SÖNME */
+/* 🔥 MOLA */
 @keyframes yanipSonme {
     0%   { background:#8B0000; box-shadow:0 0 5px red; }
     50%  { background:#ff0000; box-shadow:0 0 20px red; }
@@ -58,11 +96,12 @@ input.molada {
 
 .hidden { display:none; }
 
+/* PANEL */
 .panel {
-    background:#222;
+    background:#1f2937;
     padding:10px;
-    margin:10px;
-    border-radius:10px;
+    margin-top:10px;
+    border-radius:16px;
     max-height:0;
     overflow:hidden;
     transition:all 0.4s ease;
@@ -71,16 +110,30 @@ input.molada {
 .panel.acik {
     max-height:400px;
     overflow-y:auto;
-    padding:10px;
 }
 
+/* FLOAT BUTON */
 .ustButonlar {
-    position:absolute;
-    top:120px;
-    right:-180px;
+    position:fixed;
+    bottom:20px;
+    right:20px;
     display:flex;
     flex-direction:column;
-    gap:8px;
+    gap:10px;
+}
+
+.ustButonlar button {
+    width:50px;
+    height:50px;
+    border-radius:50%;
+    font-size:18px;
+    padding:0;
+}
+
+/* SCROLL */
+#alan {
+    overflow-y:auto;
+    max-height:55vh;
 }
 </style>
 </head>
@@ -103,15 +156,14 @@ input.molada {
 
 <button onclick="window.location.href='mola.html'">☕ Mola Sayfası</button>
 
-<!-- 🔥 SADECE ADMİN -->
 <button id="mesajBtn" onclick="window.location.href='mesaj.html'" style="display:none;">📩 Mesaj</button>
 
 <button id="panelBtn" onclick="panelToggle()" style="display:none;">👥 Personel Paneli</button>
 
 <div class="ustButonlar">
-<button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
-<button id="kaydirBtn" onclick="kaydir()" style="display:none;">⬇️ Kaydır</button>
-<button id="degistirBtn" onclick="degistir()" style="display:none;">↔️ Yer Değiştir</button>
+<button id="kaydetBtn" onclick="kaydet()" style="display:none;">💾</button>
+<button id="kaydirBtn" onclick="kaydir()" style="display:none;">⬇️</button>
+<button id="degistirBtn" onclick="degistir()" style="display:none;">↔️</button>
 </div>
 
 <div id="alan"></div>
@@ -154,7 +206,6 @@ const molaRef = doc(db, "kasa", "mola");
 onSnapshot(molaRef, (snap)=>{
     molaData = snap.exists() ? snap.data().data : {};
 
-    // ✅ FIX: mola değişince kasayı yeniden çiz
     if(!document.getElementById("app").classList.contains("hidden")){
         olustur();
     }
