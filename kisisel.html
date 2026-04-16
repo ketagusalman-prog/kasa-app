@@ -6,36 +6,22 @@
 
 <style>
 body {
-    font-family: Arial;
-    background:#1e1e2f;
+    font-family: 'Segoe UI', Arial;
+    background:#151521;
     color:white;
-    text-align:center;
+    margin:0;
 }
 
-.container {
-    max-width:600px;
-    margin:auto;
-}
-
-.kart {
-    background:#2a2a3d;
+/* ÜST BAR */
+.header {
+    background:#1f1f2e;
     padding:15px;
-    margin:10px;
-    border-radius:10px;
-}
-
-.yeniMesaj {
-    border-left:5px solid red;
-}
-
-.bildirim {
-    position:fixed;
-    top:10px;
-    right:10px;
-    background:#4CAF50;
-    padding:10px 15px;
-    border-radius:8px;
-    display:none;
+    font-size:20px;
+    font-weight:bold;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    box-shadow:0 2px 10px rgba(0,0,0,0.5);
 }
 
 #sayac {
@@ -44,22 +30,86 @@ body {
     border-radius:50%;
     font-size:12px;
 }
+
+/* ANA ALAN */
+.container {
+    max-width:700px;
+    margin:20px auto;
+    padding:10px;
+}
+
+/* KART */
+.kart {
+    background:linear-gradient(145deg,#1f1f2e,#2c2c3f);
+    padding:18px;
+    margin:12px 0;
+    border-radius:14px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.5);
+    transition:0.3s;
+}
+
+.kart:hover {
+    transform:scale(1.02);
+}
+
+/* MESAJ */
+.yeniMesaj {
+    border-left:5px solid #ff3b3b;
+}
+
+/* BUTON */
+button {
+    padding:8px 14px;
+    margin:5px;
+    border-radius:8px;
+    border:none;
+    background:#4CAF50;
+    color:white;
+    cursor:pointer;
+    transition:0.2s;
+}
+
+button:hover {
+    background:#45a049;
+    transform:scale(1.05);
+}
+
+/* BİLDİRİM */
+.bildirim {
+    position:fixed;
+    top:20px;
+    right:20px;
+    background:#4CAF50;
+    padding:12px 18px;
+    border-radius:10px;
+    display:none;
+    box-shadow:0 0 10px rgba(0,0,0,0.5);
+    animation:fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+    from {opacity:0; transform:translateY(-10px);}
+    to {opacity:1; transform:translateY(0);}
+}
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="header">
+    👤 Kişisel Panel
+    <span id="sayac"></span>
+</div>
 
-<h2>👤 Kişisel Panel <span id="sayac"></span></h2>
+<div class="container">
 
 <div id="bilgi"></div>
 
 <h3>📩 Mesajlar</h3>
 
 <div>
-<button onclick="tumunuSil()">🧹 Tüm Mesajları Sil</button>
-<button onclick="okunanlariSil()">✔ Okunmuşları Temizle</button>
+<button onclick="tumunuSil()">🧹 Tümünü Sil</button>
+<button onclick="okunanlariSil()">✔ Okunanları Temizle</button>
 </div>
 
 <div id="mesajAlani"></div>
@@ -84,19 +134,17 @@ const db = getFirestore(app);
 
 let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase().trim();
 
-/* 📊 GOOGLE SHEETS VERİ */
+/* GOOGLE SHEETS */
 fetch("https://script.google.com/macros/s/AKfycbxODlNf0yl2oAtkd5oMw1ghWavKSOO8TmT81uAUN8Oiqbj8yzx81x7iRexwcAHo7ecv4g/exec")
 .then(res => res.json())
 .then(data => {
 
     let div = document.getElementById("bilgi");
 
-    // 🔥 BOŞ SATIRLARI TEMİZLE
     let temizData = data.filter(x =>
         x.isim && x.isim.toString().trim() !== ""
     );
 
-    // 🔥 KULLANICIYI BUL
     let kisi = temizData.find(x =>
         x.isim.toString().toLowerCase().trim() === kullanici
     );
@@ -108,19 +156,16 @@ fetch("https://script.google.com/macros/s/AKfycbxODlNf0yl2oAtkd5oMw1ghWavKSOO8Tm
 
     div.innerHTML = `
         <div class="kart">
-            <h3>${kisi.isim}</h3>
-            <p>Sicil: ${kisi.sicil || "-"}</p>
-            <p>Fiş Sayısı: ${kisi.fis || "-"}</p>
-            <p>Kartezyen Puan: ${kisi.kpuan || "-"}</p>
-            <p>Sicil: ${kisi.sicil || "-"}</p>
-            <p>Satır Sayısı: ${kisi.satırsayısı || "-"}</p>
-            <p>Fiş Başı Süre: ${kisi.fisbasısure || "-"}</p>
-            <p>Kpuan: ${kisi.kpuan || "-"}</p>
+            <h2>${kisi.isim}</h2>
+            <p>🏢 Departman: ${kisi.departman || "-"}</p>
+            <p>🆔 Sicil: ${kisi.sicil || "-"}</p>
+            <p>📞 Telefon: ${kisi.telefon || "-"}</p>
+            <p>🧾 Fiş: ${kisi.fis || "-"}</p>
         </div>
     `;
 });
 
-/* 📩 MESAJ */
+/* MESAJ */
 const mesajRef = doc(db, "mesajlar", kullanici);
 
 onSnapshot(mesajRef, (snap)=>{
@@ -165,50 +210,30 @@ onSnapshot(mesajRef, (snap)=>{
 
 });
 
-/* ✔ OKUNDU */
+/* FONKSİYONLAR AYNI */
 window.okunduYap = async function(index){
-
     let snap = await getDoc(mesajRef);
-    if(!snap.exists()) return;
-
     let liste = snap.data().liste || [];
-
     liste[index].okundu = true;
-
     await setDoc(mesajRef, {liste});
 }
 
-/* 🗑️ TEK SİL */
 window.silMesaj = async function(index){
-
     let snap = await getDoc(mesajRef);
-    if(!snap.exists()) return;
-
     let liste = snap.data().liste || [];
-
     let yeniListe = liste.filter((_, i) => i !== index);
-
     await setDoc(mesajRef, {liste: yeniListe});
 }
 
-/* 🔥 TÜMÜNÜ SİL */
 window.tumunuSil = async function(){
-
     if(!confirm("Tüm mesajlar silinsin mi?")) return;
-
     await setDoc(mesajRef, {liste: []});
 }
 
-/* 🔥 OKUNMUŞLARI SİL */
 window.okunanlariSil = async function(){
-
     let snap = await getDoc(mesajRef);
-    if(!snap.exists()) return;
-
     let liste = snap.data().liste || [];
-
     let filtre = liste.filter(m => !m.okundu);
-
     await setDoc(mesajRef, {liste: filtre});
 }
 
