@@ -57,7 +57,6 @@ body {
 
 <h3>📩 Mesajlar</h3>
 
-<!-- 🔥 YENİ BUTONLAR -->
 <div>
 <button onclick="tumunuSil()">🧹 Tüm Mesajları Sil</button>
 <button onclick="okunanlariSil()">✔ Okunmuşları Temizle</button>
@@ -83,20 +82,24 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase();
+let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase().trim();
 
-/* 📊 PERSONEL */
-const ref = doc(db, "kasa", "excel");
-
-onSnapshot(ref, (snap)=>{
-
-    let data = snap.exists() ? snap.data().liste : [];
-
-    let kisi = data.find(x =>
-        (x.isim || "").toLowerCase() === kullanici
-    );
+/* 📊 GOOGLE SHEETS VERİ */
+fetch("https://script.google.com/macros/s/AKfycbxODlNf0yl2oAtkd5oMw1ghWavKSOO8TmT81uAUN8Oiqbj8yzx81x7iRexwcAHo7ecv4g/exec")
+.then(res => res.json())
+.then(data => {
 
     let div = document.getElementById("bilgi");
+
+    // 🔥 BOŞ SATIRLARI TEMİZLE
+    let temizData = data.filter(x =>
+        x.isim && x.isim.toString().trim() !== ""
+    );
+
+    // 🔥 KULLANICIYI BUL
+    let kisi = temizData.find(x =>
+        x.isim.toString().toLowerCase().trim() === kullanici
+    );
 
     if(!kisi){
         div.innerHTML = "Veri bulunamadı ❌";
@@ -193,7 +196,7 @@ window.tumunuSil = async function(){
     await setDoc(mesajRef, {liste: []});
 }
 
-/* 🔥 SADECE OKUNMUŞLARI SİL */
+/* 🔥 OKUNMUŞLARI SİL */
 window.okunanlariSil = async function(){
 
     let snap = await getDoc(mesajRef);
