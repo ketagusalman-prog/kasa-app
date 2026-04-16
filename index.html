@@ -7,30 +7,57 @@
 <style>
 body {
     font-family: Arial;
-    background:#0b1020;
+    background:#111827;
     color:white;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
     margin:0;
 }
 
-/* 📱 TELEFON GÖRÜNÜM */
+/* 📱 FULL SCREEN */
 .container {
     width:100%;
-    max-width:390px;
     height:100vh;
     background:#111827;
-    border-radius:30px;
-    overflow:hidden;
-    box-shadow:0 0 40px rgba(0,0,0,0.8);
     position:relative;
-    padding:15px;
+    padding-top:60px;
+    padding-bottom:70px;
+    box-sizing:border-box;
 }
 
-h2 {
-    margin-top:10px;
+/* 🔝 APP BAR */
+.appbar {
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:60px;
+    background:#1f2937;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:bold;
+    font-size:18px;
+    z-index:10;
+}
+
+/* 🔽 TAB BAR */
+.tabbar {
+    position:fixed;
+    bottom:0;
+    left:0;
+    width:100%;
+    height:65px;
+    background:#1f2937;
+    display:flex;
+    justify-content:space-around;
+    align-items:center;
+    z-index:10;
+}
+
+.tabbar button {
+    background:none;
+    border:none;
+    color:white;
+    font-size:14px;
 }
 
 /* INPUT */
@@ -48,7 +75,6 @@ input {
 input:disabled {
     background:#ddd;
     color:#000;
-    opacity:1;
 }
 
 /* BUTTON */
@@ -61,17 +87,15 @@ button {
     background:#22c55e;
     color:white;
     font-weight:bold;
-    font-size:15px;
 }
 
 /* KASA */
 .kasa {
     display:flex;
     gap:10px;
-    margin:10px 0;
+    margin:10px;
     padding:12px;
     border-radius:16px;
-    font-weight:bold;
 }
 
 .erkek { background:linear-gradient(135deg,#3b82f6,#1e3a8a); }
@@ -83,9 +107,9 @@ button {
 
 /* 🔥 MOLA */
 @keyframes yanipSonme {
-    0%   { background:#8B0000; box-shadow:0 0 5px red; }
-    50%  { background:#ff0000; box-shadow:0 0 20px red; }
-    100% { background:#8B0000; box-shadow:0 0 5px red; }
+    0%   { background:#8B0000; }
+    50%  { background:#ff0000; }
+    100% { background:#8B0000; }
 }
 
 input.molada {
@@ -100,7 +124,7 @@ input.molada {
 .panel {
     background:#1f2937;
     padding:10px;
-    margin-top:10px;
+    margin:10px;
     border-radius:16px;
     max-height:0;
     overflow:hidden;
@@ -112,11 +136,11 @@ input.molada {
     overflow-y:auto;
 }
 
-/* FLOAT BUTON */
+/* FLOAT BUTTON */
 .ustButonlar {
     position:fixed;
-    bottom:20px;
-    right:20px;
+    bottom:80px;
+    right:15px;
     display:flex;
     flex-direction:column;
     gap:10px;
@@ -126,23 +150,22 @@ input.molada {
     width:50px;
     height:50px;
     border-radius:50%;
-    font-size:18px;
     padding:0;
 }
 
 /* SCROLL */
 #alan {
     overflow-y:auto;
-    max-height:55vh;
+    height:calc(100vh - 150px);
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="appbar">Kasa Sistem</div>
 
-<h2>Kasa Sistem</h2>
+<div class="container">
 
 <div id="login">
 <input id="kullanici" placeholder="Kullanıcı adı">
@@ -154,11 +177,11 @@ input.molada {
 
 <h3 id="info"></h3>
 
-<button onclick="window.location.href='mola.html'">☕ Mola Sayfası</button>
+<button onclick="window.location.href='mola.html'">☕ Mola</button>
 
 <button id="mesajBtn" onclick="window.location.href='mesaj.html'" style="display:none;">📩 Mesaj</button>
 
-<button id="panelBtn" onclick="panelToggle()" style="display:none;">👥 Personel Paneli</button>
+<button id="panelBtn" onclick="panelToggle()" style="display:none;">👥 Panel</button>
 
 <div class="ustButonlar">
 <button id="kaydetBtn" onclick="kaydet()" style="display:none;">💾</button>
@@ -177,6 +200,13 @@ input.molada {
 </div>
 
 </div>
+</div>
+
+<!-- 🔽 ALT MENÜ -->
+<div class="tabbar">
+<button onclick="window.location.reload()">🏠 Ana</button>
+<button onclick="window.location.href='mola.html'">☕ Mola</button>
+<button onclick="window.location.href='mesaj.html'">📩 Mesaj</button>
 </div>
 
 <script type="module">
@@ -205,7 +235,6 @@ const molaRef = doc(db, "kasa", "mola");
 
 onSnapshot(molaRef, (snap)=>{
     molaData = snap.exists() ? snap.data().data : {};
-
     if(!document.getElementById("app").classList.contains("hidden")){
         olustur();
     }
@@ -225,7 +254,6 @@ function moladaMi(isim){
 
     for(let g of gruplar){
         for(let i=1;i<=4;i++){
-
             let key = g+i;
             let saat = molaData[key]?.saat;
             let kisiler = molaData[key]?.kisiler || [];
@@ -233,7 +261,6 @@ function moladaMi(isim){
             if(!saat) continue;
 
             let [h,m] = saat.split(":");
-
             let hedef = new Date();
             hedef.setHours(h,m,0);
 
@@ -265,7 +292,6 @@ window.giris = function() {
 
         if (k === admin.k && s === admin.s) {
             adminMi = true;
-
             document.getElementById("panelBtn").style.display = "block";
             document.getElementById("mesajBtn").style.display = "block";
         } else {
@@ -287,8 +313,7 @@ window.giris = function() {
 }
 
 window.panelToggle = function(){
-    let p = document.getElementById("panel");
-    p.classList.toggle("acik");
+    document.getElementById("panel").classList.toggle("acik");
 }
 
 function olustur() {
