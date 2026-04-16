@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kişisel Performans Paneli</title>
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -15,14 +14,14 @@ body {
     color: white;
 }
 
-/* üst bar */
+/* üst alan */
 .topbar {
     display: flex;
     justify-content: space-between;
     padding: 20px;
 }
 
-/* mesaj animasyon */
+/* yanıp sönen mesaj */
 .alert {
     background: red;
     padding: 10px 20px;
@@ -47,12 +46,16 @@ body {
     box-shadow: 0 15px 40px rgba(0,0,0,0.5);
     max-width: 400px;
     margin-bottom: 20px;
-    animation: fadeIn 0.7s ease;
+    animation: fadeIn 0.8s ease;
 }
 
 @keyframes fadeIn {
     from {opacity:0; transform: translateY(20px);}
     to {opacity:1; transform: translateY(0);}
+}
+
+.kart h2 {
+    margin-top: 0;
 }
 
 p {
@@ -91,9 +94,12 @@ input {
 </div>
 
 <script>
-
-// 🔴 BURAYA GOOGLE SHEET CSV LİNKİNİ KOY
-const SHEET_URL = "BURAYA_YAPIŞTIR";
+// örnek veri (burayı kendi verinle değiştir)
+const data = [
+    { isim: "ahmet", departman: "Kasa", sicil: 123, fis: 50, kpuan: 80 },
+    { isim: "mehmet", departman: "Reyon", sicil: 124, fis: 30, kpuan: 60 },
+    { isim: "ayşe", departman: "Kasa", sicil: 125, fis: 70, kpuan: 95 }
+];
 
 // mesaj animasyonu
 setInterval(() => {
@@ -102,39 +108,13 @@ setInterval(() => {
     setTimeout(() => box.style.display = "none", 3000);
 }, 15000);
 
-// CSV parse
-async function loadData() {
-    const res = await fetch(SHEET_URL);
-    const text = await res.text();
-
-    const rows = text.split("\\n").map(r => r.split(","));
-
-    const headers = rows[0];
-
-    const data = rows.slice(1).map(row => {
-        let obj = {};
-        headers.forEach((h,i) => obj[h.trim()] = row[i]);
-        return obj;
-    });
-
-    return data;
-}
-
-let allData = [];
-
-loadData().then(d => {
-    allData = d;
-});
-
-// render
 function render() {
     const name = document.getElementById("myName").value.toLowerCase();
-
-    const me = allData.find(x => x.isim?.toLowerCase() === name);
+    const me = data.find(x => x.isim.toLowerCase() === name);
 
     if (!me) return;
 
-    const avg = allData.reduce((a,b)=>a + Number(b.kpuan || 0),0) / allData.length;
+    const avg = data.reduce((a,b)=>a+b.kpuan,0) / data.length;
 
     document.getElementById("kart").innerHTML = `
     <div class="kart">
@@ -155,15 +135,13 @@ function drawChart(me, avg){
         data: {
             labels: ['Sen', 'Ortalama'],
             datasets: [{
-                data: [Number(me.kpuan), avg]
+                data: [me.kpuan, avg]
             }]
         }
     });
 }
 
-// input dinle
 document.getElementById("myName").addEventListener("input", render);
-
 </script>
 
 </body>
