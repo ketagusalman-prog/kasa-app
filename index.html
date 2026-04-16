@@ -50,7 +50,7 @@ body {
     z-index:10;
 }
 
-/* 🔒 LOGINDE GİZLE */
+/* LOGINDE GİZLE */
 #login:not(.hidden) ~ .tabbar {
     display:none;
 }
@@ -73,7 +73,6 @@ body {
 
 .loginCard h2 {
     text-align:center;
-    margin-bottom:20px;
 }
 
 /* INPUT */
@@ -218,7 +217,6 @@ input.molada {
 
 <script type="module">
 
-/* 🔴 BURADAN SONRA JS AYNEN SENİN KOD */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -299,8 +297,6 @@ window.giris = function() {
 
         if (k === admin.k && s === admin.s) {
             adminMi = true;
-            document.body.classList.add("admin");
-
             document.getElementById("panelBtn").style.display = "block";
             document.getElementById("mesajBtn").style.display = "block";
         } else {
@@ -321,7 +317,134 @@ window.giris = function() {
     });
 }
 
-/* geri kalan JS aynı */
+window.panelToggle = function(){
+    document.getElementById("panel").classList.toggle("acik");
+}
+
+function olustur() {
+    const ref = doc(db, "kasa", "liste");
+
+    onSnapshot(ref, (snap) => {
+
+        let kayit = snap.exists() ? snap.data().data : {};
+
+        alan.innerHTML = "";
+        inputs = [];
+
+        for (let i = 0; i < 6; i++) {
+
+            let div = document.createElement("div");
+            div.className = "kasa";
+
+            let i1 = document.createElement("input");
+            let i2 = document.createElement("input");
+
+            let k = kayit["kasa"+(i+1)];
+            if (k) {
+                i1.value = k.sol;
+                i2.value = k.sag;
+            }
+
+            if (!adminMi) {
+                i1.disabled = true;
+                i2.disabled = true;
+            }
+
+            div.classList.add(cinsiyet(i1.value || i2.value));
+
+            if(moladaMi(i1.value)) i1.classList.add("molada");
+            if(moladaMi(i2.value)) i2.classList.add("molada");
+
+            div.classList.add("aktif");
+
+            div.appendChild(i1);
+            div.appendChild(i2);
+            alan.appendChild(div);
+
+            inputs.push(i1, i2);
+        }
+
+        if (adminMi) {
+            document.getElementById("kaydetBtn").style.display = "block";
+            document.getElementById("kaydirBtn").style.display = "block";
+            document.getElementById("degistirBtn").style.display = "block";
+        }
+    });
+}
+
+window.kaydet = async function() {
+    let data = {};
+    for (let i = 0; i < inputs.length; i+=2) {
+        data["kasa"+(i/2+1)] = {
+            sol: inputs[i].value,
+            sag: inputs[i+1].value
+        };
+    }
+    await setDoc(doc(db, "kasa", "liste"), {data});
+}
+
+window.kaydir = async function() {
+    let yeni = [];
+    for (let i = 0; i < inputs.length; i+=2) {
+        yeni.push({sol: inputs[i].value, sag: inputs[i+1].value});
+    }
+
+    let son = yeni.pop();
+    yeni.unshift(son);
+
+    for (let i = 0; i < yeni.length; i++) {
+        inputs[i*2].value = yeni[i].sol;
+        inputs[i*2+1].value = yeni[i].sag;
+    }
+
+    let data = {};
+    yeni.forEach((k,i)=> data["kasa"+(i+1)] = k);
+    await setDoc(doc(db, "kasa", "liste"), {data});
+}
+
+window.degistir = async function() {
+    let yeni = [];
+
+    for (let i = 0; i < inputs.length; i+=2) {
+        yeni.push({sol: inputs[i].value, sag: inputs[i+1].value});
+    }
+
+    yeni.forEach(k => [k.sol, k.sag] = [k.sag, k.sol]);
+
+    for (let i = 0; i < yeni.length; i++) {
+        inputs[i*2].value = yeni[i].sol;
+        inputs[i*2+1].value = yeni[i].sag;
+    }
+
+    let data = {};
+    yeni.forEach((k,i)=> data["kasa"+(i+1)] = k);
+    await setDoc(doc(db, "kasa", "liste"), {data});
+}
+
+window.ekle = async function() {
+    let k = document.getElementById("yeniK").value;
+    let s = document.getElementById("yeniS").value;
+
+    personeller.push({k,s});
+    await setDoc(doc(db, "kasa", "personel"), {liste: personeller});
+}
+
+function listeGoster() {
+    let div = document.getElementById("liste");
+    div.innerHTML = "";
+
+    personeller.forEach((p,i) => {
+        let d = document.createElement("div");
+        d.innerHTML = p.k + " <button onclick='sil("+i+")'>❌</button>";
+        div.appendChild(d);
+    });
+}
+
+window.sil = async function(i) {
+    personeller.splice(i,1);
+    await setDoc(doc(db, "kasa", "personel"), {liste: personeller});
+}
+
 </script>
 
 </body>
