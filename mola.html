@@ -7,7 +7,6 @@
 
 <style>
 
-/* 🔥 GENEL */
 body {
     margin:0;
     background:linear-gradient(135deg,#0f172a,#020617);
@@ -18,7 +17,6 @@ body {
     font-family:"Segoe UI";
 }
 
-/* 📱 TELEFON */
 .phone {
     width:390px;
     height:800px;
@@ -36,9 +34,11 @@ body {
     overflow-y:auto;
     color:white;
     padding:15px;
+
+    /* 🔥 EKLENDİ (GÖRÜNÜM FIX) */
+    padding-bottom:80px;
 }
 
-/* 🔝 ÜST BAR */
 .topbar {
     display:flex;
     justify-content:space-between;
@@ -51,7 +51,6 @@ body {
     padding:6px 10px;
 }
 
-/* BAŞLIK */
 .baslik {
     margin-top:15px;
     font-size:16px;
@@ -62,14 +61,12 @@ body {
     align-items:center;
 }
 
-/* GRID */
 .grid {
     display:grid;
     grid-template-columns: repeat(2, 1fr);
     gap:8px;
 }
 
-/* BLOK */
 .blok {
     background:#1e293b;
     padding:8px;
@@ -78,13 +75,11 @@ body {
     position:relative;
 }
 
-/* AKTİF */
 .aktif {
     background:#8B0000 !important;
     box-shadow:0 0 10px red,0 0 20px red;
 }
 
-/* BİTTİ */
 .bitti {
     background:#166534 !important;
     box-shadow:0 0 10px lime,0 0 20px lime;
@@ -96,7 +91,6 @@ h4 {
     color:#38bdf8;
 }
 
-/* INPUT */
 input {
     padding:6px;
     margin:3px;
@@ -114,7 +108,6 @@ input:disabled {
 .kisiInput { width:90%; }
 .sureInput { width:50px; }
 
-/* BUTON */
 button {
     padding:10px;
     margin:5px;
@@ -126,7 +119,6 @@ button {
     width:100%;
 }
 
-/* ALT BUTON */
 .altBtn {
     display:flex;
     gap:5px;
@@ -134,6 +126,24 @@ button {
 
 .altBtn button {
     flex:1;
+}
+
+/* 🔥 BÜYÜK SAYAÇ */
+.buyukSayac {
+    position:fixed;
+    bottom:15px;
+    left:50%;
+    transform:translateX(-50%);
+    width:320px;
+    background:black;
+    text-align:center;
+    font-size:26px;
+    font-weight:bold;
+    padding:10px;
+    color:#22c55e;
+    border-radius:10px;
+    border:1px solid #334155;
+    z-index:9999;
 }
 
 </style>
@@ -160,6 +170,10 @@ button {
 </div>
 
 </div>
+
+<!-- 🔥 SADECE EKLENEN KISIM -->
+<div id="buyukSayac" class="buyukSayac">--:--</div>
+
 </div>
 
 <script type="module">
@@ -204,81 +218,73 @@ onSnapshot(ref, (snap) => {
 });
 
 function baslik(key,text){
+    let d=document.createElement("div");
+    d.className="baslik";
 
-    let d = document.createElement("div");
-    d.className = "baslik";
-
-    let span = document.createElement("span");
-    span.innerText = text;
+    let span=document.createElement("span");
+    span.innerText=text;
     d.appendChild(span);
 
-    let inp = document.createElement("input");
+    let inp=document.createElement("input");
     inp.type="number";
     inp.className="sureInput";
-    inp.value = state[key]?.sure || "";
+    inp.value=state[key]?.sure || "";
+    inp.disabled=!adminMi;
 
-    inp.disabled = !adminMi;
-
-    inp.oninput = () => {
+    inp.oninput=()=>{
         if(!adminMi) return;
-        state[key] = { sure: inp.value };
+        state[key]={sure:inp.value};
     }
 
     d.appendChild(inp);
-
     return d;
 }
 
 function grid(prefix,adet,sureKey){
-    let g = document.createElement("div");
+    let g=document.createElement("div");
     g.className="grid";
-
     for(let i=1;i<=adet;i++){
         g.appendChild(blok(prefix+i,sureKey));
     }
-
     return g;
 }
 
 function blok(key,sureKey){
 
-    let b = document.createElement("div");
+    let b=document.createElement("div");
     b.className="blok";
 
-    let t = document.createElement("h4");
+    let t=document.createElement("h4");
     t.innerText=key;
     b.appendChild(t);
 
-    let saat = document.createElement("input");
+    let saat=document.createElement("input");
     saat.type="time";
-    saat.value = state[key]?.saat || "";
-    saat.disabled = !adminMi;
+    saat.value=state[key]?.saat || "";
+    saat.disabled=!adminMi;
 
-    saat.oninput = () => {
+    saat.oninput=()=>{
         if(!adminMi) return;
-        state[key] = state[key] || {};
-        state[key].saat = saat.value;
+        state[key]=state[key]||{};
+        state[key].saat=saat.value;
     }
 
     b.appendChild(saat);
 
-    let kisiler=[];
-
     for(let i=0;i<6;i++){
-        let inp = document.createElement("input");
+        let inp=document.createElement("input");
         inp.className="kisiInput";
-        inp.value = state[key]?.kisiler?.[i] || "";
-        inp.disabled = !adminMi;
+        inp.value=state[key]?.kisiler?.[i] || "";
+        inp.disabled=!adminMi;
 
-        inp.oninput = () => {
+        inp.oninput=()=>{
             if(!adminMi) return;
-            state[key] = state[key] || {};
-            state[key].kisiler = state[key].kisiler || [];
-            state[key].kisiler[i] = inp.value;
+            state[key]=state[key]||{};
+            state[key].kisiler=state[key].kisiler||[];
+            state[key].kisiler[i]=inp.value;
         }
 
         b.appendChild(inp);
-        kisiler.push(inp);
     }
 
     let sayac=document.createElement("div");
@@ -288,10 +294,10 @@ function blok(key,sureKey){
 
         if(!saat.value) return;
 
-        let dk = parseInt(state[sureKey]?.sure || 15);
-        let sure = dk*60;
+        let dk=parseInt(state[sureKey]?.sure || 15);
+        let sure=dk*60;
 
-        let now = new Date();
+        let now=new Date();
         let [h,m]=saat.value.split(":");
 
         let hedef=new Date();
@@ -299,29 +305,13 @@ function blok(key,sureKey){
 
         let fark=Math.floor((hedef-now)/1000);
 
-        if(fark > 43200){
-            hedef.setDate(hedef.getDate()-1);
-            fark = Math.floor((hedef-now)/1000);
-        }
-
         if(fark<=0 && fark>-sure){
             b.classList.add("aktif");
-            b.classList.remove("bitti");
-
             let kalan=sure+fark;
-            let d=Math.floor(kalan/60);
-            let s=kalan%60;
-
-            sayac.innerText=`Mola: ${d}dk ${s}sn`;
-        }
-        else if(fark<=-sure){
-            b.classList.add("bitti");
-            b.classList.remove("aktif");
-
-            sayac.innerText="Mola bitti";
+            sayac.innerText=`${Math.floor(kalan/60)}:${kalan%60}`;
         }
         else{
-            b.classList.remove("aktif","bitti");
+            b.classList.remove("aktif");
             sayac.innerText="";
         }
 
@@ -330,43 +320,50 @@ function blok(key,sureKey){
     return b;
 }
 
-window.kaydir = function(){
+/* 🔥 GLOBAL SAYAÇ */
+setInterval(()=>{
 
-    if(!adminMi){
-        alert("Sadece admin!");
-        return;
-    }
+    let aktif=null;
 
-    ["cay","yemek","son"].forEach(grup=>{
+    ["cay","yemek","son"].forEach(g=>{
+        for(let i=1;i<=4;i++){
 
-        let kisilerList = [
-            state[grup+"1"]?.kisiler || [],
-            state[grup+"2"]?.kisiler || [],
-            state[grup+"3"]?.kisiler || []
-        ];
+            let key=g+i;
+            let d=state[key];
+            if(!d || !d.saat) continue;
 
-        let son = kisilerList.pop();
-        kisilerList.unshift(son);
+            let kisiler=(d.kisiler||[]).map(x=>x.toLowerCase());
+            if(!kisiler.includes(kullanici)) continue;
 
-        for(let i=1;i<=3;i++){
-            state[grup+i] = state[grup+i] || {};
-            state[grup+i].kisiler = kisilerList[i-1];
+            let [h,m]=d.saat.split(":");
+
+            let now=new Date();
+            let hedef=new Date();
+            hedef.setHours(h,m,0);
+
+            let sure=(state[g+"Sure"]?.sure||15)*60;
+            let fark=(hedef-now)/1000;
+
+            if(fark<=0 && fark>-sure){
+                aktif={hedef,sure};
+            }
         }
     });
 
-    alan.innerHTML = "";
-}
-
-window.kaydet = async function(){
-
-    if(!adminMi){
-        alert("Sadece admin!");
+    if(!aktif){
+        document.getElementById("buyukSayac").innerText="--:--";
         return;
     }
 
-    await setDoc(doc(db,"kasa","mola"),{data:state});
-    alert("Kaydedildi");
-}
+    let kalan=Math.max(0,aktif.sure - ((new Date()-aktif.hedef)/1000));
+
+    let dk=Math.floor(kalan/60);
+    let sn=Math.floor(kalan%60);
+
+    document.getElementById("buyukSayac").innerText =
+        String(dk).padStart(2,"0")+":"+String(sn).padStart(2,"0");
+
+},1000);
 
 </script>
 
