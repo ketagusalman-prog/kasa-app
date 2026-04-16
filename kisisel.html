@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kişisel Mobil Panel</title>
+<title>Kişisel Panel</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -16,32 +16,30 @@ body {
     justify-content: center;
 }
 
-/* 📱 telefon görünümü */
-.phone {
+/* telefon görünümü */
+.container {
     width: 360px;
     min-height: 100vh;
     background: #020617;
-    border-radius: 30px;
+    border-radius: 25px;
     padding: 15px;
     box-shadow: 0 0 40px rgba(0,0,0,0.7);
-    position: relative;
 }
 
 /* üst bar */
-.header {
+.topbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
     color: white;
 }
 
-/* 🔴 mesaj uyarı */
+/* mesaj uyarı */
 .alert {
     background: red;
     padding: 6px 12px;
     border-radius: 10px;
     animation: blink 1s infinite;
-    font-size: 12px;
 }
 
 @keyframes blink {
@@ -50,12 +48,11 @@ body {
     100% {opacity:1;}
 }
 
-/* input */
 input {
     width: 100%;
     padding: 10px;
     margin: 15px 0;
-    border-radius: 12px;
+    border-radius: 10px;
     border: none;
 }
 
@@ -74,23 +71,15 @@ input {
     to {opacity:1; transform:translateY(0);}
 }
 
-.kart h2 {
-    margin-top: 0;
-}
-
-/* satırlar */
 .kart p {
     display: flex;
     justify-content: space-between;
     margin: 6px 0;
-    font-size: 14px;
 }
 
-/* renk */
 .high { color: #22c55e; }
 .low { color: #ef4444; }
 
-/* grafik */
 canvas {
     margin-top: 20px;
 }
@@ -99,9 +88,9 @@ canvas {
 
 <body>
 
-<div class="phone">
+<div class="container">
 
-    <div class="header">
+    <div class="topbar">
         <h3>⚡ Panel</h3>
         <div id="alertBox" class="alert" style="display:none;">Yeni Mesaj</div>
     </div>
@@ -115,10 +104,10 @@ canvas {
 
 <script>
 
-// 🔴 GOOGLE SHEET CSV LİNKİNİ BURAYA KOY
+// GOOGLE SHEET LINK
 const SHEET_URL = "BURAYA_LINK";
 
-// 🔔 mesaj efekti
+// mesaj animasyonu
 setInterval(() => {
     const box = document.getElementById("alertBox");
     box.style.display = "block";
@@ -130,7 +119,7 @@ async function loadData() {
     const res = await fetch(SHEET_URL);
     const text = await res.text();
 
-    const rows = text.split("\\n").map(r => r.split(","));
+    const rows = text.split("\n").map(r => r.split(","));
     const headers = rows[0];
 
     return rows.slice(1).map(row => {
