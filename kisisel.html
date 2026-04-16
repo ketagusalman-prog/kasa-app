@@ -1,233 +1,190 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>Kişisel Panel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kişisel Mobil Panel</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body { font-family: 'Segoe UI'; background:#0f172a; color:white; margin:0; }
+body {
+    margin: 0;
+    background: #0f172a;
+    font-family: "Segoe UI";
+    display: flex;
+    justify-content: center;
+}
 
+/* 📱 telefon görünümü */
+.phone {
+    width: 360px;
+    min-height: 100vh;
+    background: #020617;
+    border-radius: 30px;
+    padding: 15px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.7);
+    position: relative;
+}
+
+/* üst bar */
 .header {
-    background:#1e293b;
-    padding:15px;
-    display:flex;
-    justify-content:space-between;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
 }
 
-.container { max-width:700px; margin:20px auto; }
+/* 🔴 mesaj uyarı */
+.alert {
+    background: red;
+    padding: 6px 12px;
+    border-radius: 10px;
+    animation: blink 1s infinite;
+    font-size: 12px;
+}
 
+@keyframes blink {
+    0% {opacity:1;}
+    50% {opacity:0.2;}
+    100% {opacity:1;}
+}
+
+/* input */
+input {
+    width: 100%;
+    padding: 10px;
+    margin: 15px 0;
+    border-radius: 12px;
+    border: none;
+}
+
+/* kart */
 .kart {
-    background:#1e293b;
-    padding:15px;
-    margin:10px;
-    border-radius:12px;
+    background: #1e293b;
+    padding: 20px;
+    border-radius: 20px;
+    color: white;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    animation: fadeIn 0.6s ease;
 }
 
-select {
-    padding:8px;
-    border-radius:8px;
-    margin:10px;
+@keyframes fadeIn {
+    from {opacity:0; transform:translateY(20px);}
+    to {opacity:1; transform:translateY(0);}
 }
 
-.iyi { color:#22c55e; }
-.orta { color:#facc15; }
-.kotu { color:#ef4444; }
+.kart h2 {
+    margin-top: 0;
+}
 
-.bar { height:8px; background:#333; border-radius:10px; }
-.bar-inner { height:100%; background:#22c55e; }
+/* satırlar */
+.kart p {
+    display: flex;
+    justify-content: space-between;
+    margin: 6px 0;
+    font-size: 14px;
+}
 
-.yeniMesaj { border-left:4px solid red; }
+/* renk */
+.high { color: #22c55e; }
+.low { color: #ef4444; }
 
-button {
-    padding:8px;
-    margin:5px;
-    border:none;
-    border-radius:8px;
-    background:#4CAF50;
-    color:white;
+/* grafik */
+canvas {
+    margin-top: 20px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="header">
-    👤 Panel
-    <span id="sayac"></span>
-</div>
+<div class="phone">
 
-<div class="container">
+    <div class="header">
+        <h3>⚡ Panel</h3>
+        <div id="alertBox" class="alert" style="display:none;">Yeni Mesaj</div>
+    </div>
 
-<!-- 🔥 ADMIN SEÇİM -->
-<div id="adminSec" style="display:none;">
-    <select id="kisiSelect"></select>
-</div>
+    <input type="text" id="myName" placeholder="İsmini yaz...">
 
-<div id="bilgi"></div>
-<div id="lider"></div>
-
-<h3>📩 Mesajlar</h3>
-
-<button onclick="tumunuSil()">🧹 Tümünü Sil</button>
-<button onclick="okunanlariSil()">✔ Okunanları Sil</button>
-
-<div id="mesajAlani"></div>
+    <div id="kart"></div>
+    <canvas id="grafik"></canvas>
 
 </div>
 
-<script type="module">
+<script>
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+// 🔴 GOOGLE SHEET CSV LİNKİNİ BURAYA KOY
+const SHEET_URL = "BURAYA_LINK";
 
-const firebaseConfig = {
-  apiKey: "AIzaSy...",
-  authDomain: "ukasa1.firebaseapp.com",
-  projectId: "ukasa1"
-};
+// 🔔 mesaj efekti
+setInterval(() => {
+    const box = document.getElementById("alertBox");
+    box.style.display = "block";
+    setTimeout(() => box.style.display = "none", 3000);
+}, 15000);
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+// veri çekme
+async function loadData() {
+    const res = await fetch(SHEET_URL);
+    const text = await res.text();
 
-let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase();
-let seciliKisi = kullanici;
-let tumData = [];
+    const rows = text.split("\\n").map(r => r.split(","));
+    const headers = rows[0];
 
-/* 🔥 GOOGLE SHEETS */
-fetch("https://script.google.com/macros/s/AKfycbxODlNf0yl2oAtkd5oMw1ghWavKSOO8TmT81uAUN8Oiqbj8yzx81x7iRexwcAHo7ecv4g/exec")
-.then(res => res.json())
-.then(data => {
-
-    tumData = data.filter(x => x.isim && x.isim.trim() !== "");
-
-    /* 🔥 ADMIN MI */
-    if(kullanici === "admin"){
-        document.getElementById("adminSec").style.display = "block";
-
-        let select = document.getElementById("kisiSelect");
-
-        tumData.forEach(k => {
-            let opt = document.createElement("option");
-            opt.value = k.isim.toLowerCase();
-            opt.innerText = k.isim;
-            select.appendChild(opt);
-        });
-
-        select.onchange = () => {
-            seciliKisi = select.value;
-            goster();
-        };
-
-        seciliKisi = tumData[0]?.isim.toLowerCase();
-    }
-
-    goster();
-});
-
-/* 🔥 GÖSTER */
-function goster(){
-
-    let kisi = tumData.find(x =>
-        x.isim.toLowerCase() === seciliKisi
-    );
-
-    if(!kisi){
-        document.getElementById("bilgi").innerHTML = "Veri yok ❌";
-        return;
-    }
-
-    let puan = Number(kisi.kpuan || 0);
-
-    let durum = puan >= 80 ? "iyi" : puan >= 50 ? "orta" : "kotu";
-
-    document.getElementById("bilgi").innerHTML = `
-        <div class="kart">
-            <h2>${kisi.isim}</h2>
-            <p>Departman: ${kisi.departman || "-"}</p>
-            <p>Fiş: ${kisi.fis || "-"}</p>
-            <p>Kpuan: <b class="${durum}">${puan}</b></p>
-
-            <div class="bar">
-                <div class="bar-inner" style="width:${puan}%"></div>
-            </div>
-        </div>
-    `;
-
-    /* 🔥 TOP 3 */
-    let top3 = [...tumData]
-        .sort((a,b)=>(b.kpuan||0)-(a.kpuan||0))
-        .slice(0,3);
-
-    document.getElementById("lider").innerHTML = `
-        <div class="kart">
-        🏆 En İyi 3<br>
-        ${top3.map((x,i)=>`${i+1}. ${x.isim} (${x.kpuan})`).join("<br>")}
-        </div>
-    `;
-}
-
-/* 📩 MESAJ */
-const mesajRef = doc(db, "mesajlar", kullanici);
-
-onSnapshot(mesajRef, (snap)=>{
-
-    if(!snap.exists()) return;
-
-    let data = snap.data().liste || [];
-
-    let div = document.getElementById("mesajAlani");
-    let sayac = document.getElementById("sayac");
-
-    div.innerHTML = "";
-
-    let okunmamis = 0;
-
-    data.slice().reverse().forEach((m,index)=>{
-
-        let realIndex = data.length - 1 - index;
-
-        if(!m.okundu) okunmamis++;
-
-        let d = document.createElement("div");
-        d.className = "kart " + (!m.okundu ? "yeniMesaj" : "");
-
-        d.innerHTML = `
-            <p>${m.text}</p>
-            <small>${new Date(m.tarih).toLocaleString()}</small><br>
-            ${!m.okundu ? `<button onclick="okunduYap(${realIndex})">✔</button>` : ""}
-            <button onclick="silMesaj(${realIndex})">🗑️</button>
-        `;
-
-        div.appendChild(d);
+    return rows.slice(1).map(row => {
+        let obj = {};
+        headers.forEach((h,i)=> obj[h.trim()] = row[i]);
+        return obj;
     });
-
-    sayac.innerText = okunmamis > 0 ? okunmamis : "";
-});
-
-/* MESAJ FONKSİYON */
-window.okunduYap = async function(i){
-    let snap = await getDoc(mesajRef);
-    let liste = snap.data().liste;
-    liste[i].okundu = true;
-    await setDoc(mesajRef,{liste});
 }
 
-window.silMesaj = async function(i){
-    let snap = await getDoc(mesajRef);
-    let liste = snap.data().liste;
-    liste.splice(i,1);
-    await setDoc(mesajRef,{liste});
+let allData = [];
+
+loadData().then(d => allData = d);
+
+// render
+function render() {
+    const name = document.getElementById("myName").value.toLowerCase();
+    const kisi = allData.find(x => x.isim?.toLowerCase() === name);
+
+    if (!kisi) return;
+
+    const avg = allData.reduce((a,b)=>a+Number(b.kpuan||0),0)/allData.length;
+
+    document.getElementById("kart").innerHTML = `
+    <div class="kart">
+        <h2>${kisi.isim}</h2>
+
+        <p>🏢 Departman: <b>${kisi.departman || "-"}</b></p>
+        <p>🆔 Sicil: <b>${kisi.sicil || "-"}</b></p>
+        <p>🧾 Fiş Sayısı: <b>${kisi.fis || "-"}</b></p>
+        <p>📊 Satır Sayısı: <b>${kisi.satirSayisi || "-"}</b></p>
+        <p>⏱️ Fiş Başı Süre: <b>${kisi.fisBasiSure || "-"}</b></p>
+        <p>⭐ Kpuan: <b class="${kisi.kpuan>=avg?'high':'low'}">${kisi.kpuan || "-"}</b></p>
+
+        <p>📈 Ortalama: <b>${avg.toFixed(1)}</b></p>
+    </div>
+    `;
+
+    drawChart(kisi, avg);
 }
 
-window.tumunuSil = async function(){
-    await setDoc(mesajRef,{liste:[]});
+// grafik
+function drawChart(kisi, avg){
+    new Chart(document.getElementById('grafik'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Sen', 'Ortalama'],
+            datasets: [{
+                data: [Number(kisi.kpuan), avg]
+            }]
+        }
+    });
 }
 
-window.okunanlariSil = async function(){
-    let snap = await getDoc(mesajRef);
-    let liste = snap.data().liste.filter(x=>!x.okundu);
-    await setDoc(mesajRef,{liste});
-}
+document.getElementById("myName").addEventListener("input", render);
 
 </script>
 
