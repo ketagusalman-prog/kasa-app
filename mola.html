@@ -1,212 +1,267 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mola Sistemi</title>
 
 <style>
+
+/* 🔥 GENEL */
 body {
     margin:0;
-    font-family:Arial;
-    background:#0b1020;
-    color:white;
+    background:linear-gradient(135deg,#0f172a,#020617);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    font-family:"Segoe UI";
 }
 
-/* GENEL */
-.container {
+/* 📱 TELEFON */
+.phone {
+    width:390px;
+    height:800px;
+    background:black;
+    border-radius:35px;
     padding:10px;
+    box-shadow:0 0 40px rgba(0,0,0,0.8);
+}
+
+.app {
+    width:100%;
+    height:100%;
+    background:#020617;
+    border-radius:25px;
+    overflow-y:auto;
+    color:white;
+    padding:15px;
+}
+
+/* 🔝 ÜST BAR */
+.topbar {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+}
+
+.topbar button {
+    width:auto;
+    padding:6px 10px;
 }
 
 /* BAŞLIK */
-h2 {
-    text-align:center;
-    margin:10px 0;
-}
-
-/* BLOKLAR */
-.grup {
-    background:#1f2937;
-    margin:10px 0;
-    padding:10px;
-    border-radius:12px;
-}
-
-.grup h3 {
-    margin:5px 0;
-}
-
-/* KUTULAR */
-.kutu {
-    background:#111827;
-    padding:10px;
-    border-radius:10px;
-    margin:6px 0;
-}
-
-/* BÜYÜK SAYAÇ */
-.sayac {
-    position:fixed;
-    bottom:0;
-    width:100%;
-    background:black;
-    text-align:center;
-    font-size:40px;
+.baslik {
+    margin-top:15px;
+    font-size:16px;
     font-weight:bold;
-    padding:15px;
-    color:#22c55e;
+    color:#FFD700;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+/* GRID */
+.grid {
+    display:grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap:8px;
+}
+
+/* BLOK */
+.blok {
+    background:#1e293b;
+    padding:8px;
+    border-radius:12px;
+    border:1px solid #334155;
+    position:relative;
 }
 
 /* AKTİF */
 .aktif {
-    background:#ff0000 !important;
+    background:#8B0000 !important;
+    box-shadow:0 0 10px red,0 0 20px red;
 }
+
+/* BİTTİ */
+.bitti {
+    background:#166534 !important;
+    box-shadow:0 0 10px lime,0 0 20px lime;
+}
+
+h4 {
+    margin:5px 0;
+    font-size:13px;
+    color:#38bdf8;
+}
+
+/* INPUT */
+input {
+    padding:6px;
+    margin:3px;
+    border-radius:8px;
+    border:none;
+    font-size:12px;
+    font-weight:bold;
+}
+
+input:disabled {
+    background:#444;
+    color:#fff;
+}
+
+.kisiInput { width:90%; }
+.sureInput { width:50px; }
+
+/* BUTON */
+button {
+    padding:10px;
+    margin:5px;
+    border-radius:10px;
+    border:none;
+    background:#4CAF50;
+    color:white;
+    font-weight:bold;
+    width:100%;
+}
+
+/* ALT BUTON */
+.altBtn {
+    display:flex;
+    gap:5px;
+}
+
+.altBtn button {
+    flex:1;
+}
+
+/* 🔥 BÜYÜK SAYAÇ */
+.buyukSayac {
+    position:sticky;
+    bottom:0;
+    width:100%;
+    background:black;
+    text-align:center;
+    font-size:32px;
+    font-weight:bold;
+    padding:12px;
+    color:#22c55e;
+    border-top:2px solid #334155;
+}
+
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="phone">
+<div class="app">
 
-<h2>☕ Çay Molası</h2>
-<div id="cay"></div>
-
-<h2>🍽 Yemek Molası</h2>
-<div id="yemek"></div>
-
-<h2>💤 Son Mola</h2>
-<div id="son"></div>
-
+<div class="topbar">
+    <h3>☕ Mola</h3>
+    <div>
+        <button onclick="window.location.href='index.html'">⬅️</button>
+        <button onclick="window.location.href='kisisel.html'">👤</button>
+    </div>
 </div>
 
-<div class="sayac" id="sayac">--:--</div>
+<div id="alan"></div>
+
+<!-- 🔥 BÜYÜK SAYAÇ -->
+<div id="buyukSayac" class="buyukSayac">--:--</div>
+
+<div class="altBtn">
+<button id="kaydetBtn" onclick="kaydet()" style="display:none;">Kaydet</button>
+<button id="kaydirBtn" onclick="kaydir()" style="display:none;">Kaydır</button>
+</div>
+
+</div>
+</div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-const app = initializeApp({
-  apiKey:"AIzaSy...",
-  authDomain:"ukasa1.firebaseapp.com",
-  projectId:"ukasa1"
-});
+const firebaseConfig = {
+  apiKey: "AIzaSy...",
+  authDomain: "ukasa1.firebaseapp.com",
+  projectId: "ukasa1"
+};
 
+const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* AKTİF KULLANICI */
-let aktifKullanici = localStorage.getItem("kullanici");
+let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase().trim();
+let adminMi = (kullanici === "admin");
 
-/* MOLA DATA */
-let molaData = {};
-onSnapshot(doc(db,"kasa","mola"), snap=>{
-    molaData = snap.exists()?snap.data().data:{};
-    ciz();
+kaydetBtn.style.display = adminMi ? "block" : "none";
+kaydirBtn.style.display = adminMi ? "block" : "none";
+
+let alan = document.getElementById("alan");
+let state = {};
+
+onSnapshot(doc(db,"kasa","mola"), (snap)=>{
+    state = snap.exists()?snap.data().data:{};
+
+    alan.innerHTML="";
+
+    alan.appendChild(baslik("caySure","☕ Çay Molası"));
+    alan.appendChild(grid("cay",4,"caySure"));
+
+    alan.appendChild(baslik("yemekSure","🍽️ Yemek Molası"));
+    alan.appendChild(grid("yemek",4,"yemekSure"));
+
+    alan.appendChild(baslik("sonSure","🕓 Son Mola"));
+    alan.appendChild(grid("son",4,"sonSure"));
 });
 
-/* ÇİZ */
-function ciz(){
+/* 🔥 BÜYÜK SAYAÇ */
+setInterval(()=>{
 
-    ["cay","yemek","son"].forEach(tip=>{
-        let div = document.getElementById(tip);
-        div.innerHTML="";
+    let aktif=null;
 
+    ["cay","yemek","son"].forEach(g=>{
         for(let i=1;i<=4;i++){
 
-            let key = tip+i;
-            let data = molaData[key] || {};
+            let key=g+i;
+            let d=state[key];
+            if(!d || !d.saat) continue;
 
-            let box = document.createElement("div");
-            box.className="kutu";
+            let kisiler=(d.kisiler||[]).map(x=>x.toLowerCase());
 
-            let kisiler = (data.kisiler || []).join(", ");
-            let saat = data.saat || "--:--";
+            if(!kisiler.includes(kullanici)) continue;
 
-            box.innerHTML = `
-                <b>${tip.toUpperCase()} ${i}</b><br>
-                🕒 ${saat}<br>
-                👤 ${kisiler}
-            `;
+            let [h,m]=d.saat.split(":");
 
-            /* AKTİF MOLA */
-            if(kisiler.toLowerCase().includes((aktifKullanici||"").toLowerCase())){
-                if(aktifMi(saat, tip)){
-                    box.classList.add("aktif");
-                }
-            }
+            let now=new Date();
+            let hedef=new Date();
+            hedef.setHours(h,m,0);
 
-            div.appendChild(box);
-        }
-    });
+            let sure=(state[g+"Sure"]?.sure||15)*60;
+            let fark=(hedef-now)/1000;
 
-    sayacBaslat();
-}
-
-/* AKTİF KONTROL */
-function aktifMi(saat, tip){
-    if(!saat) return false;
-
-    let now = new Date();
-    let [h,m]=saat.split(":");
-
-    let hedef=new Date();
-    hedef.setHours(h,m,0);
-
-    let sure=(molaData[tip+"Sure"]?.sure||15)*60;
-    let fark=(hedef-now)/1000;
-
-    return fark<=0 && fark>-sure;
-}
-
-/* SAYAÇ */
-function sayacBaslat(){
-
-    let aktifSaat=null;
-    let aktifSure=0;
-
-    ["cay","yemek","son"].forEach(tip=>{
-        for(let i=1;i<=4;i++){
-            let key=tip+i;
-            let data=molaData[key];
-
-            if(!data) continue;
-
-            let kisiler=(data.kisiler||[]);
-            if(!kisiler.map(x=>x.toLowerCase()).includes((aktifKullanici||"").toLowerCase())) continue;
-
-            let saat=data.saat;
-            if(!saat) continue;
-
-            if(aktifMi(saat,tip)){
-                aktifSaat=saat;
-                aktifSure=(molaData[tip+"Sure"]?.sure||15)*60;
+            if(fark<=0 && fark>-sure){
+                aktif={hedef,sure};
             }
         }
     });
 
-    if(!aktifSaat){
-        document.getElementById("sayac").innerText="--:--";
+    if(!aktif){
+        buyukSayac.innerText="--:--";
         return;
     }
 
-    setInterval(()=>{
-        let now=new Date();
-        let [h,m]=aktifSaat.split(":");
+    let kalan=Math.max(0,aktif.sure - ((new Date()-aktif.hedef)/1000));
 
-        let hedef=new Date();
-        hedef.setHours(h,m,0);
+    let dk=Math.floor(kalan/60);
+    let sn=Math.floor(kalan%60);
 
-        let gecen=(now-hedef)/1000;
-        let kalan=Math.max(0,aktifSure-gecen);
+    buyukSayac.innerText =
+        String(dk).padStart(2,"0")+":"+String(sn).padStart(2,"0");
 
-        let dk=Math.floor(kalan/60);
-        let sn=Math.floor(kalan%60);
-
-        document.getElementById("sayac").innerText =
-            String(dk).padStart(2,"0")+":"+String(sn).padStart(2,"0");
-
-    },1000);
-}
+},1000);
 
 </script>
 
