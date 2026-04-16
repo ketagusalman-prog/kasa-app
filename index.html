@@ -33,6 +33,18 @@ body {
     position:relative;
 }
 
+/* 🔥 YENİ: KASA KIRMIZI */
+.kasa.aktif {
+    box-shadow: 0 0 15px red, 0 0 25px red;
+    border:2px solid red;
+}
+
+/* 🔥 YENİ: YAKLAŞIYOR */
+.kasa.yaklasiyorBox {
+    box-shadow: 0 0 15px orange, 0 0 25px orange;
+    border:2px solid orange;
+}
+
 .sayac {
     position:absolute;
     top:-8px;
@@ -50,11 +62,13 @@ body {
     100% { background:#8B0000; }
 }
 
+/* 🔥 INPUT MOLADA */
 input.molada {
     animation: yanipSonme 1s infinite;
     color:#fff;
 }
 
+/* 🔥 YAKLAŞIYOR */
 input.yaklasiyor {
     background:orange !important;
     color:black !important;
@@ -139,8 +153,15 @@ function olustur(){
     let d=molaDurumu(kisi);
 
     if(d){
-        if(d.durum==="molada") input.classList.add("molada");
-        if(d.durum==="yaklasiyor") input.classList.add("yaklasiyor");
+        if(d.durum==="molada"){
+            input.classList.add("molada");
+            div.classList.add("aktif"); // 🔥 KASA KIRMIZI
+        }
+
+        if(d.durum==="yaklasiyor"){
+            input.classList.add("yaklasiyor");
+            div.classList.add("yaklasiyorBox"); // 🔥 TURUNCU
+        }
 
         let s=document.createElement("div");
         s.className="sayac";
