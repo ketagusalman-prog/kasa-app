@@ -1,255 +1,168 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>Kişisel Panel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kişisel Performans Paneli</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 body {
-    font-family: 'Segoe UI', Arial;
-    background:#0f172a;
-    color:white;
-    margin:0;
+    margin: 0;
+    font-family: "Segoe UI", Arial;
+    background: #0f172a;
+    color: white;
 }
 
-/* HEADER */
-.header {
-    background:#1e293b;
-    padding:15px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    box-shadow:0 2px 10px rgba(0,0,0,0.5);
+/* üst bar */
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
 }
 
-#sayac {
-    background:red;
-    padding:5px 10px;
-    border-radius:50%;
+/* mesaj animasyon */
+.alert {
+    background: red;
+    padding: 10px 20px;
+    border-radius: 10px;
+    animation: blink 1s infinite;
+}
+@keyframes blink {
+    0% {opacity:1;}
+    50% {opacity:0.3;}
+    100% {opacity:1;}
 }
 
-/* CONTAINER */
 .container {
-    max-width:700px;
-    margin:20px auto;
-    padding:10px;
+    padding: 20px;
 }
 
-/* KART */
+/* kart */
 .kart {
-    background:#1e293b;
-    padding:18px;
-    margin:12px 0;
-    border-radius:14px;
-    box-shadow:0 4px 15px rgba(0,0,0,0.4);
+    background: #1e293b;
+    padding: 25px;
+    border-radius: 20px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+    max-width: 400px;
+    margin-bottom: 20px;
+    animation: fadeIn 0.7s ease;
 }
 
-/* DURUM RENK */
-.iyi { color:#22c55e; }
-.orta { color:#facc15; }
-.kotu { color:#ef4444; }
-
-/* PROGRESS */
-.bar {
-    height:8px;
-    background:#334155;
-    border-radius:10px;
-    overflow:hidden;
-    margin-top:8px;
-}
-.bar-inner {
-    height:100%;
-    background:#22c55e;
+@keyframes fadeIn {
+    from {opacity:0; transform: translateY(20px);}
+    to {opacity:1; transform: translateY(0);}
 }
 
-/* MESAJ */
-.yeniMesaj {
-    border-left:5px solid red;
+p {
+    display: flex;
+    justify-content: space-between;
+    margin: 8px 0;
 }
 
-/* BUTON */
-button {
-    padding:8px 12px;
-    margin:5px;
-    border:none;
-    border-radius:8px;
-    background:#4CAF50;
-    color:white;
-    cursor:pointer;
-}
+.high { color: #22c55e; }
+.low { color: #ef4444; }
 
-/* BİLDİRİM */
-.bildirim {
-    position:fixed;
-    top:20px;
-    right:20px;
-    background:#4CAF50;
-    padding:10px 15px;
-    border-radius:10px;
-    display:none;
+input {
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    margin-bottom: 15px;
+    width: 250px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="header">
-    👤 Kişisel Panel
-    <span id="sayac"></span>
+<div class="topbar">
+    <h2>⚡ Kişisel Panel</h2>
+    <div id="alertBox" class="alert" style="display:none;">Yeni Mesaj!</div>
 </div>
 
 <div class="container">
 
-<div id="bilgi"></div>
+<input type="text" id="myName" placeholder="İsmini yaz...">
 
-<div id="lider"></div>
-
-<h3>📩 Mesajlar</h3>
-
-<div>
-<button onclick="tumunuSil()">🧹 Tümünü Sil</button>
-<button onclick="okunanlariSil()">✔ Okunanları Temizle</button>
-</div>
-
-<div id="mesajAlani"></div>
+<div id="kart"></div>
+<canvas id="grafik"></canvas>
 
 </div>
 
-<div id="bildirim" class="bildirim">Yeni mesaj var!</div>
+<script>
 
-<script type="module">
+// 🔴 BURAYA GOOGLE SHEET CSV LİNKİNİ KOY
+const SHEET_URL = "BURAYA_YAPIŞTIR";
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+// mesaj animasyonu
+setInterval(() => {
+    const box = document.getElementById("alertBox");
+    box.style.display = "block";
+    setTimeout(() => box.style.display = "none", 3000);
+}, 15000);
 
-const firebaseConfig = {
-  apiKey: "AIzaSy...",
-  authDomain: "ukasa1.firebaseapp.com",
-  projectId: "ukasa1"
-};
+// CSV parse
+async function loadData() {
+    const res = await fetch(SHEET_URL);
+    const text = await res.text();
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+    const rows = text.split("\\n").map(r => r.split(","));
 
-let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase().trim();
+    const headers = rows[0];
 
-/* 🔥 GOOGLE SHEETS */
-fetch("https://script.google.com/macros/s/AKfycbxODlNf0yl2oAtkd5oMw1ghWavKSOO8TmT81uAUN8Oiqbj8yzx81x7iRexwcAHo7ecv4g/exec")
-.then(res => res.json())
-.then(data => {
-
-    let temiz = data.filter(x => x.isim && x.isim.trim() !== "");
-
-    /* 🔥 TOP 3 */
-    let top3 = [...temiz].sort((a,b)=>(b.kpuan||0)-(a.kpuan||0)).slice(0,3);
-
-    document.getElementById("lider").innerHTML = `
-        <div class="kart">
-            🏆 En İyi 3<br>
-            ${top3.map((x,i)=>`${i+1}. ${x.isim} (${x.kpuan})`).join("<br>")}
-        </div>
-    `;
-
-    let kisi = temiz.find(x =>
-        x.isim.toLowerCase().trim() === kullanici
-    );
-
-    if(!kisi){
-        document.getElementById("bilgi").innerHTML = "Veri bulunamadı ❌";
-        return;
-    }
-
-    let puan = Number(kisi.kpuan || 0);
-
-    let durum = puan >= 80 ? "iyi" : puan >= 50 ? "orta" : "kotu";
-    let durumText = puan >= 80 ? "İyi" : puan >= 50 ? "Orta" : "Düşük";
-
-    document.getElementById("bilgi").innerHTML = `
-        <div class="kart">
-            <h2>${kisi.isim}</h2>
-            <p>Departman: ${kisi.departman || "-"}</p>
-            <p>Fiş: ${kisi.fis || "-"}</p>
-            <p>Kpuan: <b class="${durum}">${puan}</b></p>
-            <p>Durum: <b class="${durum}">${durumText}</b></p>
-
-            <div class="bar">
-                <div class="bar-inner" style="width:${puan}%"></div>
-            </div>
-        </div>
-    `;
-});
-
-/* 📩 MESAJ (DEĞİŞMEDİ) */
-const mesajRef = doc(db, "mesajlar", kullanici);
-
-onSnapshot(mesajRef, (snap)=>{
-
-    if(!snap.exists()) return;
-
-    let data = snap.data().liste || [];
-
-    let div = document.getElementById("mesajAlani");
-    let sayac = document.getElementById("sayac");
-
-    div.innerHTML = "";
-
-    let okunmamis = 0;
-
-    data.slice().reverse().forEach((m,index)=>{
-
-        let realIndex = data.length - 1 - index;
-
-        if(!m.okundu) okunmamis++;
-
-        let d = document.createElement("div");
-        d.className = "kart " + (!m.okundu ? "yeniMesaj" : "");
-
-        d.innerHTML = `
-            <p>${m.text}</p>
-            <small>${new Date(m.tarih).toLocaleString()}</small><br>
-            ${!m.okundu ? `<button onclick="okunduYap(${realIndex})">✔ Okundu</button>` : ""}
-            <button onclick="silMesaj(${realIndex})">🗑️ Sil</button>
-        `;
-
-        div.appendChild(d);
+    const data = rows.slice(1).map(row => {
+        let obj = {};
+        headers.forEach((h,i) => obj[h.trim()] = row[i]);
+        return obj;
     });
 
-    sayac.innerText = okunmamis > 0 ? okunmamis : "";
+    return data;
+}
 
-    if(okunmamis > 0){
-        let b = document.getElementById("bildirim");
-        b.style.display = "block";
-        setTimeout(()=> b.style.display="none", 3000);
-    }
+let allData = [];
 
+loadData().then(d => {
+    allData = d;
 });
 
-/* MESAJ FONKSİYONLARI */
-window.okunduYap = async function(index){
-    let snap = await getDoc(mesajRef);
-    let liste = snap.data().liste || [];
-    liste[index].okundu = true;
-    await setDoc(mesajRef, {liste});
+// render
+function render() {
+    const name = document.getElementById("myName").value.toLowerCase();
+
+    const me = allData.find(x => x.isim?.toLowerCase() === name);
+
+    if (!me) return;
+
+    const avg = allData.reduce((a,b)=>a + Number(b.kpuan || 0),0) / allData.length;
+
+    document.getElementById("kart").innerHTML = `
+    <div class="kart">
+        <h2>${me.isim}</h2>
+        <p><span>Departman</span><b>${me.departman}</b></p>
+        <p><span>Sicil</span><b>${me.sicil}</b></p>
+        <p><span>Fiş</span><b>${me.fis}</b></p>
+        <p><span>Kpuan</span><b class="${me.kpuan>=avg?'high':'low'}">${me.kpuan}</b></p>
+        <p><span>Ortalama</span><b>${avg.toFixed(1)}</b></p>
+    </div>`;
+
+    drawChart(me, avg);
 }
 
-window.silMesaj = async function(index){
-    let snap = await getDoc(mesajRef);
-    let liste = snap.data().liste || [];
-    let yeniListe = liste.filter((_, i) => i !== index);
-    await setDoc(mesajRef, {liste: yeniListe});
+function drawChart(me, avg){
+    new Chart(document.getElementById('grafik'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Sen', 'Ortalama'],
+            datasets: [{
+                data: [Number(me.kpuan), avg]
+            }]
+        }
+    });
 }
 
-window.tumunuSil = async function(){
-    if(!confirm("Tüm mesajlar silinsin mi?")) return;
-    await setDoc(mesajRef, {liste: []});
-}
-
-window.okunanlariSil = async function(){
-    let snap = await getDoc(mesajRef);
-    let liste = snap.data().liste || [];
-    let filtre = liste.filter(m => !m.okundu);
-    await setDoc(mesajRef, {liste: filtre});
-}
+// input dinle
+document.getElementById("myName").addEventListener("input", render);
 
 </script>
 
