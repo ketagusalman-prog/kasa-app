@@ -180,7 +180,7 @@ button {
 </div>
 </div>
 
-<!-- 🔥 EKLENEN BÜYÜK SAYAÇ -->
+<!-- 🔥 EKLENDİ -->
 <div id="buyukSayac" class="buyukSayac">--:--</div>
 
 <script type="module">
@@ -351,53 +351,64 @@ function blok(key,sureKey){
     return b;
 }
 
-/* 🔥 BÜYÜK SAYAÇ */
+/* 🔥 SADECE OKUYAN BÜYÜK SAYAÇ */
 setInterval(()=>{
 
-    let bulundu = false;
+    let aktifBlok = document.querySelector(".blok.aktif");
 
-    ["cay","yemek","son"].forEach(g=>{
-        for(let i=1;i<=4;i++){
+    if(!aktifBlok){
+        document.getElementById("buyukSayac").innerText="--:--";
+        return;
+    }
 
-            let key = g+i;
-            let d = state[key];
+    let sayac = aktifBlok.querySelector("div");
 
-            if(!d || !d.saat) continue;
+    if(!sayac){
+        document.getElementById("buyukSayac").innerText="--:--";
+        return;
+    }
 
-            let kisiler = (d.kisiler||[]).map(x=>x.toLowerCase());
-            if(!kisiler.includes(kullanici)) continue;
+    let text = sayac.innerText;
 
-            let dk = parseInt(state[g+"Sure"]?.sure || 15);
-            let sure = dk*60;
+    if(!text){
+        document.getElementById("buyukSayac").innerText="--:--";
+        return;
+    }
 
-            let now = new Date();
-            let [h,m]=d.saat.split(":");
+    let temiz = text.replace("Mola:", "").trim();
 
-            let hedef=new Date();
-            hedef.setHours(h,m,0);
+    document.getElementById("buyukSayac").innerText = temiz;
 
-            let fark = Math.floor((hedef-now)/1000);
+},500);
 
-            if(fark<=0 && fark>-sure){
+window.kaydir = function(){
+    if(!adminMi){ alert("Sadece admin!"); return; }
 
-                let kalan = sure + fark;
+    ["cay","yemek","son"].forEach(grup=>{
+        let kisilerList = [
+            state[grup+"1"]?.kisiler || [],
+            state[grup+"2"]?.kisiler || [],
+            state[grup+"3"]?.kisiler || []
+        ];
 
-                let dakika = Math.floor(kalan/60);
-                let saniye = kalan % 60;
+        let son = kisilerList.pop();
+        kisilerList.unshift(son);
 
-                document.getElementById("buyukSayac").innerText =
-                    dakika + "dk " + saniye + "sn";
-
-                bulundu = true;
-            }
+        for(let i=1;i<=3;i++){
+            state[grup+i] = state[grup+i] || {};
+            state[grup+i].kisiler = kisilerList[i-1];
         }
     });
 
-    if(!bulundu){
-        document.getElementById("buyukSayac").innerText="--:--";
-    }
+    alan.innerHTML="";
+}
 
-},1000);
+window.kaydet = async function(){
+    if(!adminMi){ alert("Sadece admin!"); return; }
+
+    await setDoc(doc(db,"kasa","mola"),{data:state});
+    alert("Kaydedildi");
+}
 
 </script>
 
