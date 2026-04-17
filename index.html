@@ -127,7 +127,6 @@ body.girisYapildi #imza{display:none;}
 </div>
 
 <div id="buyukSayac">--:--</div>
-
 <div id="imza">Developed by Umut SALMAN</div>
 
 <script type="module">
@@ -148,6 +147,7 @@ let personeller=[];
 let adminMi=false;
 let alan=document.getElementById("alan");
 let inputs=[];
+let molaData={};
 
 /* PERSONEL */
 onSnapshot(doc(db,"kasa","personel"),snap=>{
@@ -156,12 +156,11 @@ listeGoster();
 });
 
 /* MOLA */
-let molaData={};
 onSnapshot(doc(db,"kasa","mola"),snap=>{
 molaData=snap.exists()?snap.data().data:{};
 });
 
-/* 🔥 TEK SNAPSHOT (DÜZELTME) */
+/* LİSTE */
 onSnapshot(doc(db,"kasa","liste"),snap=>{
 let kayit=snap.exists()?snap.data().data:{};
 render(kayit);
@@ -264,74 +263,69 @@ if(kisiler.map(x=>x.toLowerCase()).includes(isim.toLowerCase())) return true;
 return false;
 }
 
-/* ADMIN */
-window.kaydet=async function(){
-let data={};
-for(let i=0;i<inputs.length;i+=2){
-data["kasa"+(i/2+1)]={sol:inputs[i].value,sag:inputs[i+1].value};
-}
-await setDoc(doc(db,"kasa","liste"),{data});
-}
+/* 🔥 SAYAÇ (ÇALIŞAN) */
+setInterval(()=>{
 
-window.kaydir=async function(){
-let yeni=[];
-for(let i=0;i<inputs.length;i+=2){
-yeni.push({sol:inputs[i].value,sag:inputs[i+1].value});
-}
-let son=yeni.pop();
-yeni.unshift(son);
+let aktifIsimler=[];
 
-yeni.forEach((k,i)=>{
-inputs[i*2].value=k.sol;
-inputs[i*2+1].value=k.sag;
+document.querySelectorAll("#alan input").forEach(inp=>{
+if(inp.classList.contains("molada") && inp.value){
+aktifIsimler.push(inp.value);
+}
 });
 
-let data={};
-yeni.forEach((k,i)=>data["kasa"+(i+1)]=k);
-await setDoc(doc(db,"kasa","liste"),{data});
+if(aktifIsimler.length===0){
+buyukSayac.innerText="--:--";
+return;
 }
 
-window.degistir=async function(){
-let yeni=[];
-for(let i=0;i<inputs.length;i+=2){
-yeni.push({sol:inputs[i].value,sag:inputs[i+1].value});
+let now=new Date();
+let enKucuk=999999;
+let secilen="--:--";
+
+["cay","yemek","son"].forEach(g=>{
+for(let i=1;i<=4;i++){
+
+let key=g+i;
+let saat=molaData[key]?.saat;
+let kisiler=molaData[key]?.kisiler||[];
+
+if(!saat) continue;
+
+let varMi=kisiler.some(k =>
+aktifIsimler.some(a => a.toLowerCase()===k.toLowerCase())
+);
+
+if(!varMi) continue;
+
+let [h,m]=saat.split(":");
+let hedef=new Date();
+hedef.setHours(h,m,0);
+
+let sure=(molaData[g+"Sure"]?.sure||15)*60;
+let fark=Math.floor((hedef-now)/1000);
+
+if(fark>43200){
+hedef.setDate(hedef.getDate()-1);
+fark=Math.floor((hedef-now)/1000);
 }
 
-yeni.forEach(k=>[k.sol,k.sag]=[k.sag,k.sol]);
+if(fark<=0 && fark>-sure){
+let kalan=sure+fark;
 
-yeni.forEach((k,i)=>{
-inputs[i*2].value=k.sol;
-inputs[i*2+1].value=k.sag;
+if(kalan<enKucuk){
+enKucuk=kalan;
+let d=Math.floor(kalan/60);
+let s=kalan%60;
+secilen=d+"dk "+s+"sn";
+}
+}
+}
 });
 
-let data={};
-yeni.forEach((k,i)=>data["kasa"+(i+1)]=k);
-await setDoc(doc(db,"kasa","liste"),{data});
-}
+buyukSayac.innerText=secilen;
 
-/* PERSONEL */
-window.panelToggle=function(){
-panel.classList.toggle("acik");
-}
-
-window.ekle=async function(){
-personeller.push({k:yeniK.value,s:yeniS.value});
-await setDoc(doc(db,"kasa","personel"),{liste:personeller});
-}
-
-function listeGoster(){
-liste.innerHTML="";
-personeller.forEach((p,i)=>{
-let d=document.createElement("div");
-d.innerHTML=p.k+" <button onclick='sil("+i+")'>❌</button>";
-liste.appendChild(d);
-});
-}
-
-window.sil=async function(i){
-personeller.splice(i,1);
-await setDoc(doc(db,"kasa","personel"),{liste:personeller});
-}
+},1000);
 
 </script>
 
