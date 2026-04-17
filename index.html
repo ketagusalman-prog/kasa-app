@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <title>Kasa Sistem</title>
 
 <style>
@@ -20,16 +19,6 @@ body.girisYapildi .tabbar{display:flex;}
 /* LOGIN */
 #login{height:100vh;display:flex;justify-content:center;align-items:center;}
 .loginCard{width:85%;background:#1f2937;padding:25px;border-radius:20px;}
-
-/* ✍️ İMZA (STABİL) */
-.imza{
-    margin-top:12px;
-    text-align:center;
-    font-family:cursive;
-    font-size:16px;
-    color:#6b7280;
-    opacity:0.8;
-}
 
 /* APP */
 #app{display:none;padding-top:60px;padding-bottom:70px;}
@@ -59,7 +48,7 @@ input.molada{animation:yanipSonme 1s infinite;color:white;}
 .panel{background:#1f2937;margin:10px;padding:10px;border-radius:12px;max-height:0;overflow:hidden;transition:0.3s;}
 .panel.acik{max-height:300px;overflow:auto;}
 
-/* 🔥 SAYAÇ FIX */
+/* 🔥 BÜYÜK SAYAÇ */
 #buyukSayac{
 position:fixed;
 bottom:80px;
@@ -73,11 +62,19 @@ font-size:22px;
 padding:10px;
 border-radius:12px;
 z-index:9999;
-display:none;
 }
 
-body.girisYapildi #buyukSayac{
-display:block;
+/* 🔥 İMZA */
+#imza{
+position:fixed;
+bottom:5px;
+right:10px;
+font-size:11px;
+color:#94a3b8;
+opacity:0.6;
+pointer-events:none;
+z-index:9999;
+user-select:none;
 }
 </style>
 </head>
@@ -89,16 +86,10 @@ display:block;
 <!-- LOGIN -->
 <div id="login">
 <div class="loginCard">
-
 <h2>Giriş</h2>
-
-<input id="kullanici" placeholder="Kullanıcı adı">
-<input id="sifre" type="password" placeholder="Şifre">
+<input id="kullanici">
+<input id="sifre" type="password">
 <button onclick="giris()">Giriş</button>
-
-<!-- ✍️ İMZA -->
-<div class="imza">Ümüt SALMAN</div>
-
 </div>
 </div>
 
@@ -134,6 +125,11 @@ display:block;
 
 <!-- 🔥 SAYAÇ -->
 <div id="buyukSayac">--:--</div>
+
+<!-- 🔥 İMZA -->
+<div id="imza">
+Developed by Umut SALMAN
+</div>
 
 <script type="module">
 
@@ -199,7 +195,6 @@ let kadin=["ayşe","fatma","zeynep","elif","buse"];
 return kadin.includes((isim||"").toLowerCase())?"kadin":"erkek";
 }
 
-/* 🔥 DÜZELTİLMİŞ MOLA */
 function moladaMi(isim){
 if(!isim)return false;
 
@@ -208,27 +203,22 @@ let gruplar=["cay","yemek","son"];
 
 for(let g of gruplar){
 for(let i=1;i<=4;i++){
-
 let key=g+i;
 let saat=molaData[key]?.saat;
 let kisiler=molaData[key]?.kisiler||[];
 
-if(!saat) continue;
-if(!kisiler.map(x=>x.toLowerCase()).includes(isim.toLowerCase())) continue;
+if(!saat)continue;
 
 let [h,m]=saat.split(":");
 let hedef=new Date();
 hedef.setHours(h,m,0);
 
-let sure;
-if(g==="yemek") sure=(molaData["yemekSure"]?.sure||45)*60;
-else if(g==="cay") sure=(molaData["caySure"]?.sure||15)*60;
-else sure=(molaData["sonSure"]?.sure||10)*60;
+let sure=(molaData[g+"Sure"]?.sure||15)*60;
+let fark=(hedef-now)/1000;
 
-let fark=(now - hedef)/1000;
-
-if(fark>=0 && fark<sure) return true;
-
+if(fark<=0 && fark>-sure){
+if(kisiler.map(x=>x.toLowerCase()).includes(isim.toLowerCase())) return true;
+}
 }
 }
 return false;
@@ -273,6 +263,65 @@ inputs.push(i1,i2);
 }
 });
 }
+
+/* 🔥 BÜYÜK SAYAÇ */
+setInterval(()=>{
+
+let aktifIsimler=[];
+
+document.querySelectorAll("input").forEach(inp=>{
+if(inp.classList.contains("molada") && inp.value){
+aktifIsimler.push(inp.value);
+}
+});
+
+if(aktifIsimler.length===0){
+buyukSayac.innerText="--:--";
+return;
+}
+
+let now=new Date();
+let enKucuk=999999;
+let secilen="--:--";
+
+let gruplar=["cay","yemek","son"];
+
+for(let g of gruplar){
+for(let i=1;i<=4;i++){
+
+let key=g+i;
+let saat=molaData[key]?.saat;
+let kisiler=molaData[key]?.kisiler||[];
+
+if(!saat)continue;
+
+let varMi=kisiler.some(k=>aktifIsimler.map(x=>x.toLowerCase()).includes(k.toLowerCase()));
+if(!varMi) continue;
+
+let [h,m]=saat.split(":");
+let hedef=new Date();
+hedef.setHours(h,m,0);
+
+let sure=(molaData[g+"Sure"]?.sure||15)*60;
+let fark=Math.floor((hedef-now)/1000);
+
+if(fark<=0 && fark>-sure){
+
+let kalan=sure+fark;
+
+if(kalan<enKucuk){
+enKucuk=kalan;
+let d=Math.floor(kalan/60);
+let s=kalan%60;
+secilen=d+"dk "+s+"sn";
+}
+}
+}
+}
+
+buyukSayac.innerText=secilen;
+
+},1000);
 
 </script>
 
