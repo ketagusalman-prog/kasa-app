@@ -18,7 +18,7 @@ body.girisYapildi .tabbar{display:flex;}
 
 /* LOGIN */
 #login{height:100vh;display:flex;justify-content:center;align-items:center;}
-.loginCard{width:85%;background:#1f2937;padding:25px;border-radius:20px;position:relative;}
+.loginCard{width:85%;background:#1f2937;padding:25px;border-radius:20px;}
 
 /* APP */
 #app{display:none;padding-top:60px;padding-bottom:70px;}
@@ -63,17 +63,6 @@ padding:10px;
 border-radius:12px;
 z-index:9999;
 }
-
-/* 🔥 İMZA (SADECE LOGIN) */
-.imza{
-position:absolute;
-bottom:10px;
-left:0;
-width:100%;
-text-align:center;
-font-size:12px;
-opacity:0.6;
-}
 </style>
 </head>
 
@@ -84,13 +73,16 @@ opacity:0.6;
 <!-- LOGIN -->
 <div id="login">
 <div class="loginCard">
+
+<!-- 🔥 SADECE BU EKLENDİ -->
+<div style="text-align:center; font-size:12px; opacity:0.6; margin-bottom:10px;">
+developed by umut SALMAN
+</div>
+
 <h2>Giriş</h2>
 <input id="kullanici">
 <input id="sifre" type="password">
 <button onclick="giris()">Giriş</button>
-
-<!-- 🔥 SADECE BU EKLENDİ -->
-<div class="imza">developed by umut SALMAN</div>
 
 </div>
 </div>
@@ -130,7 +122,7 @@ opacity:0.6;
 
 <script type="module">
 
-// ✅ BURASI SENİN ORİJİNAL KODUN (HİÇ DOKUNULMADI)
+// SENİN ORİJİNAL JS KODUN BURADA (DEĞİŞMEDİ)
 
 </script>
 
