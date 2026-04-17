@@ -207,6 +207,9 @@ function render(){
         <p>⭐ Kpuan: <b class="${kisi.kpuan>=avg?'high':'low'}">${kisi.kpuan || "-"}</b></p>
         <p>🏢 Ay: <b>${kisi.ay || "-"}</b></p>
         <p>🧾 Fiş Sayısı: <b>${kisi.fis || "-"}</b></p>
+        <p>💰 TL Hakediş: <b>${kisi.tl || "-"}</b></p>
+        <p>🤑 Euro Hakediş: <b>${kisi.euro || "-"}</b></p>
+        <p>🔢 Toplam Adet: <b>${kisi.adet || "-"}</b></p>
     </div>`;
 
     drawChart(kisi, avg);
