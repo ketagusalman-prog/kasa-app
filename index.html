@@ -6,9 +6,6 @@
 
 <title>Kasa Sistem</title>
 
-<!-- ✅ FONT (bozmaz versiyon) -->
-<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-
 <style>
 body { font-family: Arial; background:#0b1020; color:white; margin:0; }
 
@@ -26,13 +23,12 @@ body.girisYapildi .tabbar{display:flex;}
 
 /* ✍️ İMZA (STABİL) */
 .imza{
-    margin-top:10px;
+    margin-top:12px;
     text-align:center;
-    font-family:'Great Vibes', cursive;
-    font-size:18px;
-    color:#9ca3af;
-    opacity:0.7;
-    letter-spacing:1px;
+    font-family:cursive;
+    font-size:16px;
+    color:#6b7280;
+    opacity:0.8;
 }
 
 /* APP */
@@ -63,7 +59,7 @@ input.molada{animation:yanipSonme 1s infinite;color:white;}
 .panel{background:#1f2937;margin:10px;padding:10px;border-radius:12px;max-height:0;overflow:hidden;transition:0.3s;}
 .panel.acik{max-height:300px;overflow:auto;}
 
-/* 🔥 BÜYÜK SAYAÇ */
+/* 🔥 SAYAÇ FIX */
 #buyukSayac{
 position:fixed;
 bottom:80px;
@@ -77,6 +73,11 @@ font-size:22px;
 padding:10px;
 border-radius:12px;
 z-index:9999;
+display:none;
+}
+
+body.girisYapildi #buyukSayac{
+display:block;
 }
 </style>
 </head>
@@ -134,9 +135,145 @@ z-index:9999;
 <!-- 🔥 SAYAÇ -->
 <div id="buyukSayac">--:--</div>
 
-<!-- ⚠️ JS AYNI KALDI -->
 <script type="module">
-/* BURAYA SENİN MEVCUT JS KODUNU AYNI ŞEKİLDE KOY */
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const app = initializeApp({
+apiKey:"AIzaSy...",
+authDomain:"ukasa1.firebaseapp.com",
+projectId:"ukasa1"
+});
+
+const db = getFirestore(app);
+
+let admin={k:"admin",s:"1234"};
+let personeller=[];
+let adminMi=false;
+let alan=document.getElementById("alan");
+let inputs=[];
+
+/* PERSONEL */
+onSnapshot(doc(db,"kasa","personel"),snap=>{
+if(snap.exists()) personeller=snap.data().liste;
+listeGoster();
+});
+
+/* MOLA */
+let molaData={};
+onSnapshot(doc(db,"kasa","mola"),snap=>{
+molaData=snap.exists()?snap.data().data:{};
+olustur();
+});
+
+/* GİRİŞ */
+window.giris=function(){
+let k=kullanici.value.trim();
+let s=sifre.value.trim();
+
+localStorage.removeItem("kullanici");
+
+if(k===admin.k && s===admin.s){
+adminMi=true;
+mesajBtn.style.display="block";
+panelBtn.style.display="block";
+kaydetBtn.style.display="block";
+kaydirBtn.style.display="block";
+degistirBtn.style.display="block";
+}else{
+let bulundu=personeller.find(p=>p.k===k && p.s===s);
+if(!bulundu){alert("Hatalı giriş");return;}
+}
+
+localStorage.setItem("kullanici",k);
+document.body.classList.add("girisYapildi");
+login.style.display="none";
+
+olustur();
+}
+
+/* KASA */
+function cinsiyet(isim){
+let kadin=["ayşe","fatma","zeynep","elif","buse"];
+return kadin.includes((isim||"").toLowerCase())?"kadin":"erkek";
+}
+
+/* 🔥 DÜZELTİLMİŞ MOLA */
+function moladaMi(isim){
+if(!isim)return false;
+
+let now=new Date();
+let gruplar=["cay","yemek","son"];
+
+for(let g of gruplar){
+for(let i=1;i<=4;i++){
+
+let key=g+i;
+let saat=molaData[key]?.saat;
+let kisiler=molaData[key]?.kisiler||[];
+
+if(!saat) continue;
+if(!kisiler.map(x=>x.toLowerCase()).includes(isim.toLowerCase())) continue;
+
+let [h,m]=saat.split(":");
+let hedef=new Date();
+hedef.setHours(h,m,0);
+
+let sure;
+if(g==="yemek") sure=(molaData["yemekSure"]?.sure||45)*60;
+else if(g==="cay") sure=(molaData["caySure"]?.sure||15)*60;
+else sure=(molaData["sonSure"]?.sure||10)*60;
+
+let fark=(now - hedef)/1000;
+
+if(fark>=0 && fark<sure) return true;
+
+}
+}
+return false;
+}
+
+function olustur(){
+onSnapshot(doc(db,"kasa","liste"),snap=>{
+
+let kayit=snap.exists()?snap.data().data:{};
+alan.innerHTML="";
+inputs=[];
+
+for(let i=0;i<6;i++){
+
+let div=document.createElement("div");
+div.className="kasa";
+
+let i1=document.createElement("input");
+let i2=document.createElement("input");
+
+let k=kayit["kasa"+(i+1)];
+if(k){
+i1.value=k.sol;
+i2.value=k.sag;
+}
+
+i1.disabled=!adminMi;
+i2.disabled=!adminMi;
+
+div.classList.add(cinsiyet(i1.value||i2.value));
+
+if(moladaMi(i1.value)) i1.classList.add("molada");
+if(moladaMi(i2.value)) i2.classList.add("molada");
+
+div.classList.add("aktif");
+
+div.appendChild(i1);
+div.appendChild(i2);
+alan.appendChild(div);
+
+inputs.push(i1,i2);
+}
+});
+}
+
 </script>
 
 </body>
