@@ -191,10 +191,13 @@ login.style.display="none";
 }
 
 /* RENDER */
+let aktifInputs=[];
+
 function render(kayit){
 
 alan.innerHTML="";
 inputs=[];
+aktifInputs=[];
 
 for(let i=0;i<6;i++){
 
@@ -215,8 +218,15 @@ i2.disabled=!adminMi;
 
 div.classList.add(cinsiyet(i1.value||i2.value));
 
-if(moladaMi(i1.value)) i1.classList.add("molada");
-if(moladaMi(i2.value)) i2.classList.add("molada");
+if(moladaMi(i1.value)){
+i1.classList.add("molada");
+aktifInputs.push(i1);
+}
+
+if(moladaMi(i2.value)){
+i2.classList.add("molada");
+aktifInputs.push(i2);
+}
 
 div.classList.add("aktif");
 
@@ -238,10 +248,10 @@ function moladaMi(isim){
 if(!isim)return false;
 
 let now=new Date();
-let gruplar=["cay","yemek","son"];
 
-for(let g of gruplar){
+for(let g of ["cay","yemek","son"]){
 for(let i=1;i<=4;i++){
+
 let key=g+i;
 let saat=molaData[key]?.saat;
 let kisiler=molaData[key]?.kisiler||[];
@@ -263,21 +273,15 @@ if(kisiler.map(x=>x.toLowerCase()).includes(isim.toLowerCase())) return true;
 return false;
 }
 
-/* 🔥 SAYAÇ (ÇALIŞAN) */
+/* 🔥 OPTİMİZE SAYAÇ */
 setInterval(()=>{
 
-let aktifIsimler=[];
-
-document.querySelectorAll("#alan input").forEach(inp=>{
-if(inp.classList.contains("molada") && inp.value){
-aktifIsimler.push(inp.value);
-}
-});
-
-if(aktifIsimler.length===0){
+if(aktifInputs.length===0){
 buyukSayac.innerText="--:--";
 return;
 }
+
+let aktifIsimler = aktifInputs.map(i=>i.value).filter(v=>v);
 
 let now=new Date();
 let enKucuk=999999;
@@ -311,6 +315,7 @@ fark=Math.floor((hedef-now)/1000);
 }
 
 if(fark<=0 && fark>-sure){
+
 let kalan=sure+fark;
 
 if(kalan<enKucuk){
