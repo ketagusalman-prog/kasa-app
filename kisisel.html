@@ -199,12 +199,13 @@ function render(){
     <div class="kart">
         <h3>${kisi.isim || "İsimsiz"}</h3>
 
-        <p>🏢 Departman: <b>${kisi.departman || "-"}</b></p>
+        <p>🏢 Ay: <b>${kisi.ay1 || "-"}</b></p>
         <p>🆔 Sicil: <b>${kisi.sicil || "-"}</b></p>
         <p>🧾 Fiş Sayısı: <b>${kisi.fis1 || "-"}</b></p>
         <p>📊 Satır Sayısı: <b>${kisi.satirSayisi || "-"}</b></p>
         <p>⏱️ Fiş Başı Süre: <b>${kisi.fisBasiSure || "-"}</b></p>
         <p>⭐ Kpuan: <b class="${kisi.kpuan>=avg?'high':'low'}">${kisi.kpuan || "-"}</b></p>
+        <p>🏢 Ay: <b>${kisi.ay || "-"}</b></p>
     </div>`;
 
     drawChart(kisi, avg);
