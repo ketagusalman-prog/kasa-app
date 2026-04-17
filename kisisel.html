@@ -206,6 +206,7 @@ function render(){
         <p>⏱️ Fiş Başı Süre: <b>${kisi.fisBasiSure || "-"}</b></p>
         <p>⭐ Kpuan: <b class="${kisi.kpuan>=avg?'high':'low'}">${kisi.kpuan || "-"}</b></p>
         <p>🏢 Ay: <b>${kisi.ay || "-"}</b></p>
+        <p>🧾 Fiş Sayısı: <b>${kisi.fis || "-"}</b></p>
     </div>`;
 
     drawChart(kisi, avg);
