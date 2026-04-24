@@ -12,87 +12,75 @@ body{margin:0;background:#0b1020;color:white;font-family:Arial;}
 height:100vh;
 background:linear-gradient(#0f5132,#198754);
 position:relative;
-padding:5px;
+padding:10px;
 overflow:hidden;
 }
 
-.ortaCizgi{position:absolute;top:50%;width:100%;height:2px;background:white;opacity:0.5;}
+.ortaCizgi{
+position:absolute;top:50%;left:0;width:100%;height:2px;
+background:white;opacity:0.5;
+}
+
 .ortaYuvarlak{
 position:absolute;top:50%;left:50%;
 transform:translate(-50%,-50%);
-width:90px;height:90px;border:2px solid white;border-radius:50%;
-opacity:0.5;
+width:120px;height:120px;
+border:2px solid white;border-radius:50%;opacity:0.5;
 }
 
 .kale{
-position:absolute;width:110px;height:35px;
-border:3px solid white;left:50%;transform:translateX(-50%);
+position:absolute;width:160px;height:60px;
+border:4px solid white;left:50%;
+transform:translateX(-50%);
 }
-.kale.ust{top:5px;}
-.kale.alt{bottom:5px;}
+.kale.ust{top:0;}
+.kale.alt{bottom:0;}
 
-.takim{position:absolute;width:100%;display:flex;flex-direction:column;align-items:center;}
-.beyaz{top:6%;}
-.siyah{bottom:6%;}
-
-.satir{display:flex;justify-content:center;gap:8px;margin:4px 0;flex-wrap:wrap;}
-
-.oyuncu{
+.takim{
+position:absolute;width:100%;
 display:flex;flex-direction:column;align-items:center;
-font-size:10px;width:65px;
 }
+
+.beyaz{top:5%;}
+.siyah{bottom:5%;}
+
+.satir{display:flex;justify-content:center;gap:12px;margin:6px;}
+
+.oyuncu{display:flex;flex-direction:column;align-items:center;font-size:11px;}
 
 .oyuncu img{
-width:50px;height:50px;border-radius:50%;
-border:2px solid white;object-fit:cover;
+width:55px;height:55px;border-radius:50%;
+object-fit:cover;border:2px solid white;
 }
 
-.isim{font-size:10px;font-weight:bold;text-align:center;max-width:65px;overflow:hidden;}
-.puan{font-size:9px;opacity:0.8;}
-
-.bayrak{
-position:absolute;left:10px;font-size:14px;font-weight:bold;
-background:rgba(0,0,0,0.6);padding:4px 8px;border-radius:8px;
-}
-.bayrak.ust{top:10%;}
-.bayrak.alt{bottom:10%;}
+.isim{font-weight:bold;}
+.puan{font-size:10px;opacity:0.8;}
 
 .takimPuan{
-position:absolute;right:10px;
-background:rgba(0,0,0,0.6);
-padding:5px 10px;border-radius:10px;
-font-size:12px;font-weight:bold;
+position:absolute;
+right:10px;
+font-size:14px;
+background:rgba(0,0,0,0.5);
+padding:5px 10px;
+border-radius:10px;
 }
-.puanUst{top:15%;}
-.puanAlt{bottom:15%;}
-
-.skor{
-position:absolute;top:50%;left:50%;
-transform:translate(-50%,-50%);
-background:black;padding:10px 20px;
-border-radius:12px;font-size:22px;font-weight:bold;
-}
-
-.adminPanel{
-position:absolute;top:10px;right:10px;
-background:#111;padding:10px;border-radius:10px;
-}
-
-button{
-padding:6px 10px;border:none;border-radius:8px;
-background:#22c55e;color:white;margin-top:5px;
-}
+.puanBeyaz{top:45%;}
+.puanSiyah{bottom:45%;}
 </style>
 </head>
 
 <body>
+
+<div style="position:absolute;z-index:10;padding:10px;">
+<button onclick="window.location.href='halisaha.html'">⬅️</button>
+</div>
 
 <div id="saha"></div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const app = initializeApp({
 apiKey:"AIzaSy...",
@@ -102,20 +90,27 @@ projectId:"ukasa1"
 
 const db = getFirestore(app);
 
-let kullanici = localStorage.getItem("kullanici");
-let currentState={};
-
-/* 🔥 GENEL (FORM EKLENDİ AMA BOZULMADI) */
+/* PUAN */
 function genel(k){
-let base = ((k.pas||0)+(k.sut||0)+(k.calim||0)+(k.kosu||0))/4;
-let form = k.form || 0;
-return Math.round(base + form);
+return Math.round(((k.pas||0)+(k.sut||0)+(k.calim||0)+(k.kosu||0))/4);
 }
 
 /* TAKIM */
 function dengeliTakim(state){
 
-let oyuncular = Object.keys(state).map(key=>{
+let tumOyuncular = Object.keys(state)
+.filter(key=>{
+let k = state[key];
+
+/* ❌ OYNAYAMAYANLAR %100 DIŞARI */
+if(String(k.oynayamaz) === "true") return false;
+
+/* güvenlik */
+if(!k.isim) return false;
+
+return true;
+})
+.map(key=>{
 let k=state[key];
 return {
 isim:k.isim,
@@ -125,14 +120,36 @@ resim:k.resim || "https://via.placeholder.com/50"
 };
 });
 
-oyuncular.sort((a,b)=>b.puan-a.puan);
-oyuncular = oyuncular.slice(0,16);
+/* UYARI */
+if(tumOyuncular.length < 16){
+alert("⚠️ Yeterli oyuncu yok! (Minimum 16 gerekli)");
+}
 
-let A=[],B=[],sumA=0,sumB=0;
+/* KALECİ AYIR */
+let kaleciler = tumOyuncular.filter(o=>o.mevki==="Kaleci");
+let digerleri = tumOyuncular.filter(o=>o.mevki!=="Kaleci");
+
+/* sırala */
+kaleciler.sort((a,b)=>b.puan-a.puan);
+digerleri.sort((a,b)=>b.puan-a.puan);
+
+/* TAKIM */
+let A=[],B=[];
+let sumA=0,sumB=0;
+
+/* 🧤 KALECİLERİ GARANTİ YERLEŞTİR */
+if(kaleciler[0]){ A.push(kaleciler[0]); sumA+=kaleciler[0].puan; }
+if(kaleciler[1]){ B.push(kaleciler[1]); sumB+=kaleciler[1].puan; }
+
+/* kalan oyuncular */
+let oyuncular = digerleri.slice(0,16 - (A.length + B.length));
 
 oyuncular.forEach(o=>{
-if(sumA<=sumB){ A.push(o); sumA+=o.puan; }
-else{ B.push(o); sumB+=o.puan; }
+if(sumA<=sumB){
+A.push(o); sumA+=o.puan;
+}else{
+B.push(o); sumB+=o.puan;
+}
 });
 
 return {A,B,sumA,sumB};
@@ -140,6 +157,7 @@ return {A,B,sumA,sumB};
 
 /* DİZİLİŞ */
 function diz(t){
+
 let kaleci=t.filter(x=>x.mevki==="Kaleci").slice(0,1);
 let def=t.filter(x=>x.mevki==="Defans").slice(0,4);
 let orta=t.filter(x=>x.mevki==="Orta Saha").slice(0,3);
@@ -175,65 +193,16 @@ function satir(arr){
 return arr.map(o=>oyuncuHTML(o)).join("");
 }
 
-/* 🔥 FORM GÜNCELLE */
-function formGuncelle(state, skor){
-
-let [a,b] = skor.split("-").map(x=>parseInt(x.trim()));
-if(isNaN(a) || isNaN(b)) return state;
-
-let t = dengeliTakim(state);
-
-let kazanan = a > b ? t.A : b > a ? t.B : null;
-let kaybeden = a > b ? t.B : b > a ? t.A : null;
-
-kazanan?.forEach(o=>{
-state[o.isim].form = Math.min(10,(state[o.isim].form||0)+2);
-});
-
-kaybeden?.forEach(o=>{
-state[o.isim].form = Math.max(-10,(state[o.isim].form||0)-1);
-});
-
-if(a===b){
-[...t.A,...t.B].forEach(o=>{
-state[o.isim].form = Math.min(10,(state[o.isim].form||0)+1);
-});
-}
-
-return state;
-}
-
-/* SAHA ÇİZ */
+/* ÇİZ */
 function sahaCiz(state){
 
 let t=dengeliTakim(state);
 let A=diz(t.A);
 let B=diz(t.B);
 
-let skor = state._skor || "0 - 0";
-
-let adminUI="";
-if(kullanici==="admin"){
-adminUI=`
-<div class="adminPanel">
-<input id="skorInput" placeholder="2-1">
-<button onclick="skorKaydet()">Kaydet</button>
-</div>`;
-}
-
 document.getElementById("saha").innerHTML=`
 
 <div class="saha">
-
-${adminUI}
-
-<div class="bayrak ust">⚪ BEYAZ</div>
-<div class="bayrak alt">⚫ SİYAH</div>
-
-<div class="takimPuan puanUst">⚪ ${t.sumA}</div>
-<div class="takimPuan puanAlt">⚫ ${t.sumB}</div>
-
-<div class="skor">${skor}</div>
 
 <div class="ortaCizgi"></div>
 <div class="ortaYuvarlak"></div>
@@ -241,11 +210,15 @@ ${adminUI}
 <div class="kale ust"></div>
 <div class="kale alt"></div>
 
+<div class="takimPuan puanBeyaz">⚪ ${t.sumA}</div>
+<div class="takimPuan puanSiyah">⚫ ${t.sumB}</div>
+
 <div class="takim beyaz">
-<div class="satir">${satir(A.kaleci)}</div>
-<div class="satir">${satir(A.def)}</div>
-<div class="satir">${satir(A.orta)}</div>
+<h3>⚪ Beyaz</h3>
 <div class="satir">${satir(A.forvet)}</div>
+<div class="satir">${satir(A.orta)}</div>
+<div class="satir">${satir(A.def)}</div>
+<div class="satir">${satir(A.kaleci)}</div>
 </div>
 
 <div class="takim siyah">
@@ -253,29 +226,17 @@ ${adminUI}
 <div class="satir">${satir(B.orta)}</div>
 <div class="satir">${satir(B.def)}</div>
 <div class="satir">${satir(B.kaleci)}</div>
+<h3>⚫ Siyah</h3>
 </div>
 
 </div>
 `;
 }
 
-/* 🔥 SKOR KAYDET */
-window.skorKaydet = async function(){
-
-let val = document.getElementById("skorInput").value;
-
-/* sadece ekleme */
-let yeniState = formGuncelle({...currentState}, val);
-
-await setDoc(doc(db,"kasa","halisaha"),{
-data:{...yeniState, _skor: val}
-});
-}
-
 /* FIREBASE */
 onSnapshot(doc(db,"kasa","halisaha"),snap=>{
-currentState = snap.exists()?snap.data().data:{};
-sahaCiz(currentState);
+let state=snap.exists()?snap.data().data:{};
+sahaCiz(state);
 });
 
 </script>
