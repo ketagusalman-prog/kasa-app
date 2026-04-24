@@ -97,7 +97,8 @@ baslat(k,true);
 return;
 }
 
-let bulundu=personeller.find(p=>p.k===k && p.s===s);
+/* 🔥 1234 DEFAULT DESTEK */
+let bulundu=personeller.find(p=>p.k===k && (p.s===s || (!p.s && s==="1234")));
 
 if(!bulundu){
 alert("Hatalı giriş");
@@ -126,7 +127,7 @@ ciz(kullanici,adminMi);
 });
 }
 
-/* ŞİFRE */
+/* ŞİFRE DEĞİŞTİR */
 window.sifreDegistir=async function(){
 
 let k=localStorage.getItem("kullanici");
@@ -143,7 +144,7 @@ await setDoc(doc(db,"kasa","personel"),{liste:personeller});
 alert("Şifre güncellendi");
 }
 
-/* ORT */
+/* ORTALAMA */
 function ortalama(eski,yeni){
 return Math.round((eski + yeni)/2);
 }
@@ -212,7 +213,7 @@ let isim=document.createElement("h4");
 isim.innerText=k.isim;
 div.appendChild(isim);
 
-/* ⭐ PUAN SİSTEMİ */
+/* ⭐ PUAN */
 if(kullanici!==k.owner){
 
 let son=k.puanlayanlar?.[kullanici] || 0;
@@ -304,12 +305,17 @@ async function kaydet(){
 await setDoc(doc(db,"kasa","halisaha"),{data:state});
 }
 
-/* EKLE */
-window.oyuncuEkle=function(){
+/* 🔥 OYUNCU EKLE + 1234 ŞİFRE */
+window.oyuncuEkle=async function(){
+
 let isim=document.getElementById("yeniOyuncu").value.trim().toLowerCase();
 if(!isim) return;
 
 state[isim]={isim:isim,owner:isim,pas:0,sut:0,calim:0,kosu:0};
+
+/* 🔥 ŞİFRE OTOMATİK */
+personeller.push({k:isim, s:"1234"});
+await setDoc(doc(db,"kasa","personel"),{liste:personeller});
 
 document.getElementById("yeniOyuncu").value="";
 kaydet();
