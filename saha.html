@@ -12,56 +12,85 @@ body{margin:0;background:#0b1020;color:white;font-family:Arial;}
 height:100vh;
 background:linear-gradient(#0f5132,#198754);
 position:relative;
-padding:10px;
 overflow:hidden;
 }
 
-.ortaCizgi{
-position:absolute;top:50%;left:0;width:100%;height:2px;
-background:white;opacity:0.5;
+/* saha çizgisi */
+.saha::after{
+content:"";
+position:absolute;
+inset:0;
+background:
+linear-gradient(to bottom, transparent 49%, white 50%, transparent 51%),
+radial-gradient(circle at center, transparent 60px, white 61px, transparent 62px);
+opacity:0.15;
 }
 
-.ortaYuvarlak{
-position:absolute;top:50%;left:50%;
-transform:translate(-50%,-50%);
-width:120px;height:120px;
-border:2px solid white;border-radius:50%;opacity:0.5;
+/* bayrak */
+.bayrak{
+position:absolute;
+width:100%;
+height:50%;
+left:0;
+overflow:hidden;
 }
 
-.kale{
-position:absolute;width:160px;height:60px;
-border:4px solid white;left:50%;
-transform:translateX(-50%);
+.bayrak::before{
+content:"";
+position:absolute;
+width:200%;
+height:100%;
+left:-50%;
+opacity:0.15;
+animation:dalga 6s linear infinite;
 }
+
+.bayrakBeyaz{top:0;}
+.bayrakBeyaz::before{
+background:linear-gradient(120deg,transparent 20%,white 50%,transparent 80%);
+}
+
+.bayrakSiyah{bottom:0;}
+.bayrakSiyah::before{
+background:linear-gradient(120deg,transparent 20%,black 50%,transparent 80%);
+}
+
+@keyframes dalga{
+0%{transform:translateX(0);}
+100%{transform:translateX(50%);}
+}
+
+.ortaCizgi{position:absolute;top:50%;width:100%;height:2px;background:white;opacity:0.5;}
+.ortaYuvarlak{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+width:100px;height:100px;border:2px solid white;border-radius:50%;opacity:0.5;}
+
+.kale{position:absolute;width:140px;height:50px;border:4px solid white;left:50%;transform:translateX(-50%);}
 .kale.ust{top:0;}
 .kale.alt{bottom:0;}
 
 .takim{
-position:absolute;width:100%;
-display:flex;flex-direction:column;align-items:center;
+position:absolute;
+width:100%;
+height:50%;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
 }
 
-.beyaz{top:5%;}
-.siyah{bottom:5%;}
+.beyaz{top:0;}
+.siyah{bottom:0;}
 
-.satir{display:flex;justify-content:center;gap:12px;margin:6px;}
+.satir{display:flex;gap:6px;margin:4px;flex-wrap:wrap;}
 
-.oyuncu{display:flex;flex-direction:column;align-items:center;font-size:11px;}
-
-.oyuncu img{
-width:55px;height:55px;border-radius:50%;
-object-fit:cover;border:2px solid white;
-}
-
-.isim{font-weight:bold;}
-.puan{font-size:10px;opacity:0.8;}
+.oyuncu{text-align:center;font-size:10px;}
+.oyuncu img{width:45px;height:45px;border-radius:50%;border:2px solid white;}
 
 .takimPuan{
 position:absolute;
 right:10px;
-font-size:14px;
 background:rgba(0,0,0,0.5);
-padding:5px 10px;
+padding:4px 8px;
 border-radius:10px;
 }
 .puanBeyaz{top:45%;}
@@ -90,74 +119,75 @@ projectId:"ukasa1"
 
 const db = getFirestore(app);
 
-/* PUAN */
 function genel(k){
 return Math.round(((k.pas||0)+(k.sut||0)+(k.calim||0)+(k.kosu||0))/4);
 }
 
-/* TAKIM */
+/* 🔥 KESİN TAKIM MOTORU */
 function dengeliTakim(state){
 
-let tumOyuncular = Object.keys(state)
-.filter(key=>{
-let k = state[key];
-
-/* ❌ OYNAYAMAYANLAR %100 DIŞARI */
-if(String(k.oynayamaz) === "true") return false;
-
-/* güvenlik */
-if(!k.isim) return false;
-
-return true;
-})
-.map(key=>{
-let k=state[key];
-return {
-isim:k.isim,
-mevki:k.mevki||"Orta Saha",
-puan:genel(k),
-resim:k.resim || "https://via.placeholder.com/50"
-};
-});
-
-/* UYARI */
-if(tumOyuncular.length < 16){
-alert("⚠️ Yeterli oyuncu yok! (Minimum 16 gerekli)");
+function formPuan(k){
+return genel(k) + ((k.sonMacPuan||0)*0.2);
 }
 
-/* KALECİ AYIR */
-let kaleciler = tumOyuncular.filter(o=>o.mevki==="Kaleci");
-let digerleri = tumOyuncular.filter(o=>o.mevki!=="Kaleci");
+let oyuncular = Object.keys(state)
+.filter(k=>!state[k].oynayamaz)
+.map(k=>({
+isim:state[k].isim,
+mevki:state[k].mevki||"Orta Saha",
+puan:formPuan(state[k]),
+resim:state[k].resim||"https://via.placeholder.com/50"
+}));
 
-/* sırala */
-kaleciler.sort((a,b)=>b.puan-a.puan);
-digerleri.sort((a,b)=>b.puan-a.puan);
+/* en iyi 16 */
+oyuncular.sort((a,b)=>b.puan-a.puan);
+oyuncular = oyuncular.slice(0,16);
 
-/* TAKIM */
+/* karıştır */
+oyuncular.sort(()=>Math.random()-0.5);
+
 let A=[],B=[];
 let sumA=0,sumB=0;
 
-/* 🧤 KALECİLERİ GARANTİ YERLEŞTİR */
-if(kaleciler[0]){ A.push(kaleciler[0]); sumA+=kaleciler[0].puan; }
-if(kaleciler[1]){ B.push(kaleciler[1]); sumB+=kaleciler[1].puan; }
+/* KALECİ */
+let kaleciler = oyuncular.filter(o=>o.mevki==="Kaleci");
+if(kaleciler[0]){A.push(kaleciler[0]); sumA+=kaleciler[0].puan;}
+if(kaleciler[1]){B.push(kaleciler[1]); sumB+=kaleciler[1].puan;}
 
-/* kalan oyuncular */
-let oyuncular = digerleri.slice(0,16 - (A.length + B.length));
+/* FORVET */
+let forvetler = oyuncular.filter(o=>o.mevki==="Forvet");
+if(forvetler[0] && !A.includes(forvetler[0])){A.push(forvetler[0]); sumA+=forvetler[0].puan;}
+if(forvetler[1] && !B.includes(forvetler[1])){B.push(forvetler[1]); sumB+=forvetler[1].puan;}
 
+/* KALANLAR */
 oyuncular.forEach(o=>{
-if(sumA<=sumB){
+if(A.includes(o)||B.includes(o)) return;
+
+if(A.length<8 && (sumA<=sumB || B.length>=8)){
 A.push(o); sumA+=o.puan;
-}else{
+}else if(B.length<8){
 B.push(o); sumB+=o.puan;
 }
 });
 
+/* TAMAMLA */
+while(A.length<8){
+let x=oyuncular.find(o=>!A.includes(o)&&!B.includes(o));
+if(!x) break;
+A.push(x); sumA+=x.puan;
+}
+
+while(B.length<8){
+let x=oyuncular.find(o=>!A.includes(o)&&!B.includes(o));
+if(!x) break;
+B.push(x); sumB+=x.puan;
+}
+
 return {A,B,sumA,sumB};
 }
 
-/* DİZİLİŞ */
+/* diz */
 function diz(t){
-
 let kaleci=t.filter(x=>x.mevki==="Kaleci").slice(0,1);
 let def=t.filter(x=>x.mevki==="Defans").slice(0,4);
 let orta=t.filter(x=>x.mevki==="Orta Saha").slice(0,3);
@@ -179,21 +209,16 @@ doldur(forvet,3);
 return {kaleci,def,orta,forvet};
 }
 
-/* HTML */
-function oyuncuHTML(o){
-return `
-<div class="oyuncu">
+function htmlOyuncu(o){
+return `<div class="oyuncu">
 <img src="${o.resim}">
-<div class="isim">${o.isim}</div>
-<div class="puan">${o.puan}</div>
+<div>${o.isim}</div>
+<div>${o.puan}</div>
 </div>`;
 }
 
-function satir(arr){
-return arr.map(o=>oyuncuHTML(o)).join("");
-}
+function satir(a){return a.map(htmlOyuncu).join("");}
 
-/* ÇİZ */
 function sahaCiz(state){
 
 let t=dengeliTakim(state);
@@ -201,8 +226,10 @@ let A=diz(t.A);
 let B=diz(t.B);
 
 document.getElementById("saha").innerHTML=`
-
 <div class="saha">
+
+<div class="bayrak bayrakBeyaz"></div>
+<div class="bayrak bayrakSiyah"></div>
 
 <div class="ortaCizgi"></div>
 <div class="ortaYuvarlak"></div>
@@ -222,10 +249,10 @@ document.getElementById("saha").innerHTML=`
 </div>
 
 <div class="takim siyah">
-<div class="satir">${satir(B.forvet)}</div>
-<div class="satir">${satir(B.orta)}</div>
-<div class="satir">${satir(B.def)}</div>
 <div class="satir">${satir(B.kaleci)}</div>
+<div class="satir">${satir(B.def)}</div>
+<div class="satir">${satir(B.orta)}</div>
+<div class="satir">${satir(B.forvet)}</div>
 <h3>⚫ Siyah</h3>
 </div>
 
@@ -233,7 +260,6 @@ document.getElementById("saha").innerHTML=`
 `;
 }
 
-/* FIREBASE */
 onSnapshot(doc(db,"kasa","halisaha"),snap=>{
 let state=snap.exists()?snap.data().data:{};
 sahaCiz(state);
