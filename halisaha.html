@@ -364,7 +364,8 @@ kaydet();
 
 </script>
 
-/* 📱 SWIPE GEÇİŞ */
+<script>
+/* 📱 SWIPE → SAHA */
 let startX = 0;
 let endX = 0;
 
@@ -377,17 +378,10 @@ document.addEventListener("touchend", (e)=>{
 
     let fark = startX - endX;
 
-    /* sola kaydır (saha.html) */
     if(fark > 80){
         window.location.href = "saha.html";
     }
-
-    /* sağa kaydır (geri) */
-    if(fark < -80){
-        // istersen geri sayfa
-        // window.location.href = "index.html";
-    }
 });
-
+</script>
 </body>
 </html>
