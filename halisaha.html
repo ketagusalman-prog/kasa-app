@@ -19,7 +19,6 @@ input{width:100%;padding:8px;margin:5px 0;border-radius:8px;border:none;}
 button{width:100%;padding:10px;border:none;border-radius:10px;background:#22c55e;color:white;}
 .yildiz{font-size:18px;cursor:pointer;color:#555;}
 .yildiz.aktif{color:#FFD700;}
-.badge{position:absolute;bottom:8px;left:8px;background:#FFD700;color:black;padding:2px 6px;border-radius:6px;font-size:11px;font-weight:bold;}
 .buyukPuan{position:absolute;top:8px;right:10px;font-size:22px;font-weight:bold;}
 </style>
 </head>
@@ -43,7 +42,7 @@ button{width:100%;padding:10px;border:none;border-radius:10px;background:#22c55e
 <button onclick="window.location.href='index.html'">⬅️</button>
 </div>
 
-<!-- ŞİFRE DEĞİŞTİR -->
+<!-- ŞİFRE -->
 <div id="sifrePanel" style="display:none;padding:10px;">
 <input id="yeniSifre" placeholder="Yeni Şifre">
 <button onclick="sifreDegistir()">Şifre Değiştir</button>
@@ -74,7 +73,7 @@ const db = getFirestore(app);
 let state={};
 let alan=document.getElementById("alan");
 
-/* 🔥 PERSONEL */
+/* PERSONEL */
 let personeller=[];
 let personelHazir=false;
 
@@ -83,7 +82,7 @@ if(snap.exists()) personeller=snap.data().liste;
 personelHazir=true;
 });
 
-/* 🔥 LOGIN */
+/* LOGIN */
 window.giris=function(){
 
 if(!personelHazir){
@@ -111,48 +110,33 @@ return;
 baslat(k,false);
 }
 
-/* 🔥 BAŞLAT */
+/* BAŞLAT */
 function baslat(kullanici,adminMi){
 
 localStorage.setItem("kullanici",kullanici);
 
-document.getElementById("login").style.display="none";
-document.getElementById("app").style.display="block";
-document.getElementById("sifrePanel").style.display="block";
+login.style.display="none";
+app.style.display="block";
+sifrePanel.style.display="block";
 
-if(adminMi) document.getElementById("adminPanel").style.display="block";
+if(adminMi) adminPanel.style.display="block";
 
-const ref=doc(db,"kasa","halisaha");
-
-onSnapshot(ref,(snap)=>{
+onSnapshot(doc(db,"kasa","halisaha"),snap=>{
 state=snap.exists()?snap.data().data:{};
 ciz(kullanici,adminMi);
 });
 }
 
-/* 🔥 ŞİFRE DEĞİŞTİR */
-window.sifreDegistir = async function(){
+/* ŞİFRE */
+window.sifreDegistir=async function(){
 
-let kullanici = localStorage.getItem("kullanici");
-let yeni = document.getElementById("yeniSifre").value.trim();
+let k=localStorage.getItem("kullanici");
+let yeni=yeniSifre.value.trim();
 
-if(!yeni){
-alert("Şifre boş olamaz");
-return;
-}
+if(!yeni) return alert("Boş olamaz");
+if(k==="admin") return alert("Admin değişmez");
 
-if(kullanici==="admin"){
-alert("Admin şifresi değişmez");
-return;
-}
-
-let kisi = personeller.find(p=>p.k===kullanici);
-
-if(!kisi){
-alert("Kullanıcı bulunamadı");
-return;
-}
-
+let kisi=personeller.find(p=>p.k===k);
 kisi.s=yeni;
 
 await setDoc(doc(db,"kasa","personel"),{liste:personeller});
@@ -160,9 +144,8 @@ await setDoc(doc(db,"kasa","personel"),{liste:personeller});
 alert("Şifre güncellendi");
 }
 
-/* PUAN ORT */
+/* ORT */
 function ortalama(eski,yeni){
-yeni=parseInt(yeni||0);
 return Math.round((eski + yeni)/2);
 }
 
@@ -189,11 +172,7 @@ div.className="kart";
 if(k.bg){
 div.style.backgroundImage=`url(${k.bg})`;
 }else{
-let renk="#374151";
-if(genel>=80) renk="#FFD700";
-else if(genel>=60) renk="#22c55e";
-else if(genel>=40) renk="#f97316";
-div.style.background=`linear-gradient(135deg,${renk},#111)`;
+div.style.background="#222";
 }
 
 /* PUAN */
@@ -207,16 +186,97 @@ let img=document.createElement("img");
 img.src=k.resim||"https://via.placeholder.com/80";
 div.appendChild(img);
 
+/* OWNER upload */
+if(kullanici===k.owner){
+
+let file=document.createElement("input");
+file.type="file";
+file.onchange=e=>{
+let r=new FileReader();
+r.onload=()=>{state[key].resim=r.result;kaydet();}
+r.readAsDataURL(e.target.files[0]);
+};
+div.appendChild(file);
+
+let bg=document.createElement("input");
+bg.type="file";
+bg.onchange=e=>{
+let r=new FileReader();
+r.onload=()=>{state[key].bg=r.result;kaydet();}
+r.readAsDataURL(e.target.files[0]);
+};
+div.appendChild(bg);
+}
+
 /* İSİM */
 let isim=document.createElement("h4");
 isim.innerText=k.isim;
 div.appendChild(isim);
 
+/* ⭐ PUAN */
+if(kullanici!==k.owner){
+
+let btn=document.createElement("button");
+btn.innerText="Puan Ver";
+
+let panel=document.createElement("div");
+panel.style.display="none";
+
+function yildiz(label){
+let wrap=document.createElement("div");
+wrap.innerHTML="<b>"+label+"</b><br>";
+let val=0;
+
+for(let i=1;i<=5;i++){
+let y=document.createElement("span");
+y.innerText="★";
+y.className="yildiz";
+
+y.onclick=()=>{
+val=i;
+wrap.querySelectorAll(".yildiz").forEach((el,ix)=>{
+el.classList.toggle("aktif",ix<i);
+});
+};
+
+wrap.appendChild(y);
+}
+
+return {el:wrap,get:()=>val*20};
+}
+
+let p=yildiz("Pas");
+let s=yildiz("Şut");
+let c=yildiz("Çalım");
+let kY=yildiz("Koşu");
+
+let kaydetBtn=document.createElement("button");
+kaydetBtn.innerText="Kaydet";
+
+kaydetBtn.onclick=()=>{
+state[key].pas=ortalama(pas,p.get());
+state[key].sut=ortalama(sut,s.get());
+state[key].calim=ortalama(calim,c.get());
+state[key].kosu=ortalama(kosu,kY.get());
+kaydet();
+panel.style.display="none";
+};
+
+panel.append(p.el,s.el,c.el,kY.el,kaydetBtn);
+
+btn.onclick=()=>{
+panel.style.display=panel.style.display==="none"?"block":"none";
+};
+
+div.appendChild(btn);
+div.appendChild(panel);
+}
+
 /* ADMIN */
 if(adminMi){
 let sil=document.createElement("button");
 sil.innerText="Sil";
-sil.onclick=()=>{delete state[key]; kaydet();}
+sil.onclick=()=>{delete state[key];kaydet();}
 div.appendChild(sil);
 }
 
@@ -225,7 +285,7 @@ alan.appendChild(div);
 });
 }
 
-/* KAYDET */
+/* SAVE */
 async function kaydet(){
 await setDoc(doc(db,"kasa","halisaha"),{data:state});
 }
