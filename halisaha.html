@@ -6,146 +6,55 @@
 <title>Halı Saha</title>
 
 <style>
-body{
-    margin:0;
-    background:#0b1020;
-    color:white;
-    font-family:Arial;
-}
-
-/* LOGIN */
-#login{
-    height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-}
-
-.loginBox{
-    width:80%;
-    background:#1f2937;
-    padding:20px;
-    border-radius:15px;
-}
-
-/* APP */
+body{margin:0;background:#0b1020;color:white;font-family:Arial;}
+#login{height:100vh;display:flex;justify-content:center;align-items:center;}
+.loginBox{width:80%;background:#1f2937;padding:20px;border-radius:15px;}
 #app{ display:none; }
-
-/* GRID */
-.container{
-    display:grid;
-    grid-template-columns:repeat(2,1fr);
-    gap:10px;
-    padding:10px;
-}
-
-/* KART */
-.kart{
-    padding:12px;
-    border-radius:15px;
-    text-align:center;
-    position:relative;
-    box-shadow:0 0 8px rgba(0,0,0,0.6);
-    background-size:cover;
-    background-position:center;
-}
-
-/* overlay */
-.kart::after{
-    content:"";
-    position:absolute;
-    inset:0;
-    background:rgba(0,0,0,0.55);
-    border-radius:15px;
-}
-
-/* içerik üstte */
-.kart *{
-    position:relative;
-    z-index:2;
-}
-
-/* RESİM */
-img{
-    width:80px;
-    height:80px;
-    border-radius:50%;
-}
-
-/* INPUT */
-input{
-    width:100%;
-    padding:8px;
-    margin:5px 0;
-    border-radius:8px;
-    border:none;
-}
-
-/* BUTTON */
-button{
-    width:100%;
-    padding:10px;
-    border:none;
-    border-radius:10px;
-    background:#22c55e;
-    color:white;
-}
-
-/* ⭐ YILDIZ */
-.yildiz{
-    font-size:18px;
-    cursor:pointer;
-    color:#555;
-}
-.yildiz.aktif{
-    color:#FFD700;
-}
-
-/* 🏆 BADGE */
-.badge{
-    position:absolute;
-    bottom:8px;
-    left:8px;
-    background:#FFD700;
-    color:black;
-    padding:2px 6px;
-    border-radius:6px;
-    font-size:11px;
-    font-weight:bold;
-}
-
-/* PUAN */
-.buyukPuan{
-    position:absolute;
-    top:8px;
-    right:10px;
-    font-size:22px;
-    font-weight:bold;
-}
+.container{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:10px;}
+.kart{padding:12px;border-radius:15px;text-align:center;position:relative;box-shadow:0 0 8px rgba(0,0,0,0.6);background-size:cover;background-position:center;}
+.kart::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,0.55);border-radius:15px;}
+.kart *{position:relative;z-index:2;}
+img{width:80px;height:80px;border-radius:50%;}
+input,select{width:100%;padding:8px;margin:5px 0;border-radius:8px;border:none;}
+button{width:100%;padding:10px;border:none;border-radius:10px;background:#22c55e;color:white;}
+.yildiz{font-size:18px;cursor:pointer;color:#555;}
+.yildiz.aktif{color:#FFD700;}
+.buyukPuan{position:absolute;top:8px;right:10px;font-size:22px;font-weight:bold;}
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
 <div id="login">
 <div class="loginBox">
 <h3>⚽ Giriş</h3>
-<input id="kullanici" placeholder="Kullanıcı">
-<input id="sifre" type="password" placeholder="Şifre">
+<input id="kullanici">
+<input id="sifre" type="password">
 <button onclick="giris()">Giriş</button>
 </div>
 </div>
 
-<!-- APP -->
 <div id="app">
 
 <div style="padding:10px;">
 <button onclick="window.location.href='index.html'">⬅️</button>
 </div>
 
+<div id="sifrePanel" style="display:none;padding:10px;">
+<input id="yeniSifre" placeholder="Yeni Şifre">
+<button onclick="sifreDegistir()">Şifre Değiştir</button>
+</div>
+
 <div id="adminPanel" style="display:none;padding:10px;">
 <input id="yeniOyuncu" placeholder="Oyuncu adı">
+
+<select id="mevki">
+<option value="Kaleci">Kaleci</option>
+<option value="Defans">Defans</option>
+<option value="Orta Saha">Orta Saha</option>
+<option value="Forvet">Forvet</option>
+</select>
+
 <button onclick="oyuncuEkle()">Oyuncu Ekle</button>
 </div>
 
@@ -171,12 +80,20 @@ let alan=document.getElementById("alan");
 
 /* PERSONEL */
 let personeller=[];
+let personelHazir=false;
+
 onSnapshot(doc(db,"kasa","personel"),snap=>{
 if(snap.exists()) personeller=snap.data().liste;
+personelHazir=true;
 });
 
-/* GİRİŞ */
+/* LOGIN */
 window.giris=function(){
+
+if(!personelHazir){
+alert("Sistem yükleniyor...");
+return;
+}
 
 let k=document.getElementById("kullanici").value.trim().toLowerCase();
 let s=document.getElementById("sifre").value.trim();
@@ -188,7 +105,7 @@ baslat(k,true);
 return;
 }
 
-let bulundu=personeller.find(p=>p.k===k && p.s===s);
+let bulundu=personeller.find(p=>p.k===k && (p.s===s || (!p.s && s==="1234")));
 
 if(!bulundu){
 alert("Hatalı giriş");
@@ -205,20 +122,37 @@ localStorage.setItem("kullanici",kullanici);
 
 document.getElementById("login").style.display="none";
 document.getElementById("app").style.display="block";
+document.getElementById("sifrePanel").style.display="block";
 
-if(adminMi) document.getElementById("adminPanel").style.display="block";
+if(adminMi){
+document.getElementById("adminPanel").style.display="block";
+}
 
-const ref=doc(db,"kasa","halisaha");
-
-onSnapshot(ref,(snap)=>{
+onSnapshot(doc(db,"kasa","halisaha"),snap=>{
 state=snap.exists()?snap.data().data:{};
 ciz(kullanici,adminMi);
 });
 }
 
-/* ORTALAMA */
+/* ŞİFRE */
+window.sifreDegistir=async function(){
+
+let k=localStorage.getItem("kullanici");
+let yeni=document.getElementById("yeniSifre").value.trim();
+
+if(!yeni) return alert("Boş olamaz");
+if(k==="admin") return alert("Admin değişmez");
+
+let kisi=personeller.find(p=>p.k===k);
+kisi.s=yeni;
+
+await setDoc(doc(db,"kasa","personel"),{liste:personeller});
+
+alert("Şifre güncellendi");
+}
+
+/* ORT */
 function ortalama(eski,yeni){
-yeni=parseInt(yeni||0);
 return Math.round((eski + yeni)/2);
 }
 
@@ -226,6 +160,15 @@ return Math.round((eski + yeni)/2);
 function ciz(kullanici,adminMi){
 
 alan.innerHTML="";
+
+/* 🔥 TOP 3 */
+let sirali = Object.keys(state).map(key=>{
+let k=state[key];
+let genel=Math.round(((k.pas||0)+(k.sut||0)+(k.calim||0)+(k.kosu||0))/4);
+return {key,genel};
+}).sort((a,b)=>b.genel-a.genel);
+
+let top3 = sirali.slice(0,3).map(x=>x.key);
 
 Object.keys(state).forEach(key=>{
 
@@ -238,35 +181,34 @@ let kosu=k.kosu||0;
 
 let genel=Math.round((pas+sut+calim+kosu)/4);
 
-/* kart */
 let div=document.createElement("div");
 div.className="kart";
 
-/* arka plan */
+/* 👑 */
+if(top3.includes(key)){
+let tac=document.createElement("div");
+tac.innerText="👑";
+tac.style.position="absolute";
+tac.style.top="5px";
+tac.style.left="5px";
+tac.style.fontSize="20px";
+div.appendChild(tac);
+}
+
+/* BG */
 if(k.bg){
 div.style.backgroundImage=`url(${k.bg})`;
 }else{
-let renk="#374151";
-if(genel>=80) renk="#FFD700";
-else if(genel>=60) renk="#22c55e";
-else if(genel>=40) renk="#f97316";
-
-div.style.background=`linear-gradient(135deg,${renk},#111)`;
+div.style.background="#222";
 }
 
-/* puan */
+/* PUAN */
 let puan=document.createElement("div");
 puan.className="buyukPuan";
 puan.innerText=genel;
 div.appendChild(puan);
 
-/* badge */
-let badge=document.createElement("div");
-badge.className="badge";
-badge.innerText=genel>=80?"ELİT":genel>=60?"İYİ":genel>=40?"ORTA":"AMATÖR";
-div.appendChild(badge);
-
-/* resim */
+/* RESİM */
 let img=document.createElement("img");
 img.src=k.resim||"https://via.placeholder.com/80";
 div.appendChild(img);
@@ -274,57 +216,44 @@ div.appendChild(img);
 /* OWNER */
 if(kullanici===k.owner){
 
-/* profil resmi */
 let file=document.createElement("input");
 file.type="file";
 file.onchange=e=>{
-let reader=new FileReader();
-reader.onload=()=>{
-state[key].resim=reader.result;
-kaydet();
-}
-reader.readAsDataURL(e.target.files[0]);
+let r=new FileReader();
+r.onload=()=>{state[key].resim=r.result;kaydet();}
+r.readAsDataURL(e.target.files[0]);
 };
 div.appendChild(file);
 
-/* 🔥 ARKA PLAN */
 let bg=document.createElement("input");
 bg.type="file";
 bg.onchange=e=>{
-let reader=new FileReader();
-reader.onload=()=>{
-state[key].bg=reader.result;
-kaydet();
-}
-reader.readAsDataURL(e.target.files[0]);
+let r=new FileReader();
+r.onload=()=>{state[key].bg=r.result;kaydet();}
+r.readAsDataURL(e.target.files[0]);
 };
 div.appendChild(bg);
 }
 
-/* isim */
+/* İSİM */
 let isim=document.createElement("h4");
 isim.innerText=k.isim;
 div.appendChild(isim);
 
-/* stat */
-let stat=document.createElement("div");
-stat.innerHTML=`
-Pas: ${pas}<br>
-Şut: ${sut}<br>
-Çalım: ${calim}<br>
-Koşu: ${kosu}
-`;
-div.appendChild(stat);
+/* 📍 MEVKİ */
+let mevki=document.createElement("div");
+mevki.innerText="📍 "+(k.mevki||"-");
+div.appendChild(mevki);
 
 /* ⭐ PUAN */
 if(kullanici!==k.owner){
 
-let son=k.puanlayanlar?.[kullanici]||0;
+let son=k.puanlayanlar?.[kullanici] || 0;
 let now=Date.now();
 let izin=(now-son)>604800000;
 
 let btn=document.createElement("button");
-btn.innerText=izin?"Puan Ver":"1 Hafta";
+btn.innerText= izin ? "Puan Ver" : "1 Hafta";
 btn.disabled=!izin;
 
 let panel=document.createElement("div");
@@ -362,6 +291,12 @@ let kaydetBtn=document.createElement("button");
 kaydetBtn.innerText="Kaydet";
 
 kaydetBtn.onclick=()=>{
+
+if(!izin){
+alert("1 hafta dolmadan puan veremezsin");
+return;
+}
+
 state[key].pas=ortalama(pas,p.get());
 state[key].sut=ortalama(sut,s.get());
 state[key].calim=ortalama(calim,c.get());
@@ -384,14 +319,11 @@ div.appendChild(btn);
 div.appendChild(panel);
 }
 
-/* admin */
+/* ADMIN */
 if(adminMi){
 let sil=document.createElement("button");
 sil.innerText="Sil";
-sil.onclick=()=>{
-delete state[key];
-kaydet();
-};
+sil.onclick=()=>{delete state[key];kaydet();}
 div.appendChild(sil);
 }
 
@@ -400,19 +332,33 @@ alan.appendChild(div);
 });
 }
 
-/* KAYDET */
+/* SAVE */
 async function kaydet(){
 await setDoc(doc(db,"kasa","halisaha"),{data:state});
 }
 
 /* EKLE */
-window.oyuncuEkle=function(){
-let isim=yeniOyuncu.value.trim().toLowerCase();
+window.oyuncuEkle=async function(){
+
+let isim=document.getElementById("yeniOyuncu").value.trim().toLowerCase();
+let mevki=document.getElementById("mevki").value;
+
 if(!isim) return;
 
-state[isim]={isim:isim,owner:isim,pas:0,sut:0,calim:0,kosu:0};
+state[isim]={
+isim:isim,
+owner:isim,
+mevki:mevki,
+pas:0,
+sut:0,
+calim:0,
+kosu:0
+};
 
-yeniOyuncu.value="";
+personeller.push({k:isim, s:"1234"});
+await setDoc(doc(db,"kasa","personel"),{liste:personeller});
+
+document.getElementById("yeniOyuncu").value="";
 kaydet();
 }
 
