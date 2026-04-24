@@ -32,9 +32,21 @@ button{width:100%;padding:12px;margin:5px 0;border-radius:10px;border:none;backg
 .kadin{background:linear-gradient(135deg,#ff6ec7,#c2185b);}
 .aktif{box-shadow:0 0 12px lime;}
 
-input.molada{background:red;color:white;}
+@keyframes yanipSonme{
+0%{background:#8B0000;}
+50%{background:#ff0000;}
+100%{background:#8B0000;}
+}
+input.molada{animation:yanipSonme 1s infinite;color:white;}
 
 #alan{overflow-y:auto;height:calc(100vh - 140px);}
+
+/* ADMIN */
+.ustButonlar{position:fixed;right:10px;bottom:90px;display:flex;flex-direction:column;gap:8px;}
+.ustButonlar button{width:55px;height:55px;border-radius:50%;}
+
+.panel{background:#1f2937;margin:10px;padding:10px;border-radius:12px;max-height:0;overflow:hidden;transition:0.3s;}
+.panel.acik{max-height:300px;overflow:auto;}
 </style>
 </head>
 
@@ -48,13 +60,16 @@ input.molada{background:red;color:white;}
 
 <h2>Giriş</h2>
 
-<button type="button" style="background:#f59e0b;" onclick="location.href='halisaha.html'">
+<!-- 🔥 EKLENEN BUTON -->
+<button 
+type="button"
+style="background:#f59e0b; margin-bottom:10px;"
+onclick="window.location.href='halisaha.html'">
 ⚽ Halı Saha
 </button>
 
 <input id="kullanici">
 <input id="sifre" type="password">
-
 <button onclick="giris()">Giriş</button>
 
 </div>
@@ -62,13 +77,38 @@ input.molada{background:red;color:white;}
 
 <!-- APP -->
 <div id="app">
+
+<button onclick="location.href='mola.html'">☕ Mola</button>
+
+<button id="mesajBtn" style="display:none;" onclick="location.href='mesaj.html'">📩 Mesaj</button>
+<button id="panelBtn" style="display:none;" onclick="panelToggle()">👥 Personel</button>
+
+<div class="ustButonlar">
+<button id="kaydetBtn" style="display:none;" onclick="kaydet()">💾</button>
+<button id="kaydirBtn" style="display:none;" onclick="kaydir()">⬇️</button>
+<button id="degistirBtn" style="display:none;" onclick="degistir()">↔️</button>
+</div>
+
 <div id="alan"></div>
+
+<div id="panel" class="panel">
+<input id="yeniK" placeholder="Kullanıcı">
+<input id="yeniS" placeholder="Şifre">
+<button onclick="ekle()">Ekle</button>
+<div id="liste"></div>
+</div>
+
+</div>
+
+<div class="tabbar">
+<button onclick="location.reload()">🏠</button>
+<button onclick="location.href='mola.html'">☕</button>
 </div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const app = initializeApp({
 apiKey:"AIzaSy...",
@@ -80,52 +120,91 @@ const db = getFirestore(app);
 
 let admin={k:"admin",s:"1234"};
 let personeller=[];
+let adminMi=false;
 let alan=document.getElementById("alan");
+let inputs=[];
 
-/* 🔥 PERSONEL */
+/* PERSONEL */
 onSnapshot(doc(db,"kasa","personel"),snap=>{
 if(snap.exists()) personeller=snap.data().liste;
+listeGoster();
 });
 
-/* 🔥 KASA LİSTE */
-onSnapshot(doc(db,"kasa","liste"),snap=>{
-if(!snap.exists()) return;
-
-let kayit=snap.data().data;
-ciz(kayit);
+/* MOLA */
+let molaData={};
+onSnapshot(doc(db,"kasa","mola"),snap=>{
+molaData=snap.exists()?snap.data().data:{};
+olustur();
 });
 
-/* 🔥 GİRİŞ */
+/* GİRİŞ */
 window.giris=function(){
 
 let k=kullanici.value.trim();
 let s=sifre.value.trim();
 
+localStorage.removeItem("kullanici");
+
 if(k===admin.k && s===admin.s){
-baslat();
-return;
-}
-
+adminMi=true;
+mesajBtn.style.display="block";
+panelBtn.style.display="block";
+kaydetBtn.style.display="block";
+kaydirBtn.style.display="block";
+degistirBtn.style.display="block";
+}else{
 let bulundu=personeller.find(p=>p.k===k && p.s===s);
-
-if(!bulundu){
-alert("Hatalı giriş");
-return;
+if(!bulundu){alert("Hatalı giriş");return;}
 }
 
-baslat();
-}
-
-/* 🔥 BAŞLAT */
-function baslat(){
+localStorage.setItem("kullanici",k);
 document.body.classList.add("girisYapildi");
 login.style.display="none";
+
+olustur();
 }
 
-/* 🔥 ÇİZ */
-function ciz(kayit){
+/* KASA */
+function cinsiyet(isim){
+let kadin=["ayşe","fatma","zeynep","elif","buse"];
+return kadin.includes((isim||"").toLowerCase())?"kadin":"erkek";
+}
 
+function moladaMi(isim){
+if(!isim)return false;
+
+let now=new Date();
+let gruplar=["cay","yemek","son"];
+
+for(let g of gruplar){
+for(let i=1;i<=4;i++){
+let key=g+i;
+let saat=molaData[key]?.saat;
+let kisiler=molaData[key]?.kisiler||[];
+
+if(!saat)continue;
+
+let [h,m]=saat.split(":");
+let hedef=new Date();
+hedef.setHours(h,m,0);
+
+let sure=(molaData[g+"Sure"]?.sure||15)*60;
+let fark=(hedef-now)/1000;
+
+if(fark<=0 && fark>-sure){
+if(kisiler.map(x=>x.toLowerCase()).includes(isim.toLowerCase())) return true;
+}
+}
+}
+return false;
+}
+
+function olustur(){
+onSnapshot(doc(db,"kasa","liste"),snap=>{
+
+let kayit=snap.exists()?snap.data().data:{};
 alan.innerHTML="";
+inputs=[];
 
 for(let i=0;i<6;i++){
 
@@ -136,16 +215,97 @@ let i1=document.createElement("input");
 let i2=document.createElement("input");
 
 let k=kayit["kasa"+(i+1)];
-
 if(k){
 i1.value=k.sol;
 i2.value=k.sag;
 }
 
+i1.disabled=!adminMi;
+i2.disabled=!adminMi;
+
+div.classList.add(cinsiyet(i1.value||i2.value));
+
+if(moladaMi(i1.value)) i1.classList.add("molada");
+if(moladaMi(i2.value)) i2.classList.add("molada");
+
+div.classList.add("aktif");
+
 div.appendChild(i1);
 div.appendChild(i2);
 alan.appendChild(div);
+
+inputs.push(i1,i2);
 }
+});
+}
+
+/* ADMIN */
+window.kaydet=async function(){
+let data={};
+for(let i=0;i<inputs.length;i+=2){
+data["kasa"+(i/2+1)]={sol:inputs[i].value,sag:inputs[i+1].value};
+}
+await setDoc(doc(db,"kasa","liste"),{data});
+}
+
+window.kaydir=async function(){
+let yeni=[];
+for(let i=0;i<inputs.length;i+=2){
+yeni.push({sol:inputs[i].value,sag:inputs[i+1].value});
+}
+let son=yeni.pop();
+yeni.unshift(son);
+
+yeni.forEach((k,i)=>{
+inputs[i*2].value=k.sol;
+inputs[i*2+1].value=k.sag;
+});
+
+let data={};
+yeni.forEach((k,i)=>data["kasa"+(i+1)]=k);
+await setDoc(doc(db,"kasa","liste"),{data});
+}
+
+window.degistir=async function(){
+let yeni=[];
+for(let i=0;i<inputs.length;i+=2){
+yeni.push({sol:inputs[i].value,sag:inputs[i+1].value});
+}
+
+yeni.forEach(k=>[k.sol,k.sag]=[k.sag,k.sol]);
+
+yeni.forEach((k,i)=>{
+inputs[i*2].value=k.sol;
+inputs[i*2+1].value=k.sag;
+});
+
+let data={};
+yeni.forEach((k,i)=>data["kasa"+(i+1)]=k);
+await setDoc(doc(db,"kasa","liste"),{data});
+}
+
+/* PERSONEL */
+window.panelToggle=function(){
+panel.classList.toggle("acik");
+}
+
+window.ekle=async function(){
+personeller.push({k:yeniK.value,s:yeniS.value});
+await setDoc(doc(db,"kasa","personel"),{liste:personeller});
+}
+
+function listeGoster(){
+liste.innerHTML="";
+personeller.forEach((p,i)=>{
+let d=document.createElement("div");
+d.innerHTML=p.k+" <button onclick='sil("+i+")'>❌</button>";
+liste.appendChild(d);
+});
+}
+
+window.sil=async function(i){
+personeller.splice(i,1);
+await setDoc(doc(db,"kasa","personel"),{liste:personeller});
 }
 
 </script>
