@@ -212,11 +212,16 @@ let isim=document.createElement("h4");
 isim.innerText=k.isim;
 div.appendChild(isim);
 
-/* PUAN */
+/* ⭐ PUAN SİSTEMİ */
 if(kullanici!==k.owner){
 
+let son=k.puanlayanlar?.[kullanici] || 0;
+let now=Date.now();
+let izin=(now-son)>604800000;
+
 let btn=document.createElement("button");
-btn.innerText="Puan Ver";
+btn.innerText= izin ? "Puan Ver" : "1 Hafta Bekle";
+btn.disabled=!izin;
 
 let panel=document.createElement("div");
 panel.style.display="none";
@@ -253,10 +258,20 @@ let kaydetBtn=document.createElement("button");
 kaydetBtn.innerText="Kaydet";
 
 kaydetBtn.onclick=()=>{
+
+if(!izin){
+alert("1 hafta dolmadan puan veremezsin");
+return;
+}
+
 state[key].pas=ortalama(pas,p.get());
 state[key].sut=ortalama(sut,s.get());
 state[key].calim=ortalama(calim,c.get());
 state[key].kosu=ortalama(kosu,kY.get());
+
+state[key].puanlayanlar=state[key].puanlayanlar||{};
+state[key].puanlayanlar[kullanici]=now;
+
 kaydet();
 panel.style.display="none";
 };
