@@ -43,8 +43,8 @@ button{width:100%;padding:10px;border:none;border-radius:10px;background:#22c55e
 <button onclick="window.location.href='index.html'">⬅️</button>
 </div>
 
-<!-- 🔥 ŞİFRE DEĞİŞTİR -->
-<div style="padding:10px;">
+<!-- ✅ ŞİFRE DEĞİŞTİR (login sonrası görünür) -->
+<div id="sifrePanel" style="display:none;padding:10px;">
 <input id="yeniSifre" placeholder="Yeni Şifre">
 <button onclick="sifreDegistir()">Şifre Değiştir</button>
 </div>
@@ -111,6 +111,9 @@ localStorage.setItem("kullanici",kullanici);
 document.getElementById("login").style.display="none";
 document.getElementById("app").style.display="block";
 
+/* 🔥 ŞİFRE PANEL AÇ */
+document.getElementById("sifrePanel").style.display="block";
+
 if(adminMi) document.getElementById("adminPanel").style.display="block";
 
 const ref=doc(db,"kasa","halisaha");
@@ -133,7 +136,7 @@ return;
 }
 
 if(kullanici === "admin"){
-alert("Admin şifresi sabit");
+alert("Admin şifresi değişmez");
 return;
 }
 
@@ -151,4 +154,4 @@ await setDoc(doc(db,"kasa","personel"),{liste:personeller});
 alert("Şifre güncellendi");
 }
 
-/* GERİ KALAN KODUN AYNI */
+/* DEVAMI SENİN KODUN AYNI */
