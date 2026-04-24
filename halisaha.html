@@ -151,17 +151,32 @@ await setDoc(doc(db,"kasa","personel"),{liste:personeller});
 alert("Şifre güncellendi");
 }
 
-/* ORT */
+/* 🔥 AKILLI ORTALAMA (TEK DEĞİŞİKLİK) */
 function ortalama(eski,yeni){
-return Math.round((eski + yeni)/2);
+
+if(!eski) return yeni;
+
+let sayi = 5;
+
+let eskiAgirlik = Math.min(0.9, (sayi-1)/sayi);
+let yeniAgirlik = 1 / sayi;
+
+let fark = Math.abs(eski - yeni);
+if(fark > 40){
+yeniAgirlik *= 0.6;
+eskiAgirlik = 1 - yeniAgirlik;
 }
 
-/* KART */
+let sonuc = eski * eskiAgirlik + yeni * yeniAgirlik;
+
+return Math.round(sonuc);
+}
+
+/* KART (geri kalan HER ŞEY AYNI) */
 function ciz(kullanici,adminMi){
 
 alan.innerHTML="";
 
-/* TOP 3 */
 let sirali = Object.keys(state).map(key=>{
 let k=state[key];
 let genel=Math.round(((k.pas||0)+(k.sut||0)+(k.calim||0)+(k.kosu||0))/4);
@@ -195,7 +210,7 @@ tac.style.fontSize="20px";
 div.appendChild(tac);
 }
 
-/* 🚫 OYNAYAMAZ */
+/* 🚫 */
 if(k.oynayamaz){
 div.style.opacity="0.4";
 
@@ -216,18 +231,15 @@ div.style.backgroundImage=`url(${k.bg})`;
 div.style.background="#222";
 }
 
-/* PUAN */
 let puan=document.createElement("div");
 puan.className="buyukPuan";
 puan.innerText=genel;
 div.appendChild(puan);
 
-/* RESİM */
 let img=document.createElement("img");
 img.src=k.resim||"https://via.placeholder.com/80";
 div.appendChild(img);
 
-/* OWNER */
 if(kullanici===k.owner){
 
 let file=document.createElement("input");
@@ -249,17 +261,14 @@ r.readAsDataURL(e.target.files[0]);
 div.appendChild(bg);
 }
 
-/* İSİM */
 let isim=document.createElement("h4");
 isim.innerText=k.isim;
 div.appendChild(isim);
 
-/* MEVKİ */
 let mevki=document.createElement("div");
 mevki.innerText="📍 "+(k.mevki||"-");
 div.appendChild(mevki);
 
-/* ⭐ PUAN */
 if(kullanici!==k.owner){
 
 let son=k.puanlayanlar?.[kullanici] || 0;
@@ -332,7 +341,6 @@ div.appendChild(btn);
 div.appendChild(panel);
 }
 
-/* ADMIN */
 if(adminMi){
 
 let sil=document.createElement("button");
@@ -340,7 +348,6 @@ sil.innerText="Sil";
 sil.onclick=()=>{delete state[key];kaydet();}
 div.appendChild(sil);
 
-/* ❌ OYNAYAMAZ BUTON */
 let sakatBtn=document.createElement("button");
 sakatBtn.innerText = k.oynayamaz ? "✅ Aktif Yap" : "❌ Oynayamaz";
 
@@ -357,12 +364,10 @@ alan.appendChild(div);
 });
 }
 
-/* SAVE */
 async function kaydet(){
 await setDoc(doc(db,"kasa","halisaha"),{data:state});
 }
 
-/* EKLE */
 window.oyuncuEkle=async function(){
 
 let isim=document.getElementById("yeniOyuncu").value.trim().toLowerCase();
@@ -388,23 +393,23 @@ kaydet();
 }
 
 </script>
-  <script>
-/* 📱 SWIPE → SAHA */
+
+<script>
 let startX = 0;
 let endX = 0;
 
 document.addEventListener("touchstart", (e)=>{
-    startX = e.changedTouches[0].screenX;
+startX = e.changedTouches[0].screenX;
 });
 
 document.addEventListener("touchend", (e)=>{
-    endX = e.changedTouches[0].screenX;
+endX = e.changedTouches[0].screenX;
 
-    let fark = startX - endX;
+let fark = startX - endX;
 
-    if(fark > 80){
-        window.location.href = "saha.html";
-    }
+if(fark > 80){
+window.location.href = "saha.html";
+}
 });
 </script>
 
