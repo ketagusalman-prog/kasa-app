@@ -10,21 +10,95 @@ body{margin:0;background:#0b1020;color:white;font-family:Arial;}
 #login{height:100vh;display:flex;justify-content:center;align-items:center;}
 .loginBox{width:80%;background:#1f2937;padding:20px;border-radius:15px;}
 #app{ display:none; }
-.container{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:10px;}
-.kart{padding:12px;border-radius:15px;text-align:center;position:relative;box-shadow:0 0 8px rgba(0,0,0,0.6);background-size:cover;background-position:center;}
-.kart::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,0.55);border-radius:15px;}
+
+.container{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:10px;
+padding:10px;
+}
+
+.kart{
+padding:12px;
+border-radius:15px;
+text-align:center;
+position:relative;
+box-shadow:0 0 8px rgba(0,0,0,0.6);
+background-size:cover;
+background-position:center;
+}
+
+.kart::after{
+content:"";
+position:absolute;
+inset:0;
+background:rgba(0,0,0,0.55);
+border-radius:15px;
+}
+
 .kart *{position:relative;z-index:2;}
+
 img{width:80px;height:80px;border-radius:50%;}
-input,select{width:100%;padding:8px;margin:5px 0;border-radius:8px;border:none;}
-button{width:100%;padding:10px;border:none;border-radius:10px;background:#22c55e;color:white;}
+
+input,select{
+width:100%;
+padding:8px;
+margin:5px 0;
+border-radius:8px;
+border:none;
+}
+
+button{
+width:100%;
+padding:10px;
+border:none;
+border-radius:10px;
+background:#22c55e;
+color:white;
+}
+
+/* PUAN */
+.buyukPuan{
+position:absolute;
+top:8px;
+right:10px;
+font-size:22px;
+font-weight:bold;
+}
+
+/* ⭐ */
 .yildiz{font-size:18px;cursor:pointer;color:#555;}
 .yildiz.aktif{color:#FFD700;}
-.buyukPuan{position:absolute;top:8px;right:10px;font-size:22px;font-weight:bold;}
+
+/* SAHA */
+.saha{
+background:green;
+border-radius:20px;
+padding:10px;
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+}
+
+.takim{
+background:rgba(0,0,0,0.4);
+padding:10px;
+border-radius:15px;
+}
+
+.oyuncu{
+background:rgba(255,255,255,0.1);
+margin:4px;
+padding:5px;
+border-radius:8px;
+font-size:12px;
+}
 </style>
 </head>
 
 <body>
 
+<!-- LOGIN -->
 <div id="login">
 <div class="loginBox">
 <h3>⚽ Giriş</h3>
@@ -34,6 +108,7 @@ button{width:100%;padding:10px;border:none;border-radius:10px;background:#22c55e
 </div>
 </div>
 
+<!-- APP -->
 <div id="app">
 
 <div style="padding:10px;">
@@ -49,16 +124,19 @@ button{width:100%;padding:10px;border:none;border-radius:10px;background:#22c55e
 <input id="yeniOyuncu" placeholder="Oyuncu adı">
 
 <select id="mevki">
-<option value="Kaleci">Kaleci</option>
-<option value="Defans">Defans</option>
-<option value="Orta Saha">Orta Saha</option>
-<option value="Forvet">Forvet</option>
+<option>Kaleci</option>
+<option>Defans</option>
+<option>Orta Saha</option>
+<option>Forvet</option>
 </select>
 
 <button onclick="oyuncuEkle()">Oyuncu Ekle</button>
 </div>
 
 <div class="container" id="alan"></div>
+
+<!-- 🔥 SAHA -->
+<div id="saha" style="padding:10px;"></div>
 
 </div>
 
@@ -95,8 +173,8 @@ alert("Sistem yükleniyor...");
 return;
 }
 
-let k=document.getElementById("kullanici").value.trim().toLowerCase();
-let s=document.getElementById("sifre").value.trim();
+let k=kullanici.value.trim().toLowerCase();
+let s=sifre.value.trim();
 
 let admin={k:"admin",s:"1234"};
 
@@ -120,13 +198,11 @@ function baslat(kullanici,adminMi){
 
 localStorage.setItem("kullanici",kullanici);
 
-document.getElementById("login").style.display="none";
-document.getElementById("app").style.display="block";
-document.getElementById("sifrePanel").style.display="block";
+login.style.display="none";
+app.style.display="block";
+sifrePanel.style.display="block";
 
-if(adminMi){
-document.getElementById("adminPanel").style.display="block";
-}
+if(adminMi) adminPanel.style.display="block";
 
 onSnapshot(doc(db,"kasa","halisaha"),snap=>{
 state=snap.exists()?snap.data().data:{};
@@ -138,7 +214,7 @@ ciz(kullanici,adminMi);
 window.sifreDegistir=async function(){
 
 let k=localStorage.getItem("kullanici");
-let yeni=document.getElementById("yeniSifre").value.trim();
+let yeni=yeniSifre.value.trim();
 
 if(!yeni) return alert("Boş olamaz");
 if(k==="admin") return alert("Admin değişmez");
@@ -147,13 +223,59 @@ let kisi=personeller.find(p=>p.k===k);
 kisi.s=yeni;
 
 await setDoc(doc(db,"kasa","personel"),{liste:personeller});
-
 alert("Şifre güncellendi");
 }
 
-/* ORT */
+/* ORTALAMA */
 function ortalama(eski,yeni){
 return Math.round((eski + yeni)/2);
+}
+
+/* 🔥 TAKIM KUR */
+function otomatikTakimKur(){
+
+let oyuncular = Object.keys(state).map(key=>{
+let k=state[key];
+let genel=Math.round(((k.pas||0)+(k.sut||0)+(k.calim||0)+(k.kosu||0))/4);
+return {key,isim:k.isim,genel};
+});
+
+oyuncular.sort((a,b)=>b.genel-a.genel);
+oyuncular = oyuncular.slice(0,16);
+
+let A=[],B=[];
+oyuncular.forEach((o,i)=>{
+if(i%2===0) A.push(o);
+else B.push(o);
+});
+
+return {A,B};
+}
+
+/* SAHA */
+function sahayiCiz(){
+
+let t=otomatikTakimKur();
+
+function toplam(arr){
+return arr.reduce((a,b)=>a+b.genel,0);
+}
+
+saha.innerHTML=`
+<div class="saha">
+
+<div class="takim">
+<h3>🔵 Takım A (${toplam(t.A)})</h3>
+${t.A.map(o=>`<div class="oyuncu">${o.isim} (${o.genel})</div>`).join("")}
+</div>
+
+<div class="takim">
+<h3>🔴 Takım B (${toplam(t.B)})</h3>
+${t.B.map(o=>`<div class="oyuncu">${o.isim} (${o.genel})</div>`).join("")}
+</div>
+
+</div>
+`;
 }
 
 /* KART */
@@ -161,7 +283,7 @@ function ciz(kullanici,adminMi){
 
 alan.innerHTML="";
 
-/* 🔥 TOP 3 */
+/* TOP 3 */
 let sirali = Object.keys(state).map(key=>{
 let k=state[key];
 let genel=Math.round(((k.pas||0)+(k.sut||0)+(k.calim||0)+(k.kosu||0))/4);
@@ -173,12 +295,7 @@ let top3 = sirali.slice(0,3).map(x=>x.key);
 Object.keys(state).forEach(key=>{
 
 let k=state[key];
-
-let pas=k.pas||0;
-let sut=k.sut||0;
-let calim=k.calim||0;
-let kosu=k.kosu||0;
-
+let pas=k.pas||0, sut=k.sut||0, calim=k.calim||0, kosu=k.kosu||0;
 let genel=Math.round((pas+sut+calim+kosu)/4);
 
 let div=document.createElement("div");
@@ -191,29 +308,24 @@ tac.innerText="👑";
 tac.style.position="absolute";
 tac.style.top="5px";
 tac.style.left="5px";
-tac.style.fontSize="20px";
 div.appendChild(tac);
 }
 
-/* BG */
-if(k.bg){
-div.style.backgroundImage=`url(${k.bg})`;
-}else{
-div.style.background="#222";
-}
+/* bg */
+if(k.bg) div.style.backgroundImage=`url(${k.bg})`;
 
-/* PUAN */
+/* puan */
 let puan=document.createElement("div");
 puan.className="buyukPuan";
 puan.innerText=genel;
 div.appendChild(puan);
 
-/* RESİM */
+/* img */
 let img=document.createElement("img");
 img.src=k.resim||"https://via.placeholder.com/80";
 div.appendChild(img);
 
-/* OWNER */
+/* owner */
 if(kullanici===k.owner){
 
 let file=document.createElement("input");
@@ -235,25 +347,25 @@ r.readAsDataURL(e.target.files[0]);
 div.appendChild(bg);
 }
 
-/* İSİM */
+/* isim */
 let isim=document.createElement("h4");
 isim.innerText=k.isim;
 div.appendChild(isim);
 
-/* 📍 MEVKİ */
+/* mevki */
 let mevki=document.createElement("div");
 mevki.innerText="📍 "+(k.mevki||"-");
 div.appendChild(mevki);
 
-/* ⭐ PUAN */
+/* PUANLAMA */
 if(kullanici!==k.owner){
 
-let son=k.puanlayanlar?.[kullanici] || 0;
+let son=k.puanlayanlar?.[kullanici]||0;
 let now=Date.now();
 let izin=(now-son)>604800000;
 
 let btn=document.createElement("button");
-btn.innerText= izin ? "Puan Ver" : "1 Hafta";
+btn.innerText=izin?"Puan Ver":"1 Hafta";
 btn.disabled=!izin;
 
 let panel=document.createElement("div");
@@ -263,40 +375,27 @@ function yildiz(label){
 let wrap=document.createElement("div");
 wrap.innerHTML="<b>"+label+"</b><br>";
 let val=0;
-
 for(let i=1;i<=5;i++){
 let y=document.createElement("span");
 y.innerText="★";
 y.className="yildiz";
-
 y.onclick=()=>{
 val=i;
 wrap.querySelectorAll(".yildiz").forEach((el,ix)=>{
 el.classList.toggle("aktif",ix<i);
 });
 };
-
 wrap.appendChild(y);
 }
-
 return {el:wrap,get:()=>val*20};
 }
 
-let p=yildiz("Pas");
-let s=yildiz("Şut");
-let c=yildiz("Çalım");
-let kY=yildiz("Koşu");
+let p=yildiz("Pas"),s=yildiz("Şut"),c=yildiz("Çalım"),kY=yildiz("Koşu");
 
 let kaydetBtn=document.createElement("button");
 kaydetBtn.innerText="Kaydet";
 
 kaydetBtn.onclick=()=>{
-
-if(!izin){
-alert("1 hafta dolmadan puan veremezsin");
-return;
-}
-
 state[key].pas=ortalama(pas,p.get());
 state[key].sut=ortalama(sut,s.get());
 state[key].calim=ortalama(calim,c.get());
@@ -312,14 +411,14 @@ panel.style.display="none";
 panel.append(p.el,s.el,c.el,kY.el,kaydetBtn);
 
 btn.onclick=()=>{
-panel.style.display = panel.style.display==="none"?"block":"none";
+panel.style.display=panel.style.display==="none"?"block":"none";
 };
 
 div.appendChild(btn);
 div.appendChild(panel);
 }
 
-/* ADMIN */
+/* admin */
 if(adminMi){
 let sil=document.createElement("button");
 sil.innerText="Sil";
@@ -330,6 +429,9 @@ div.appendChild(sil);
 alan.appendChild(div);
 
 });
+
+/* 🔥 SAHAYI GÜNCELLE */
+sahayiCiz();
 }
 
 /* SAVE */
@@ -340,25 +442,17 @@ await setDoc(doc(db,"kasa","halisaha"),{data:state});
 /* EKLE */
 window.oyuncuEkle=async function(){
 
-let isim=document.getElementById("yeniOyuncu").value.trim().toLowerCase();
+let isim=yeniOyuncu.value.trim().toLowerCase();
 let mevki=document.getElementById("mevki").value;
 
 if(!isim) return;
 
-state[isim]={
-isim:isim,
-owner:isim,
-mevki:mevki,
-pas:0,
-sut:0,
-calim:0,
-kosu:0
-};
+state[isim]={isim:isim,owner:isim,mevki:mevki,pas:0,sut:0,calim:0,kosu:0};
 
-personeller.push({k:isim, s:"1234"});
+personeller.push({k:isim,s:"1234"});
 await setDoc(doc(db,"kasa","personel"),{liste:personeller});
 
-document.getElementById("yeniOyuncu").value="";
+yeniOyuncu.value="";
 kaydet();
 }
 
