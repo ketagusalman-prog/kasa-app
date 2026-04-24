@@ -30,6 +30,7 @@ width:100px;height:100px;border:2px solid white;border-radius:50%;opacity:0.5;}
 .puanBeyaz{top:45%;}
 .puanSiyah{bottom:45%;}
 
+/* ⏳ SAYAÇ */
 #ustBilgi{
 position:absolute;
 top:10px;
@@ -42,18 +43,7 @@ font-size:14px;
 z-index:20;
 }
 
-#adminPanel{
-position:absolute;
-top:10px;
-right:10px;
-z-index:20;
-background:#0008;
-padding:10px;
-border-radius:10px;
-display:none;
-}
-
-/* 🟢 SONUÇ */
+/* ⚽ SONUÇ */
 #sonucYazi{
 position:absolute;
 top:50%;
@@ -72,20 +62,7 @@ z-index:30;
 <body>
 
 <div id="ustBilgi">⏳ Yükleniyor...</div>
-
-<div id="adminPanel">
-<input type="date" id="macTarih"><br>
-<input type="time" id="macSaat"><br>
-<button onclick="macKaydet()">Kaydet</button>
-<button onclick="manuelKilit()">🔒 Kilitle</button>
-<button onclick="macBitir()">⚽ Maçı Bitir</button>
-</div>
-
 <div id="sonucYazi"></div>
-
-<div style="position:absolute;z-index:10;padding:10px;">
-<button onclick="window.location.href='halisaha.html'">⬅️</button>
-</div>
 
 <div id="saha"></div>
 
@@ -103,17 +80,40 @@ projectId:"ukasa1"
 const db = getFirestore(app);
 
 let macData={};
-let adminMi = localStorage.getItem("kullanici")==="admin";
-
-if(adminMi){
-document.getElementById("adminPanel").style.display="block";
-}
 
 onSnapshot(doc(db,"kasa","mac"),snap=>{
 macData = snap.exists()?snap.data():{};
 });
 
-/* 🔥 GENEL (bonus eklendi ama yapı aynı) */
+/* ⏳ GERİ SAYIM */
+function geriSayim(){
+
+if(!macData.tarih || !macData.saat){
+document.getElementById("ustBilgi").innerText="📅 Maç ayarlanmadı";
+return;
+}
+
+let hedef = new Date(macData.tarih+"T"+macData.saat);
+let now = new Date();
+let fark = hedef - now;
+
+if(fark <= 0){
+document.getElementById("ustBilgi").innerText="🏁 Maç zamanı!";
+return;
+}
+
+let gun = Math.floor(fark/86400000);
+let saat = Math.floor((fark%86400000)/3600000);
+let dk = Math.floor((fark%3600000)/60000);
+
+let kilit = fark <= 172800000;
+
+document.getElementById("ustBilgi").innerText =
+(kilit ? "🔒 Kilitli " : "⏳ ") + gun+"g "+saat+"s "+dk+"dk";
+}
+setInterval(geriSayim,1000);
+
+/* PUAN */
 function genel(k){
 let base = Math.round(((k.pas||0)+(k.sut||0)+(k.calim||0)+(k.kosu||0))/4);
 
@@ -133,71 +133,15 @@ else base += 2;
 return base;
 }
 
-/* GERİ SAYIM */
-function geriSayim(){
-if(!macData.tarih || !macData.saat){
-document.getElementById("ustBilgi").innerText="📅 Maç ayarlanmadı";
-return;
-}
-let hedef = new Date(macData.tarih+"T"+macData.saat);
-let now = new Date();
-let fark = hedef-now;
-
-if(fark<=0){
-document.getElementById("ustBilgi").innerText="🏁 Maç zamanı!";
-return;
-}
-
-let gun = Math.floor(fark/86400000);
-let saat = Math.floor((fark%86400000)/3600000);
-let dk = Math.floor((fark%3600000)/60000);
-let kilit = fark<=172800000;
-
-document.getElementById("ustBilgi").innerText =
-(kilit?"🔒 Kilitli ":"⏳ ")+gun+"g "+saat+"s "+dk+"dk";
-}
-setInterval(geriSayim,1000);
-
-/* 🟢 SONUÇ GÖSTER */
+/* SONUÇ GÖSTER */
 function sonucGoster(){
 if(!macData.sonuc) return;
 document.getElementById("sonucYazi").innerText =
 macData.sonuc.beyaz + " - " + macData.sonuc.siyah;
 }
 
-/* 🟢 MAÇ BİTİR */
-window.macBitir = async function(){
-let beyaz = prompt("Beyaz kaç gol?");
-let siyah = prompt("Siyah kaç gol?");
-if(beyaz===null || siyah===null) return;
-
-await setDoc(doc(db,"kasa","mac"),{
-...macData,
-sonuc:{
-beyaz:Number(beyaz),
-siyah:Number(siyah),
-kazanan: Number(beyaz)>Number(siyah) ? "A" : "B"
-}
-});
-alert("Sonuç kaydedildi");
-}
-
-/* TAKIM (AYNEN SENİN KODUN) */
+/* TAKIM */
 function dengeliTakim(state){
-
-let kilitli=false;
-
-if(macData.tarih && macData.saat){
-let macZaman=new Date(macData.tarih+"T"+macData.saat);
-let now=new Date();
-
-if(macZaman-now<=172800000) kilitli=true;
-if(macData.manuelKilit) kilitli=true;
-
-if(kilitli && macData.takimlar){
-return macData.takimlar;
-}
-}
 
 let oyuncular = Object.keys(state)
 .filter(k=>!state[k].oynayamaz)
@@ -212,14 +156,36 @@ resim:state[k].resim||"https://via.placeholder.com/50"
 
 let A=[],B=[],sumA=0,sumB=0;
 
+/* KALECİ */
 let kaleciler = oyuncular.filter(o=>o.mevki==="Kaleci");
 if(kaleciler[0]){A.push(kaleciler[0]);sumA+=kaleciler[0].puan;}
 if(kaleciler[1]){B.push(kaleciler[1]);sumB+=kaleciler[1].puan;}
 
+/* FORVET */
 let forvetler = oyuncular.filter(o=>o.mevki==="Forvet");
 if(forvetler[0]&&!A.includes(forvetler[0])){A.push(forvetler[0]);sumA+=forvetler[0].puan;}
 if(forvetler[1]&&!B.includes(forvetler[1])){B.push(forvetler[1]);sumB+=forvetler[1].puan;}
 
+/* GARANTİ */
+if(!A.find(x=>x.mevki==="Kaleci")){
+let k=oyuncular.find(o=>o.mevki==="Kaleci"&&!B.includes(o));
+if(k){A.push(k);sumA+=k.puan;}
+}
+if(!B.find(x=>x.mevki==="Kaleci")){
+let k=oyuncular.find(o=>o.mevki==="Kaleci"&&!A.includes(o));
+if(k){B.push(k);sumB+=k.puan;}
+}
+
+if(!A.find(x=>x.mevki==="Forvet")){
+let f=oyuncular.find(o=>o.mevki==="Forvet"&&!B.includes(o));
+if(f){A.push(f);sumA+=f.puan;}
+}
+if(!B.find(x=>x.mevki==="Forvet")){
+let f=oyuncular.find(o=>o.mevki==="Forvet"&&!A.includes(o));
+if(f){B.push(f);sumB+=f.puan;}
+}
+
+/* DENGELİ DAĞIT */
 oyuncular.forEach(o=>{
 if(A.includes(o)||B.includes(o)) return;
 
@@ -230,46 +196,30 @@ B.push(o); sumB+=o.puan;
 }
 });
 
-let isimlerA = new Set(A.map(o=>o.isim));
-B = B.filter(o=>!isimlerA.has(o.isim));
-
-while(A.length<8){
-let x=oyuncular.find(o=>!A.includes(o)&&!B.includes(o));
-if(!x) break;
-A.push(x); sumA+=x.puan;
-}
-
-while(B.length<8){
-let x=oyuncular.find(o=>!A.includes(o)&&!B.includes(o));
-if(!x) break;
-B.push(x); sumB+=x.puan;
-}
-
-if(Math.abs(sumA - sumB) > 8){
-for(let i=0;i<A.length;i++){
-for(let j=0;j<B.length;j++){
-let yeniA = sumA - A[i].puan + B[j].puan;
-let yeniB = sumB - B[j].puan + A[i].puan;
-
-if(Math.abs(yeniA - yeniB) < Math.abs(sumA - sumB)){
-let temp = A[i];
-A[i] = B[j];
-B[j] = temp;
-sumA = yeniA;
-sumB = yeniB;
-}
-}
-}
-}
-
-if(!kilitli){
-setDoc(doc(db,"kasa","mac"),{
-...macData,
-takimlar:{A,B,sumA,sumB}
-});
-}
-
 return {A,B,sumA,sumB};
+}
+
+/* DİZİLİŞ */
+function diz(t){
+let kaleci=t.filter(x=>x.mevki==="Kaleci").slice(0,1);
+let def=t.filter(x=>x.mevki==="Defans").slice(0,4);
+let orta=t.filter(x=>x.mevki==="Orta Saha").slice(0,3);
+let forvet=t.filter(x=>x.mevki==="Forvet").slice(0,3);
+
+let kalan=t.filter(x=>!kaleci.includes(x)&&!def.includes(x)&&!orta.includes(x)&&!forvet.includes(x));
+
+function doldur(arr,max){
+while(arr.length<max && kalan.length){
+arr.push(kalan.shift());
+}
+}
+
+doldur(kaleci,1);
+doldur(def,4);
+doldur(orta,3);
+doldur(forvet,3);
+
+return {kaleci,def,orta,forvet};
 }
 
 /* ÇİZ */
@@ -324,50 +274,11 @@ document.getElementById("saha").innerHTML=`
 sonucGoster();
 }
 
-function diz(t){
-let kaleci=t.filter(x=>x.mevki==="Kaleci").slice(0,1);
-let def=t.filter(x=>x.mevki==="Defans").slice(0,4);
-let orta=t.filter(x=>x.mevki==="Orta Saha").slice(0,3);
-let forvet=t.filter(x=>x.mevki==="Forvet").slice(0,3);
-
-let kalan=t.filter(x=>!kaleci.includes(x)&&!def.includes(x)&&!orta.includes(x)&&!forvet.includes(x));
-
-function doldur(arr,max){
-while(arr.length<max && kalan.length){
-arr.push(kalan.shift());
-}
-}
-
-doldur(kaleci,1);
-doldur(def,4);
-doldur(orta,3);
-doldur(forvet,3);
-
-return {kaleci,def,orta,forvet};
-}
-
+/* DATA */
 onSnapshot(doc(db,"kasa","halisaha"),snap=>{
 let state=snap.exists()?snap.data().data:{};
 sahaCiz(state);
 });
-
-/* ADMIN */
-window.macKaydet=async function(){
-await setDoc(doc(db,"kasa","mac"),{
-...macData,
-tarih:macTarih.value,
-saat:macSaat.value
-});
-alert("Kaydedildi");
-}
-
-window.manuelKilit=async function(){
-await setDoc(doc(db,"kasa","mac"),{
-...macData,
-manuelKilit:true
-});
-alert("Kilitlendi");
-}
 
 </script>
 
