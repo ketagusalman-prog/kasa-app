@@ -161,7 +161,7 @@ function ciz(kullanici,adminMi){
 
 alan.innerHTML="";
 
-/* 🔥 TOP 3 */
+/* TOP 3 */
 let sirali = Object.keys(state).map(key=>{
 let k=state[key];
 let genel=Math.round(((k.pas||0)+(k.sut||0)+(k.calim||0)+(k.kosu||0))/4);
@@ -193,6 +193,20 @@ tac.style.top="5px";
 tac.style.left="5px";
 tac.style.fontSize="20px";
 div.appendChild(tac);
+}
+
+/* 🚫 OYNAYAMAZ */
+if(k.oynayamaz){
+div.style.opacity="0.4";
+
+let yasak=document.createElement("div");
+yasak.innerText="🚫";
+yasak.style.position="absolute";
+yasak.style.top="50%";
+yasak.style.left="50%";
+yasak.style.transform="translate(-50%,-50%)";
+yasak.style.fontSize="40px";
+div.appendChild(yasak);
 }
 
 /* BG */
@@ -240,7 +254,7 @@ let isim=document.createElement("h4");
 isim.innerText=k.isim;
 div.appendChild(isim);
 
-/* 📍 MEVKİ */
+/* MEVKİ */
 let mevki=document.createElement("div");
 mevki.innerText="📍 "+(k.mevki||"-");
 div.appendChild(mevki);
@@ -291,7 +305,6 @@ let kaydetBtn=document.createElement("button");
 kaydetBtn.innerText="Kaydet";
 
 kaydetBtn.onclick=()=>{
-
 if(!izin){
 alert("1 hafta dolmadan puan veremezsin");
 return;
@@ -321,10 +334,22 @@ div.appendChild(panel);
 
 /* ADMIN */
 if(adminMi){
+
 let sil=document.createElement("button");
 sil.innerText="Sil";
 sil.onclick=()=>{delete state[key];kaydet();}
 div.appendChild(sil);
+
+/* ❌ OYNAYAMAZ BUTON */
+let sakatBtn=document.createElement("button");
+sakatBtn.innerText = k.oynayamaz ? "✅ Aktif Yap" : "❌ Oynayamaz";
+
+sakatBtn.onclick=()=>{
+state[key].oynayamaz = !state[key].oynayamaz;
+kaydet();
+};
+
+div.appendChild(sakatBtn);
 }
 
 alan.appendChild(div);
@@ -364,24 +389,5 @@ kaydet();
 
 </script>
 
-<script>
-/* 📱 SWIPE → SAHA */
-let startX = 0;
-let endX = 0;
-
-document.addEventListener("touchstart", (e)=>{
-    startX = e.changedTouches[0].screenX;
-});
-
-document.addEventListener("touchend", (e)=>{
-    endX = e.changedTouches[0].screenX;
-
-    let fark = startX - endX;
-
-    if(fark > 80){
-        window.location.href = "saha.html";
-    }
-});
-</script>
 </body>
 </html>
