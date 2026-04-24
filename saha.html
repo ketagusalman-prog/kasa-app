@@ -6,14 +6,8 @@
 <title>Saha</title>
 
 <style>
-body{
-margin:0;
-background:#0b1020;
-color:white;
-font-family:Arial;
-}
+body{margin:0;background:#0b1020;color:white;font-family:Arial;}
 
-/* SAHA */
 .saha{
 height:100vh;
 background:linear-gradient(#0f5132,#198754);
@@ -22,127 +16,83 @@ padding:5px;
 overflow:hidden;
 }
 
-/* ORTA ÇİZGİ */
-.ortaCizgi{
-position:absolute;
-top:50%;
-left:0;
-width:100%;
-height:1px;
-background:white;
-opacity:0.5;
-}
-
-/* ORTA YUVARLAK */
+.ortaCizgi{position:absolute;top:50%;width:100%;height:2px;background:white;opacity:0.5;}
 .ortaYuvarlak{
-position:absolute;
-top:50%;
-left:50%;
+position:absolute;top:50%;left:50%;
 transform:translate(-50%,-50%);
-width:70px;
-height:70px;
-border:1px solid white;
-border-radius:50%;
+width:90px;height:90px;border:2px solid white;border-radius:50%;
 opacity:0.5;
 }
 
-/* KALE */
 .kale{
-position:absolute;
-width:70px;
-height:25px;
-border:2px solid white;
-left:50%;
-transform:translateX(-50%);
+position:absolute;width:110px;height:35px;
+border:3px solid white;left:50%;transform:translateX(-50%);
 }
+.kale.ust{top:5px;}
+.kale.alt{bottom:5px;}
 
-.kale.ust{ top:2px; }
-.kale.alt{ bottom:2px; }
+.takim{position:absolute;width:100%;display:flex;flex-direction:column;align-items:center;}
+.beyaz{top:6%;}
+.siyah{bottom:6%;}
 
-/* TAKIM */
-.takim{
-position:absolute;
-width:100%;
-display:flex;
-flex-direction:column;
-align-items:center;
-}
+.satir{display:flex;justify-content:center;gap:8px;margin:4px 0;flex-wrap:wrap;}
 
-/* KONUM */
-.beyaz{ top:6%; }
-.siyah{ bottom:6%; }
-
-/* SATIR */
-.satir{
-display:flex;
-justify-content:center;
-gap:6px;
-margin:3px 0;
-flex-wrap:wrap;
-}
-
-/* OYUNCU */
 .oyuncu{
-display:flex;
-flex-direction:column;
-align-items:center;
-font-size:9px;
-width:55px;
+display:flex;flex-direction:column;align-items:center;
+font-size:10px;width:65px;
 }
 
-/* FOTO */
 .oyuncu img{
-width:38px;
-height:38px;
-border-radius:50%;
-object-fit:cover;
-border:1px solid white;
+width:50px;height:50px;border-radius:50%;
+border:2px solid white;object-fit:cover;
 }
 
-/* İSİM */
-.isim{
-font-weight:bold;
-font-size:9px;
-text-align:center;
-white-space:nowrap;
-overflow:hidden;
-text-overflow:ellipsis;
-max-width:55px;
+.isim{font-size:10px;font-weight:bold;text-align:center;max-width:65px;overflow:hidden;}
+.puan{font-size:9px;opacity:0.8;}
+
+.bayrak{
+position:absolute;left:10px;font-size:14px;font-weight:bold;
+background:rgba(0,0,0,0.6);padding:4px 8px;border-radius:8px;
+}
+.bayrak.ust{top:10%;}
+.bayrak.alt{bottom:10%;}
+
+.takimPuan{
+position:absolute;right:10px;
+background:rgba(0,0,0,0.6);
+padding:5px 10px;border-radius:10px;
+font-size:12px;font-weight:bold;
+}
+.puanUst{top:15%;}
+.puanAlt{bottom:15%;}
+
+.skor{
+position:absolute;top:50%;left:50%;
+transform:translate(-50%,-50%);
+background:black;padding:10px 20px;
+border-radius:12px;font-size:22px;font-weight:bold;
 }
 
-/* PUAN */
-.puan{
-font-size:8px;
-opacity:0.8;
+.adminPanel{
+position:absolute;top:10px;right:10px;
+background:#111;padding:10px;border-radius:10px;
 }
 
-/* BAŞLIK */
-h3{
-margin:2px;
-font-size:12px;
-}
-
-/* GERİ BUTON */
-.geri{
-position:absolute;
-z-index:10;
-padding:8px;
+button{
+padding:6px 10px;border:none;border-radius:8px;
+background:#22c55e;color:white;margin-top:5px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="geri">
-<button onclick="window.location.href='halisaha.html'">⬅️</button>
-</div>
-
 <div id="saha"></div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const app = initializeApp({
 apiKey:"AIzaSy...",
@@ -152,9 +102,14 @@ projectId:"ukasa1"
 
 const db = getFirestore(app);
 
-/* GENEL */
+let kullanici = localStorage.getItem("kullanici");
+let currentState={};
+
+/* 🔥 GENEL (FORM EKLENDİ AMA BOZULMADI) */
 function genel(k){
-return Math.round(((k.pas||0)+(k.sut||0)+(k.calim||0)+(k.kosu||0))/4);
+let base = ((k.pas||0)+(k.sut||0)+(k.calim||0)+(k.kosu||0))/4;
+let form = k.form || 0;
+return Math.round(base + form);
 }
 
 /* TAKIM */
@@ -173,20 +128,18 @@ resim:k.resim || "https://via.placeholder.com/50"
 oyuncular.sort((a,b)=>b.puan-a.puan);
 oyuncular = oyuncular.slice(0,16);
 
-let A=[],B=[];
-let sumA=0,sumB=0;
+let A=[],B=[],sumA=0,sumB=0;
 
 oyuncular.forEach(o=>{
 if(sumA<=sumB){ A.push(o); sumA+=o.puan; }
 else{ B.push(o); sumB+=o.puan; }
 });
 
-return {A,B};
+return {A,B,sumA,sumB};
 }
 
 /* DİZİLİŞ */
 function diz(t){
-
 let kaleci=t.filter(x=>x.mevki==="Kaleci").slice(0,1);
 let def=t.filter(x=>x.mevki==="Defans").slice(0,4);
 let orta=t.filter(x=>x.mevki==="Orta Saha").slice(0,3);
@@ -222,16 +175,65 @@ function satir(arr){
 return arr.map(o=>oyuncuHTML(o)).join("");
 }
 
-/* ÇİZ */
+/* 🔥 FORM GÜNCELLE */
+function formGuncelle(state, skor){
+
+let [a,b] = skor.split("-").map(x=>parseInt(x.trim()));
+if(isNaN(a) || isNaN(b)) return state;
+
+let t = dengeliTakim(state);
+
+let kazanan = a > b ? t.A : b > a ? t.B : null;
+let kaybeden = a > b ? t.B : b > a ? t.A : null;
+
+kazanan?.forEach(o=>{
+state[o.isim].form = Math.min(10,(state[o.isim].form||0)+2);
+});
+
+kaybeden?.forEach(o=>{
+state[o.isim].form = Math.max(-10,(state[o.isim].form||0)-1);
+});
+
+if(a===b){
+[...t.A,...t.B].forEach(o=>{
+state[o.isim].form = Math.min(10,(state[o.isim].form||0)+1);
+});
+}
+
+return state;
+}
+
+/* SAHA ÇİZ */
 function sahaCiz(state){
 
 let t=dengeliTakim(state);
 let A=diz(t.A);
 let B=diz(t.B);
 
+let skor = state._skor || "0 - 0";
+
+let adminUI="";
+if(kullanici==="admin"){
+adminUI=`
+<div class="adminPanel">
+<input id="skorInput" placeholder="2-1">
+<button onclick="skorKaydet()">Kaydet</button>
+</div>`;
+}
+
 document.getElementById("saha").innerHTML=`
 
 <div class="saha">
+
+${adminUI}
+
+<div class="bayrak ust">⚪ BEYAZ</div>
+<div class="bayrak alt">⚫ SİYAH</div>
+
+<div class="takimPuan puanUst">⚪ ${t.sumA}</div>
+<div class="takimPuan puanAlt">⚫ ${t.sumB}</div>
+
+<div class="skor">${skor}</div>
 
 <div class="ortaCizgi"></div>
 <div class="ortaYuvarlak"></div>
@@ -239,32 +241,41 @@ document.getElementById("saha").innerHTML=`
 <div class="kale ust"></div>
 <div class="kale alt"></div>
 
-<!-- BEYAZ -->
 <div class="takim beyaz">
-<h3>⚪ Beyaz</h3>
 <div class="satir">${satir(A.kaleci)}</div>
 <div class="satir">${satir(A.def)}</div>
 <div class="satir">${satir(A.orta)}</div>
 <div class="satir">${satir(A.forvet)}</div>
 </div>
 
-<!-- SİYAH -->
 <div class="takim siyah">
 <div class="satir">${satir(B.forvet)}</div>
 <div class="satir">${satir(B.orta)}</div>
 <div class="satir">${satir(B.def)}</div>
 <div class="satir">${satir(B.kaleci)}</div>
-<h3>⚫ Siyah</h3>
 </div>
 
 </div>
 `;
 }
 
+/* 🔥 SKOR KAYDET */
+window.skorKaydet = async function(){
+
+let val = document.getElementById("skorInput").value;
+
+/* sadece ekleme */
+let yeniState = formGuncelle({...currentState}, val);
+
+await setDoc(doc(db,"kasa","halisaha"),{
+data:{...yeniState, _skor: val}
+});
+}
+
 /* FIREBASE */
 onSnapshot(doc(db,"kasa","halisaha"),snap=>{
-let state=snap.exists()?snap.data().data:{};
-sahaCiz(state);
+currentState = snap.exists()?snap.data().data:{};
+sahaCiz(currentState);
 });
 
 </script>
