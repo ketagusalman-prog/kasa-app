@@ -268,6 +268,23 @@ sahaCiz(state);
 });
 
 </script>
+let startX = 0;
+let endX = 0;
+
+document.addEventListener("touchstart", (e)=>{
+    startX = e.changedTouches[0].screenX;
+});
+
+document.addEventListener("touchend", (e)=>{
+    endX = e.changedTouches[0].screenX;
+
+    let fark = endX - startX;
+
+    if(fark > 80){
+        window.location.href = "halisaha.html";
+    }
+});
+</script>
 
 </body>
 </html>
