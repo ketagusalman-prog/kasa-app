@@ -32,37 +32,9 @@ button{width:100%;padding:12px;margin:5px 0;border-radius:10px;border:none;backg
 .kadin{background:linear-gradient(135deg,#ff6ec7,#c2185b);}
 .aktif{box-shadow:0 0 12px lime;}
 
-@keyframes yanipSonme{
-0%{background:#8B0000;}
-50%{background:#ff0000;}
-100%{background:#8B0000;}
-}
-input.molada{animation:yanipSonme 1s infinite;color:white;}
+input.molada{background:red;color:white;}
 
 #alan{overflow-y:auto;height:calc(100vh - 140px);}
-
-/* ADMIN */
-.ustButonlar{position:fixed;right:10px;bottom:90px;display:flex;flex-direction:column;gap:8px;}
-.ustButonlar button{width:55px;height:55px;border-radius:50%;}
-
-.panel{background:#1f2937;margin:10px;padding:10px;border-radius:12px;max-height:0;overflow:hidden;transition:0.3s;}
-.panel.acik{max-height:300px;overflow:auto;}
-
-/* SAYAÇ */
-#buyukSayac{
-position:fixed;
-bottom:80px;
-left:50%;
-transform:translateX(-50%);
-width:260px;
-background:black;
-color:#22c55e;
-text-align:center;
-font-size:22px;
-padding:10px;
-border-radius:12px;
-z-index:9999;
-}
 </style>
 </head>
 
@@ -76,11 +48,7 @@ z-index:9999;
 
 <h2>Giriş</h2>
 
-<!-- 🔥 DOĞRU YER -->
-<button 
-type="button"
-style="background:#f59e0b; margin-bottom:10px;"
-onclick="window.location.href='halisaha.html'">
+<button type="button" style="background:#f59e0b;" onclick="location.href='halisaha.html'">
 ⚽ Halı Saha
 </button>
 
@@ -94,40 +62,13 @@ onclick="window.location.href='halisaha.html'">
 
 <!-- APP -->
 <div id="app">
-
-<button onclick="location.href='mola.html'">☕ Mola</button>
-
-<button id="mesajBtn" style="display:none;" onclick="location.href='mesaj.html'">📩 Mesaj</button>
-<button id="panelBtn" style="display:none;" onclick="panelToggle()">👥 Personel</button>
-
-<div class="ustButonlar">
-<button id="kaydetBtn" style="display:none;" onclick="kaydet()">💾</button>
-<button id="kaydirBtn" style="display:none;" onclick="kaydir()">⬇️</button>
-<button id="degistirBtn" style="display:none;" onclick="degistir()">↔️</button>
-</div>
-
 <div id="alan"></div>
-
-<div id="panel" class="panel">
-<input id="yeniK" placeholder="Kullanıcı">
-<input id="yeniS" placeholder="Şifre">
-<button onclick="ekle()">Ekle</button>
-<div id="liste"></div>
 </div>
-
-</div>
-
-<div class="tabbar">
-<button onclick="location.reload()">🏠</button>
-<button onclick="location.href='mola.html'">☕</button>
-</div>
-
-<div id="buyukSayac">--:--</div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const app = initializeApp({
 apiKey:"AIzaSy...",
@@ -139,50 +80,73 @@ const db = getFirestore(app);
 
 let admin={k:"admin",s:"1234"};
 let personeller=[];
-let adminMi=false;
 let alan=document.getElementById("alan");
-let inputs=[];
 
-/* PERSONEL */
+/* 🔥 PERSONEL */
 onSnapshot(doc(db,"kasa","personel"),snap=>{
 if(snap.exists()) personeller=snap.data().liste;
-listeGoster();
 });
 
-/* MOLA */
-let molaData={};
-onSnapshot(doc(db,"kasa","mola"),snap=>{
-molaData=snap.exists()?snap.data().data:{};
-olustur();
+/* 🔥 KASA LİSTE */
+onSnapshot(doc(db,"kasa","liste"),snap=>{
+if(!snap.exists()) return;
+
+let kayit=snap.data().data;
+ciz(kayit);
 });
 
-/* GİRİŞ */
+/* 🔥 GİRİŞ */
 window.giris=function(){
+
 let k=kullanici.value.trim();
 let s=sifre.value.trim();
 
-localStorage.removeItem("kullanici");
-
 if(k===admin.k && s===admin.s){
-adminMi=true;
-mesajBtn.style.display="block";
-panelBtn.style.display="block";
-kaydetBtn.style.display="block";
-kaydirBtn.style.display="block";
-degistirBtn.style.display="block";
-}else{
-let bulundu=personeller.find(p=>p.k===k && p.s===s);
-if(!bulundu){alert("Hatalı giriş");return;}
+baslat();
+return;
 }
 
-localStorage.setItem("kullanici",k);
+let bulundu=personeller.find(p=>p.k===k && p.s===s);
+
+if(!bulundu){
+alert("Hatalı giriş");
+return;
+}
+
+baslat();
+}
+
+/* 🔥 BAŞLAT */
+function baslat(){
 document.body.classList.add("girisYapildi");
 login.style.display="none";
-
-olustur();
 }
 
-/* BURADAN SONRASI SENİN KODUN AYNI DEVAM */
+/* 🔥 ÇİZ */
+function ciz(kayit){
+
+alan.innerHTML="";
+
+for(let i=0;i<6;i++){
+
+let div=document.createElement("div");
+div.className="kasa";
+
+let i1=document.createElement("input");
+let i2=document.createElement("input");
+
+let k=kayit["kasa"+(i+1)];
+
+if(k){
+i1.value=k.sol;
+i2.value=k.sag;
+}
+
+div.appendChild(i1);
+div.appendChild(i2);
+alan.appendChild(div);
+}
+}
 
 </script>
 
