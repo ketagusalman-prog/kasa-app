@@ -8,57 +8,7 @@
 <style>
 body{margin:0;background:#0b1020;color:white;font-family:Arial;}
 
-.saha{
-height:100vh;
-background:linear-gradient(#0f5132,#198754);
-position:relative;
-overflow:hidden;
-}
-
-/* saha çizgisi */
-.saha::after{
-content:"";
-position:absolute;
-inset:0;
-background:
-linear-gradient(to bottom, transparent 49%, white 50%, transparent 51%),
-radial-gradient(circle at center, transparent 60px, white 61px, transparent 62px);
-opacity:0.15;
-}
-
-/* bayrak */
-.bayrak{
-position:absolute;
-width:100%;
-height:50%;
-left:0;
-overflow:hidden;
-}
-
-.bayrak::before{
-content:"";
-position:absolute;
-width:200%;
-height:100%;
-left:-50%;
-opacity:0.15;
-animation:dalga 6s linear infinite;
-}
-
-.bayrakBeyaz{top:0;}
-.bayrakBeyaz::before{
-background:linear-gradient(120deg,transparent 20%,white 50%,transparent 80%);
-}
-
-.bayrakSiyah{bottom:0;}
-.bayrakSiyah::before{
-background:linear-gradient(120deg,transparent 20%,black 50%,transparent 80%);
-}
-
-@keyframes dalga{
-0%{transform:translateX(0);}
-100%{transform:translateX(50%);}
-}
+.saha{height:100vh;background:linear-gradient(#0f5132,#198754);position:relative;overflow:hidden;}
 
 .ortaCizgi{position:absolute;top:50%;width:100%;height:2px;background:white;opacity:0.5;}
 .ortaYuvarlak{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
@@ -68,37 +18,53 @@ width:100px;height:100px;border:2px solid white;border-radius:50%;opacity:0.5;}
 .kale.ust{top:0;}
 .kale.alt{bottom:0;}
 
-.takim{
-position:absolute;
-width:100%;
-height:50%;
-display:flex;
-flex-direction:column;
-align-items:center;
-justify-content:center;
-}
-
+.takim{position:absolute;width:100%;height:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;}
 .beyaz{top:0;}
 .siyah{bottom:0;}
 
 .satir{display:flex;gap:6px;margin:4px;flex-wrap:wrap;}
-
 .oyuncu{text-align:center;font-size:10px;}
 .oyuncu img{width:45px;height:45px;border-radius:50%;border:2px solid white;}
 
-.takimPuan{
-position:absolute;
-right:10px;
-background:rgba(0,0,0,0.5);
-padding:4px 8px;
-border-radius:10px;
-}
+.takimPuan{position:absolute;right:10px;background:#0008;padding:4px 8px;border-radius:10px;}
 .puanBeyaz{top:45%;}
 .puanSiyah{bottom:45%;}
+
+#ustBilgi{
+position:absolute;
+top:10px;
+left:50%;
+transform:translateX(-50%);
+background:#0008;
+padding:8px 15px;
+border-radius:10px;
+font-size:14px;
+z-index:20;
+}
+
+#adminPanel{
+position:absolute;
+top:10px;
+right:10px;
+z-index:20;
+background:#0008;
+padding:10px;
+border-radius:10px;
+display:none;
+}
 </style>
 </head>
 
 <body>
+
+<div id="ustBilgi">⏳ Yükleniyor...</div>
+
+<div id="adminPanel">
+<input type="date" id="macTarih"><br>
+<input type="time" id="macSaat"><br>
+<button onclick="macKaydet()">Kaydet</button>
+<button onclick="manuelKilit()">🔒 Kilitle</button>
+</div>
 
 <div style="position:absolute;z-index:10;padding:10px;">
 <button onclick="window.location.href='halisaha.html'">⬅️</button>
@@ -109,7 +75,7 @@ border-radius:10px;
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const app = initializeApp({
 apiKey:"AIzaSy...",
@@ -119,47 +85,88 @@ projectId:"ukasa1"
 
 const db = getFirestore(app);
 
+let macData={};
+let adminMi = localStorage.getItem("kullanici")==="admin";
+
+if(adminMi){
+document.getElementById("adminPanel").style.display="block";
+}
+
+onSnapshot(doc(db,"kasa","mac"),snap=>{
+macData = snap.exists()?snap.data():{};
+});
+
 function genel(k){
 return Math.round(((k.pas||0)+(k.sut||0)+(k.calim||0)+(k.kosu||0))/4);
 }
 
-/* 🔥 KESİN TAKIM MOTORU */
-function dengeliTakim(state){
+/* GERİ SAYIM */
+function geriSayim(){
+if(!macData.tarih || !macData.saat){
+document.getElementById("ustBilgi").innerText="📅 Maç ayarlanmadı";
+return;
+}
+let hedef = new Date(macData.tarih+"T"+macData.saat);
+let now = new Date();
+let fark = hedef-now;
 
-function formPuan(k){
-return genel(k) + ((k.sonMacPuan||0)*0.2);
+if(fark<=0){
+document.getElementById("ustBilgi").innerText="🏁 Maç zamanı!";
+return;
 }
 
+let gun = Math.floor(fark/86400000);
+let saat = Math.floor((fark%86400000)/3600000);
+let dk = Math.floor((fark%3600000)/60000);
+let kilit = fark<=172800000;
+
+document.getElementById("ustBilgi").innerText =
+(kilit?"🔒 Kilitli ":"⏳ ")+gun+"g "+saat+"s "+dk+"dk";
+}
+setInterval(geriSayim,1000);
+
+/* TAKIM */
+function dengeliTakim(state){
+
+let kilitli=false;
+
+if(macData.tarih && macData.saat){
+let macZaman=new Date(macData.tarih+"T"+macData.saat);
+let now=new Date();
+
+if(macZaman-now<=172800000) kilitli=true;
+if(macData.manuelKilit) kilitli=true;
+
+if(kilitli && macData.takimlar){
+return macData.takimlar;
+}
+}
+
+/* 🔥 EN İYİ 16 SEÇ */
 let oyuncular = Object.keys(state)
 .filter(k=>!state[k].oynayamaz)
 .map(k=>({
 isim:state[k].isim,
 mevki:state[k].mevki||"Orta Saha",
-puan:formPuan(state[k]),
+puan:genel(state[k]),
 resim:state[k].resim||"https://via.placeholder.com/50"
-}));
+}))
+.sort((a,b)=>b.puan-a.puan)
+.slice(0,16);
 
-/* en iyi 16 */
-oyuncular.sort((a,b)=>b.puan-a.puan);
-oyuncular = oyuncular.slice(0,16);
+let A=[],B=[],sumA=0,sumB=0;
 
-/* karıştır */
-oyuncular.sort(()=>Math.random()-0.5);
-
-let A=[],B=[];
-let sumA=0,sumB=0;
-
-/* KALECİ */
+/* 🔥 KALECİ GARANTİ */
 let kaleciler = oyuncular.filter(o=>o.mevki==="Kaleci");
-if(kaleciler[0]){A.push(kaleciler[0]); sumA+=kaleciler[0].puan;}
-if(kaleciler[1]){B.push(kaleciler[1]); sumB+=kaleciler[1].puan;}
+if(kaleciler[0]){A.push(kaleciler[0]);sumA+=kaleciler[0].puan;}
+if(kaleciler[1]){B.push(kaleciler[1]);sumB+=kaleciler[1].puan;}
 
-/* FORVET */
+/* 🔥 FORVET GARANTİ */
 let forvetler = oyuncular.filter(o=>o.mevki==="Forvet");
-if(forvetler[0] && !A.includes(forvetler[0])){A.push(forvetler[0]); sumA+=forvetler[0].puan;}
-if(forvetler[1] && !B.includes(forvetler[1])){B.push(forvetler[1]); sumB+=forvetler[1].puan;}
+if(forvetler[0]&&!A.includes(forvetler[0])){A.push(forvetler[0]);sumA+=forvetler[0].puan;}
+if(forvetler[1]&&!B.includes(forvetler[1])){B.push(forvetler[1]);sumB+=forvetler[1].puan;}
 
-/* KALANLAR */
+/* 🔥 DİĞERLERİNİ DENGELİ DAĞIT */
 oyuncular.forEach(o=>{
 if(A.includes(o)||B.includes(o)) return;
 
@@ -170,7 +177,11 @@ B.push(o); sumB+=o.puan;
 }
 });
 
-/* TAMAMLA */
+/* 🔥 DUPLICATE FIX */
+let isimlerA = new Set(A.map(o=>o.isim));
+B = B.filter(o=>!isimlerA.has(o.isim));
+
+/* 🔥 TAMAMLAMA */
 while(A.length<8){
 let x=oyuncular.find(o=>!A.includes(o)&&!B.includes(o));
 if(!x) break;
@@ -183,10 +194,37 @@ if(!x) break;
 B.push(x); sumB+=x.puan;
 }
 
+/* 🔥 PUAN DENGELE */
+if(Math.abs(sumA - sumB) > 8){
+for(let i=0;i<A.length;i++){
+for(let j=0;j<B.length;j++){
+
+let yeniA = sumA - A[i].puan + B[j].puan;
+let yeniB = sumB - B[j].puan + A[i].puan;
+
+if(Math.abs(yeniA - yeniB) < Math.abs(sumA - sumB)){
+let temp = A[i];
+A[i] = B[j];
+B[j] = temp;
+sumA = yeniA;
+sumB = yeniB;
+}
+}
+}
+}
+
+/* KAYDET */
+if(!kilitli){
+setDoc(doc(db,"kasa","mac"),{
+...macData,
+takimlar:{A,B,sumA,sumB}
+});
+}
+
 return {A,B,sumA,sumB};
 }
 
-/* diz */
+/* DİZİLİŞ aynı */
 function diz(t){
 let kaleci=t.filter(x=>x.mevki==="Kaleci").slice(0,1);
 let def=t.filter(x=>x.mevki==="Defans").slice(0,4);
@@ -209,7 +247,14 @@ doldur(forvet,3);
 return {kaleci,def,orta,forvet};
 }
 
-function htmlOyuncu(o){
+/* ÇİZ aynı */
+function sahaCiz(state){
+
+let t=dengeliTakim(state);
+let A=diz(t.A);
+let B=diz(t.B);
+
+function html(o){
 return `<div class="oyuncu">
 <img src="${o.resim}">
 <div>${o.isim}</div>
@@ -217,19 +262,12 @@ return `<div class="oyuncu">
 </div>`;
 }
 
-function satir(a){return a.map(htmlOyuncu).join("");}
-
-function sahaCiz(state){
-
-let t=dengeliTakim(state);
-let A=diz(t.A);
-let B=diz(t.B);
+function satir(arr){
+return arr.map(html).join("");
+}
 
 document.getElementById("saha").innerHTML=`
 <div class="saha">
-
-<div class="bayrak bayrakBeyaz"></div>
-<div class="bayrak bayrakSiyah"></div>
 
 <div class="ortaCizgi"></div>
 <div class="ortaYuvarlak"></div>
@@ -256,14 +294,31 @@ document.getElementById("saha").innerHTML=`
 <h3>⚫ Siyah</h3>
 </div>
 
-</div>
-`;
+</div>`;
 }
 
 onSnapshot(doc(db,"kasa","halisaha"),snap=>{
 let state=snap.exists()?snap.data().data:{};
 sahaCiz(state);
 });
+
+/* ADMIN */
+window.macKaydet=async function(){
+await setDoc(doc(db,"kasa","mac"),{
+...macData,
+tarih:macTarih.value,
+saat:macSaat.value
+});
+alert("Kaydedildi");
+}
+
+window.manuelKilit=async function(){
+await setDoc(doc(db,"kasa","mac"),{
+...macData,
+manuelKilit:true
+});
+alert("Kilitlendi");
+}
 
 </script>
 
