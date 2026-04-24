@@ -364,5 +364,30 @@ kaydet();
 
 </script>
 
+/* 📱 SWIPE GEÇİŞ */
+let startX = 0;
+let endX = 0;
+
+document.addEventListener("touchstart", (e)=>{
+    startX = e.changedTouches[0].screenX;
+});
+
+document.addEventListener("touchend", (e)=>{
+    endX = e.changedTouches[0].screenX;
+
+    let fark = startX - endX;
+
+    /* sola kaydır (saha.html) */
+    if(fark > 80){
+        window.location.href = "saha.html";
+    }
+
+    /* sağa kaydır (geri) */
+    if(fark < -80){
+        // istersen geri sayfa
+        // window.location.href = "index.html";
+    }
+});
+
 </body>
 </html>
