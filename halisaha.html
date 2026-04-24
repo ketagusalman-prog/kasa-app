@@ -25,24 +25,21 @@ button{width:100%;padding:10px;border:none;border-radius:10px;background:#22c55e
 
 <body>
 
-<!-- LOGIN -->
 <div id="login">
 <div class="loginBox">
 <h3>⚽ Giriş</h3>
-<input id="kullanici" placeholder="Kullanıcı">
-<input id="sifre" type="password" placeholder="Şifre">
+<input id="kullanici">
+<input id="sifre" type="password">
 <button onclick="giris()">Giriş</button>
 </div>
 </div>
 
-<!-- APP -->
 <div id="app">
 
 <div style="padding:10px;">
 <button onclick="window.location.href='index.html'">⬅️</button>
 </div>
 
-<!-- ŞİFRE -->
 <div id="sifrePanel" style="display:none;padding:10px;">
 <input id="yeniSifre" placeholder="Yeni Şifre">
 <button onclick="sifreDegistir()">Şifre Değiştir</button>
@@ -115,11 +112,13 @@ function baslat(kullanici,adminMi){
 
 localStorage.setItem("kullanici",kullanici);
 
-login.style.display="none";
-app.style.display="block";
-sifrePanel.style.display="block";
+document.getElementById("login").style.display="none";
+document.getElementById("app").style.display="block";
+document.getElementById("sifrePanel").style.display="block";
 
-if(adminMi) adminPanel.style.display="block";
+if(adminMi){
+document.getElementById("adminPanel").style.display="block";
+}
 
 onSnapshot(doc(db,"kasa","halisaha"),snap=>{
 state=snap.exists()?snap.data().data:{};
@@ -131,7 +130,7 @@ ciz(kullanici,adminMi);
 window.sifreDegistir=async function(){
 
 let k=localStorage.getItem("kullanici");
-let yeni=yeniSifre.value.trim();
+let yeni=document.getElementById("yeniSifre").value.trim();
 
 if(!yeni) return alert("Boş olamaz");
 if(k==="admin") return alert("Admin değişmez");
@@ -186,7 +185,7 @@ let img=document.createElement("img");
 img.src=k.resim||"https://via.placeholder.com/80";
 div.appendChild(img);
 
-/* OWNER upload */
+/* OWNER */
 if(kullanici===k.owner){
 
 let file=document.createElement("input");
@@ -213,7 +212,7 @@ let isim=document.createElement("h4");
 isim.innerText=k.isim;
 div.appendChild(isim);
 
-/* ⭐ PUAN */
+/* PUAN */
 if(kullanici!==k.owner){
 
 let btn=document.createElement("button");
@@ -265,7 +264,7 @@ panel.style.display="none";
 panel.append(p.el,s.el,c.el,kY.el,kaydetBtn);
 
 btn.onclick=()=>{
-panel.style.display=panel.style.display==="none"?"block":"none";
+panel.style.display = panel.style.display==="none"?"block":"none";
 };
 
 div.appendChild(btn);
@@ -292,12 +291,12 @@ await setDoc(doc(db,"kasa","halisaha"),{data:state});
 
 /* EKLE */
 window.oyuncuEkle=function(){
-let isim=yeniOyuncu.value.trim().toLowerCase();
+let isim=document.getElementById("yeniOyuncu").value.trim().toLowerCase();
 if(!isim) return;
 
 state[isim]={isim:isim,owner:isim,pas:0,sut:0,calim:0,kosu:0};
 
-yeniOyuncu.value="";
+document.getElementById("yeniOyuncu").value="";
 kaydet();
 }
 
