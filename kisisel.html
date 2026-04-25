@@ -2,133 +2,104 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-    <title>Personel Performans</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personel Paneli</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { 
-            --bg: #0b0f1a; --card: rgba(22, 30, 49, 0.95); --accent: #3b82f6; 
-            --text: #ffffff; --border: rgba(255, 255, 255, 0.1);
-            --danger: #ef4444; --success: #10b981;
-        }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; min-height: 100vh; }
-        .phone { width: 100%; max-width: 414px; height: 100vh; background: #000; position: relative; overflow: hidden; }
-        .app { width: 100%; height: 100%; background: radial-gradient(circle at top right, #1e293b, #020617); overflow-y: auto; padding: 20px 15px 100px 15px; }
-        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .topbar h3 { font-weight: 800; font-size: 18px; color: var(--accent); }
-        .kart { background: var(--card); padding: 18px; border-radius: 22px; margin-top: 15px; border: 1px solid var(--border); backdrop-filter: blur(10px); }
-        .kart h3 { font-size: 14px; margin-bottom: 12px; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 8px; text-transform: uppercase; }
-        .kart p { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; color: #94a3b8; }
-        .kart p b { color: white; }
-        .high { color: var(--success) !important; }
-        .low { color: var(--danger) !important; }
-        button { width: 100%; padding: 14px; border-radius: 14px; border: none; font-weight: 800; color: white; cursor: pointer; font-size: 11px; text-transform: uppercase; margin-top: 10px; }
-        .btn-outline { background: rgba(255,255,255,0.05); border: 1px solid var(--border); }
-        .btn-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid var(--danger); margin-top: 20px; }
-        #status { text-align: center; margin-top: 40px; color: #64748b; font-size: 14px; }
-        canvas { margin-top: 20px; max-height: 180px; }
+        body { margin:0; background:#020617; font-family:"Segoe UI", sans-serif; color:white; display:flex; justify-content:center; }
+        .phone { width:100%; max-width:400px; height:100vh; background:#020617; padding:20px; box-sizing:border-box; }
+        .kart { background:#1e293b; padding:20px; border-radius:20px; margin-top:20px; border:1px solid rgba(255,255,255,0.1); }
+        .kart h3 { margin:0 0 15px 0; color:#3b82f6; border-bottom:1px solid #334155; padding-bottom:10px; text-transform:uppercase; font-size:16px; }
+        .kart p { display:flex; justify-content:space-between; margin:8px 0; font-size:14px; color:#94a3b8; }
+        .kart p b { color:white; }
+        .high { color:#22c55e; }
+        .low { color:#ef4444; }
+        button { width:100%; padding:12px; border-radius:12px; border:none; background:#ef4444; color:white; font-weight:bold; cursor:pointer; margin-top:20px; }
+        #loader { text-align:center; margin-top:50px; color:#3b82f6; }
     </style>
 </head>
 <body>
 
 <div class="phone">
-    <div class="app">
-        <div class="topbar">
-            <h3>⚡ VERİLERİM</h3>
-            <div id="sayac" style="display:none; background:red; color:white; padding:2px 8px; border-radius:10px; font-size:12px;">0</div>
-        </div>
-
-        <div id="status">Giriş bilgileri kontrol ediliyor...</div>
-        <div id="veriAlani"></div>
-        <canvas id="grafik" style="display:none;"></canvas>
+    <div id="loader">Verileriniz getiriliyor...</div>
+    <div id="icerik" style="display:none;">
+        <div id="veriKarti"></div>
+        <canvas id="grafik" style="margin-top:20px;"></canvas>
+        <button onclick="cikisYap()">🚪 Oturumu Kapat</button>
     </div>
 </div>
 
 <script type="module">
 const URL = "https://script.google.com/macros/s/AKfycbxODlNf0yl2oAtkd5oMw1ghWavKSOO8TmT81uAUN8Oiqbj8yzx81x7iRexwcAHo7ecv4g/exec";
 
-// KRİTİK DÜZENLEME: Hem "kullanici" hem de "isim" anahtarlarını kontrol eder
-let kullanici = (localStorage.getItem("kullanici") || localStorage.getItem("isim") || "").toLowerCase().trim();
+// index.html'deki 'kullanici' verisini oku
+let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase().trim();
 
 if (!kullanici) {
-    document.getElementById("status").innerHTML = `
-        <div class="kart" style="border:1px solid var(--danger)">
-            <h3 style="color:var(--danger)">GİRİŞ YAPILMADI</h3>
-            <p style="text-align:center; display:block">Lütfen önce ana sayfadan giriş yapın.</p>
-            <button class="btn-outline" onclick="location.href='index.html'">GİRİŞE DÖN</button>
-        </div>`;
+    // Eğer giriş yapılmamışsa ana sayfaya at
+    window.location.href = "index.html";
 } else {
-    init();
+    veriGetir();
 }
 
-async function init() {
+async function veriGetir() {
     try {
         const res = await fetch(URL);
         const data = await res.json();
         
-        // İsmi veri tabanında ara
+        // İsmi veri tabanında bul
         const kisi = data.find(x => x.isim && x.isim.toString().toLowerCase().trim() === kullanici);
 
-        document.getElementById("status").style.display = "none";
+        document.getElementById("loader").style.display = "none";
+        document.getElementById("icerik").style.display = "block";
 
         if (!kisi) {
-            document.getElementById("veriAlani").innerHTML = `
-                <div class="kart">
-                    <h3>VERİ BULUNAMADI ❌</h3>
-                    <p style="justify-content:center">Sistemde "${kullanici}" ismine ait veri yok.</p>
-                    <button class="btn-outline" onclick="localStorage.clear(); location.href='index.html'">YENİDEN GİRİŞ</button>
+            document.getElementById("veriKarti").innerHTML = `
+                <div class="kart" style="text-align:center;">
+                    <h3 style="color:#ef4444;">Veri Bulunamadı</h3>
+                    <p style="justify-content:center;">"${kullanici}" ismine ait performans kaydı yok.</p>
                 </div>`;
             return;
         }
 
-        // Genel Ortalama
+        // Ortalama puan (KPI)
         let avg = data.reduce((a, b) => a + Number(b.kpuan || 0), 0) / data.length;
 
-        document.getElementById("veriAlani").innerHTML = `
+        document.getElementById("veriKarti").innerHTML = `
             <div class="kart">
-                <h3>👤 ${kisi.isim.toUpperCase()}</h3>
+                <h3>👤 ${kisi.isim}</h3>
                 <p>🏢 Ay: <b>${kisi.ay1 || "-"}</b></p>
                 <p>🆔 Sicil: <b>${kisi.sicil || "-"}</b></p>
-                <p>🧾 Fiş: <b>${kisi.fis1 || "-"}</b></p>
+                <p>🧾 Fiş Sayısı: <b>${kisi.fis1 || "-"}</b></p>
                 <p>📊 Satır: <b>${kisi.satirSayisi || "-"}</b></p>
                 <p>⏱️ Hız: <b>${kisi.fisBasiSure || "-"}</b></p>
                 <p>⭐ Puan: <b class="${Number(kisi.kpuan) >= avg ? 'high' : 'low'}">${kisi.kpuan || "-"}</b></p>
-                <p>💰 TL: <b>${kisi.tl || "-"}</b></p>
-                <p>🤑 Euro: <b>${kisi.euro || "-"}</b></p>
-                <p>🔢 Adet: <b>${kisi.adet || "-"}</b></p>
-            </div>
-            <button class="btn-danger" onclick="cikis()">ÇIKIŞ YAP</button>
-        `;
+                <p>💰 TL Hakediş: <b>${kisi.tl || "-"}</b></p>
+                <p>🤑 Euro Hakediş: <b>${kisi.euro || "-"}</b></p>
+                <p>🔢 Toplam Adet: <b>${kisi.adet || "-"}</b></p>
+            </div>`;
 
-        drawChart(kisi.kpuan, avg);
+        new Chart(document.getElementById("grafik"), {
+            type: 'doughnut',
+            data: {
+                labels: ['Puanım', 'Ortalama'],
+                datasets: [{
+                    data: [Number(kisi.kpuan), avg],
+                    backgroundColor: ['#3b82f6', 'rgba(255,255,255,0.05)'],
+                    borderWidth: 0
+                }]
+            },
+            options: { cutout: '80%', plugins: { legend: { labels: { color: 'white' } } } }
+        });
 
-    } catch (e) {
-        document.getElementById("status").innerText = "Veri çekilirken hata oluştu!";
+    } catch (error) {
+        document.getElementById("loader").innerText = "Bağlantı Hatası!";
     }
 }
 
-function drawChart(puan, ort) {
-    const ctx = document.getElementById("grafik");
-    ctx.style.display = "block";
-    new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Puanım', 'Ortalama'],
-            datasets: [{
-                data: [Number(puan), ort],
-                backgroundColor: ['#3b82f6', 'rgba(255,255,255,0.05)'],
-                borderWidth: 0
-            }]
-        },
-        options: { cutout: '80%', plugins: { legend: { display: false } } }
-    });
-}
-
-window.cikis = function() {
-    localStorage.clear();
-    location.href = 'index.html';
+window.cikisYap = function() {
+    localStorage.removeItem("kullanici");
+    window.location.href = "index.html";
 }
 </script>
 </body>
