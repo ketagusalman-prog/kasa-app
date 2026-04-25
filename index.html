@@ -1,314 +1,362 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kasa Sistem</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Kasa Kontrol Premium V12</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --bg: #0b0f1a; 
+            --card: rgba(22, 30, 49, 0.85); 
+            --accent: #3b82f6; 
+            --text: #ffffff;
+            --border: rgba(255, 255, 255, 0.1);
+            --pink: #f472b6;
+            --green: #10b981;
+            --orange: #f59e0b;
+            --purple: #a855f7;
+            --danger: #ef4444;
+        }
+        
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
 
-<style>
-body { font-family: Arial; background:#0b1020; color:white; margin:0; }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--bg);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: var(--text); 
+            margin: 0; 
+            min-height: 100vh;
+            transition: background 0.5s ease;
+        }
 
-/* BAR */
-.appbar,.tabbar{display:none;}
-body.girisYapildi .appbar,
-body.girisYapildi .tabbar{display:flex;}
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: -1;
+        }
 
-.appbar{position:fixed;top:0;width:100%;height:60px;background:#1f2937;justify-content:center;align-items:center;}
-.tabbar{position:fixed;bottom:0;width:100%;height:70px;background:#1f2937;justify-content:space-around;align-items:center;}
+        .appbar { display: none; position: fixed; top: 0; width: 100%; height: 65px; background: rgba(11, 15, 26, 0.8); backdrop-filter: blur(20px); justify-content: center; align-items: center; font-weight: 800; z-index: 1000; border-bottom: 1px solid var(--border); color: var(--accent); letter-spacing: 1px; }
+        .tabbar { display: none; position: fixed; bottom: 0; width: 100%; height: 80px; background: rgba(22, 30, 49, 0.9); backdrop-filter: blur(25px); justify-content: space-around; align-items: center; z-index: 1000; border-top: 1px solid var(--border); padding-bottom: env(safe-area-inset-bottom); border-radius: 30px 30px 0 0; }
+        body.girisYapildi .appbar, body.girisYapildi .tabbar { display: flex; }
 
-/* LOGIN */
-#login{height:100vh;display:flex;justify-content:center;align-items:center;}
-.loginCard{width:85%;background:#1f2937;padding:25px;border-radius:20px;}
+        #anaSayac { font-size: 48px; font-weight: 800; margin-bottom: 20px; color: var(--orange); text-shadow: 0 0 20px rgba(245, 158, 11, 0.5); font-variant-numeric: tabular-nums; }
+        #anaGrup { font-size: 14px; color: #94a3b8; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 2px; }
 
-/* APP */
-#app{display:none;padding-top:60px;padding-bottom:70px;}
-body.girisYapildi #app{display:block;}
+        #login { height: 100vh; display: flex; justify-content: center; align-items: center; padding: 25px; }
+        .loginCard { width: 100%; max-width: 400px; background: var(--card); padding: 40px; border-radius: 35px; text-align: center; border: 1px solid var(--border); backdrop-filter: blur(15px); box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
 
-input{width:100%;padding:14px;margin:6px 0;border-radius:12px;border:none;}
-button{width:100%;padding:12px;margin:5px 0;border-radius:10px;border:none;background:#22c55e;color:white;}
+        #app { display: none; padding: 90px 16px 140px 16px; max-width: 500px; margin: 0 auto; }
+        body.girisYapildi #app { display: block; }
 
-.kasa{display:flex;gap:10px;margin:10px;padding:14px;border-radius:16px;font-weight:bold;}
-.erkek{background:linear-gradient(135deg,#3b82f6,#1e3a8a);}
-.kadin{background:linear-gradient(135deg,#ff6ec7,#c2185b);}
-.aktif{box-shadow:0 0 12px lime;}
+        #alan { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
 
-@keyframes yanipSonme{
-0%{background:#8B0000;}
-50%{background:#ff0000;}
-100%{background:#8B0000;}
-}
-input.molada{animation:yanipSonme 1s infinite;color:white;}
+        .kasa-birimi { 
+            background: var(--card); border-radius: 24px; padding: 16px; 
+            border: 1px solid var(--border); display: flex; flex-direction: column; 
+            gap: 12px; min-height: 160px; backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3); transition: transform 0.2s;
+            border-left: 5px solid transparent;
+        }
+        
+        /* GÜÇLENDİRİLMİŞ MOLA YANIP SÖNME */
+        .kasa-birimi.mola-aktif {
+            animation: mola-blink 1s infinite !important;
+            border: 2px solid var(--danger) !important;
+            border-left: 8px solid var(--danger) !important;
+            z-index: 5;
+        }
 
-#alan{overflow-y:auto;height:calc(100vh - 140px);}
+        @keyframes mola-blink {
+            0% { background: rgba(22, 30, 49, 0.85); box-shadow: 0 0 5px var(--danger); }
+            50% { background: rgba(239, 68, 68, 0.3); box-shadow: 0 0 20px var(--danger); }
+            100% { background: rgba(22, 30, 49, 0.85); box-shadow: 0 0 5px var(--danger); }
+        }
 
-/* ADMIN */
-.ustButonlar{position:fixed;right:10px;bottom:90px;display:flex;flex-direction:column;gap:8px;}
-.ustButonlar button{width:55px;height:55px;border-radius:50%;}
+        .g-mavi { border-left-color: var(--accent) !important; }
+        .g-turuncu { border-left-color: var(--orange) !important; }
+        .g-mor { border-left-color: var(--purple) !important; }
 
-.panel{background:#1f2937;margin:10px;padding:10px;border-radius:12px;max-height:0;overflow:hidden;transition:0.3s;}
-.panel.acik{max-height:300px;overflow:auto;}
-</style>
+        .sabit-no { font-size: 11px; font-weight: 800; color: #94a3b8; letter-spacing: 1px; }
+        .kasa-baslik-input { background: transparent; border: none; color: var(--accent); font-weight: 800; font-size: 15px; padding: 0; }
+        
+        .barkod-konteynir { background: rgba(0,0,0,0.4); padding: 6px 10px; border-radius: 12px; display: flex; align-items: center; gap: 6px; border: 1px solid var(--border); }
+        .barkod-input { background: transparent; border: none; color: #cbd5e1; font-size: 11px; width: 100%; }
+        
+        .personel-input { background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 14px; color: white; padding: 12px; font-size: 13px; font-weight: 600; text-align: center; width: 100%; }
+
+        .btn-primary { width: 100%; height: 58px; border-radius: 18px; border: none; font-weight: 800; color: white; cursor: pointer; transition: 0.3s; }
+        
+        .admin-tools { position: fixed; right: 20px; bottom: 100px; display: flex; flex-direction: column; gap: 12px; z-index: 2000; }
+        .admin-tools button { width: 56px; height: 56px; border-radius: 18px; border: none; color: white; font-size: 22px; display: none; align-items: center; justify-content: center; box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
+
+        .panel { background: var(--card); border-radius: 25px; overflow: hidden; max-height: 0; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1); backdrop-filter: blur(20px); }
+        .panel.acik { max-height: 700px; padding: 25px; border: 1px solid var(--border); margin-bottom: 20px; }
+    </style>
 </head>
-
 <body>
 
-<div class="appbar">Kasa Sistem</div>
+<div class="appbar">PREMIUM KASA YÖNETİM</div>
 
-<!-- LOGIN -->
 <div id="login">
-<div class="loginCard">
-
-<h2>Giriş</h2>
-
-<!-- 🔥 EKLENEN BUTON -->
-<button 
-type="button"
-style="background:#f59e0b; margin-bottom:10px;"
-onclick="window.location.href='halisaha.html'">
-⚽ Halı Saha
-</button>
-
-<input id="kullanici">
-<input id="sifre" type="password">
-<button onclick="giris()">Giriş</button>
-
-</div>
+    <div class="loginCard">
+        <div id="anaGrup">MOLA BEKLENİYOR</div>
+        <div id="anaSayac">00:00</div>
+        <button onclick="location.href='hali.html'" style="background:#10b981; color:white; border:none; padding:10px 20px; border-radius:50px; font-weight:800; font-size:12px; margin-bottom:25px; cursor:pointer; letter-spacing:1px;">⚽ HALISAHA PANELİ</button>
+        
+        <h3>Sistem Girişi</h3>
+        <input type="text" id="kullanici" placeholder="Kullanıcı Adı" style="width:100%; padding:15px; border-radius:12px; margin-bottom:12px; background:rgba(0,0,0,0.2); border:1px solid var(--border); color:white;">
+        <input type="password" id="sifre" placeholder="Şifre" style="width:100%; padding:15px; border-radius:12px; margin-bottom:20px; background:rgba(0,0,0,0.2); border:1px solid var(--border); color:white;">
+        <button id="girisBtn" class="btn-primary" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">BAŞLAT</button>
+    </div>
 </div>
 
-<!-- APP -->
 <div id="app">
+    <button class="btn-primary" style="background: linear-gradient(135deg, #6366f1, #4f46e5); margin-bottom:20px;" onclick="location.href='mola.html'">☕ MOLA DURUMU</button>
+    
+    <div id="alan"></div>
 
-<button onclick="location.href='mola.html'">☕ Mola</button>
+    <div id="panel" class="panel">
+        <h4 style="margin:0 0 10px 0">Görünüm</h4>
+        <input id="bgUrl" placeholder="Arka Plan Resim URL" style="width:100%; padding:12px; margin-bottom:15px; background:rgba(0,0,0,0.2); border:1px solid var(--border); color:white; border-radius:10px;">
+        <hr style="border:0; border-top:1px solid var(--border); margin-bottom:15px;">
+        <h4 style="margin:0 0 10px 0">Personel Ekle</h4>
+        <input id="yeniK" placeholder="İsim" style="width:100%; padding:12px; margin-bottom:10px; background:rgba(0,0,0,0.2); border:1px solid var(--border); color:white; border-radius:10px;">
+        <input id="yeniS" placeholder="Şifre" style="width:100%; padding:12px; margin-bottom:15px; background:rgba(0,0,0,0.2); border:1px solid var(--border); color:white; border-radius:10px;">
+        <button class="btn-primary" onclick="ekle()" style="background: var(--green); height:48px;">PERSONELİ SİSTEME İŞLE</button>
+        <div id="liste" style="margin-top:20px;"></div>
+    </div>
 
-<button id="mesajBtn" style="display:none;" onclick="location.href='mesaj.html'">📩 Mesaj</button>
-<button id="panelBtn" style="display:none;" onclick="panelToggle()">👥 Personel</button>
-
-<div class="ustButonlar">
-<button id="kaydetBtn" style="display:none;" onclick="kaydet()">💾</button>
-<button id="kaydirBtn" style="display:none;" onclick="kaydir()">⬇️</button>
-<button id="degistirBtn" style="display:none;" onclick="degistir()">↔️</button>
-</div>
-
-<div id="alan"></div>
-
-<div id="panel" class="panel">
-<input id="yeniK" placeholder="Kullanıcı">
-<input id="yeniS" placeholder="Şifre">
-<button onclick="ekle()">Ekle</button>
-<div id="liste"></div>
-</div>
-
+    <div class="admin-tools">
+        <button id="msjBtn" style="background: #ec4899;" onclick="location.href='mesaj.html'">📩</button>
+        <button id="kaydetBtn" style="background: #10b981;">💾</button>
+        <button id="kaydirBtn" style="background: #3b82f6;">⬇️</button>
+        <button id="degistirBtn" style="background: #8b5cf6;">↔️</button>
+        <button id="panelBtn" style="background: #475569;">👥</button>
+    </div>
 </div>
 
 <div class="tabbar">
-<button onclick="location.reload()">🏠</button>
-<button onclick="location.href='mola.html'">☕</button>
+    <button onclick="location.reload()" style="background:none; border:none; font-size:26px; color:white; cursor:pointer;">🏠</button>
+    <button style="background:none; border:none; font-size:26px; color:white; cursor:pointer;">📱</button>
+    <button onclick="location.href='mola.html'" style="background:none; border:none; font-size:26px; color:white; cursor:pointer;">☕</button>
 </div>
 
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-const app = initializeApp({
-apiKey:"AIzaSy...",
-authDomain:"ukasa1.firebaseapp.com",
-projectId:"ukasa1"
-});
-
+const firebaseConfig = { apiKey: "AIzaSy...", authDomain: "ukasa1.firebaseapp.com", projectId: "ukasa1" };
+const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let admin={k:"admin",s:"1234"};
-let personeller=[];
-let adminMi=false;
-let alan=document.getElementById("alan");
-let inputs=[];
+let admin = { k: "admin", s: "1234" };
+let personeller = [];
+let adminMi = false;
+let molaData = {};
+let refs = { isimler: [], barkodlar: [], basliklar: [] };
 
-/* PERSONEL */
-onSnapshot(doc(db,"kasa","personel"),snap=>{
-if(snap.exists()) personeller=snap.data().liste;
-listeGoster();
+onSnapshot(doc(db, "kasa", "ayarlar"), snap => {
+    if (snap.exists() && snap.data().arkaPlan) {
+        document.body.style.backgroundImage = `url('${snap.data().arkaPlan}')`;
+        document.getElementById("bgUrl").value = snap.data().arkaPlan;
+    }
 });
 
-/* MOLA */
-let molaData={};
-onSnapshot(doc(db,"kasa","mola"),snap=>{
-molaData=snap.exists()?snap.data().data:{};
-olustur();
+document.getElementById("girisBtn").onclick = () => {
+    const k = document.getElementById("kullanici").value.trim();
+    const s = document.getElementById("sifre").value.trim();
+    if (k === admin.k && s === admin.s) {
+        adminMi = true;
+        document.querySelectorAll(".admin-tools button").forEach(el => el.style.display = "flex");
+    } else {
+        const p = personeller.find(x => x.k === k && x.s === s);
+        if (!p) { alert("Hatalı Giriş!"); return; }
+        adminMi = false;
+    }
+    document.body.classList.add("girisYapildi");
+    document.getElementById("login").style.display = "none";
+    olustur();
+};
+
+document.getElementById("panelBtn").onclick = () => document.getElementById("panel").classList.toggle("acik");
+
+setInterval(() => {
+    if (!molaData) return;
+    const simdi = new Date();
+    let aktifMola = null;
+    let enYakinMola = null;
+    let minFark = Infinity;
+
+    const gruplar = ["cay1", "cay2", "cay3", "cay4", "yemek1", "yemek2", "yemek3", "yemek4", "son1", "son2", "son3", "son4"];
+    
+    gruplar.forEach(g => {
+        const m = molaData[g];
+        if (m?.saat) {
+            const [h, min] = m.saat.split(":");
+            const hedef = new Date(); hedef.setHours(h, min, 0);
+            const fark = (hedef - simdi) / 1000;
+            const sure = (molaData[g.replace(/[0-9]/g, "") + "Sure"]?.sure || 15) * 60;
+
+            if (fark <= 0 && fark > -sure) aktifMola = { fark: Math.abs(fark + sure), ad: g };
+            if (fark > 0 && fark < minFark) { minFark = fark; enYakinMola = { fark, ad: g }; }
+        }
+    });
+
+    const display = document.getElementById("anaSayac");
+    const label = document.getElementById("anaGrup");
+
+    if (aktifMola) {
+        const s = Math.floor(aktifMola.fark);
+        display.innerHTML = `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+        label.innerHTML = aktifMola.ad.toUpperCase() + " DEVAM EDİYOR";
+        display.style.color = "#10b981";
+    } else if (enYakinMola) {
+        const s = Math.floor(enYakinMola.fark);
+        display.innerHTML = `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+        label.innerHTML = enYakinMola.ad.toUpperCase() + " BAŞLAYACAK";
+        display.style.color = "#f59e0b";
+    }
+}, 1000);
+
+function moladaMi(isim) {
+    if (!isim || !molaData) return false;
+    const gruplar = ["cay", "yemek", "son"];
+    const simdi = new Date();
+    for (let g of gruplar) {
+        for (let i = 1; i <= 4; i++) {
+            let m = molaData[g + i];
+            if (!m?.saat || !m.kisiler) continue;
+            let [h, min] = m.saat.split(":");
+            let hedef = new Date(); hedef.setHours(parseInt(h), parseInt(min), 0);
+            let farkSaniye = (hedef - simdi) / 1000;
+            let sureSaniye = (molaData[g + "Sure"]?.sure || 15) * 60;
+            
+            if (farkSaniye <= 0 && farkSaniye > -sureSaniye) {
+                if (m.kisiler.map(x => x.toLowerCase().trim()).includes(isim.toLowerCase().trim())) return true;
+            }
+        }
+    }
+    return false;
+}
+
+function olustur() {
+    onSnapshot(doc(db, "kasa", "liste"), snap => {
+        const data = snap.exists() ? snap.data().data : {};
+        const alan = document.getElementById("alan");
+        alan.innerHTML = "";
+        refs = { isimler: [], barkodlar: [], basliklar: [] };
+
+        for (let i = 1; i <= 12; i++) {
+            const v = data["kasa" + i] || { isim: "", barkod: "", baslik: "KASA " + i };
+            const birim = document.createElement("div");
+            
+            const isMola = moladaMi(v.isim);
+            let molaGrubu = "";
+            
+            if (v.isim) {
+                const isim = v.isim.toLowerCase().trim();
+                const g1 = molaData["cay1"]?.kisiler?.map(x => x.toLowerCase().trim()) || [];
+                const g2 = molaData["cay2"]?.kisiler?.map(x => x.toLowerCase().trim()) || [];
+                const g3 = molaData["cay3"]?.kisiler?.map(x => x.toLowerCase().trim()) || [];
+                const g4 = molaData["cay4"]?.kisiler?.map(x => x.toLowerCase().trim()) || [];
+
+                if (g1.includes(isim)) molaGrubu = "g-mavi";
+                else if (g2.includes(isim)) molaGrubu = "g-turuncu";
+                else if (g3.includes(isim) || g4.includes(isim)) molaGrubu = "g-mor";
+            }
+
+            birim.className = `kasa-birimi ${molaGrubu} ${isMola ? 'mola-aktif' : ''}`;
+            
+            birim.innerHTML = `
+                <div class="sabit-no">KASA #${i}</div>
+                <input class="kasa-baslik-input" value="${v.baslik}" ${!adminMi ? 'disabled' : ''}>
+                <div class="barkod-konteynir">
+                    <input class="barkod-input" value="${v.barkod || ''}" ${!adminMi ? 'disabled' : ''}>
+                </div>
+                <input class="personel-input" value="${v.isim || ''}" placeholder="Bekleniyor..." ${!adminMi ? 'disabled' : ''}>
+            `;
+            
+            alan.appendChild(birim);
+            refs.basliklar.push(birim.querySelector('.kasa-baslik-input'));
+            refs.barkodlar.push(birim.querySelector('.barkod-input'));
+            refs.isimler.push(birim.querySelector('.personel-input'));
+        }
+    });
+}
+
+document.getElementById("kaydetBtn").onclick = async () => {
+    if (!adminMi) return;
+    let data = {};
+    for (let i = 0; i < 12; i++) {
+        data["kasa" + (i + 1)] = { isim: refs.isimler[i].value, barkod: refs.barkodlar[i].value, baslik: refs.basliklar[i].value };
+    }
+    await setDoc(doc(db, "kasa", "liste"), { data });
+    const bg = document.getElementById("bgUrl").value;
+    await setDoc(doc(db, "kasa", "ayarlar"), { arkaPlan: bg });
+    alert("Kaydedildi!");
+};
+
+document.getElementById("kaydirBtn").onclick = async () => {
+    let isimler = refs.isimler.map(r => r.value);
+    let sonIki = isimler.splice(-2);
+    isimler.unshift(...sonIki);
+    let data = {};
+    for (let i = 0; i < 12; i++) {
+        data["kasa" + (i + 1)] = { isim: isimler[i], barkod: refs.barkodlar[i].value, baslik: refs.basliklar[i].value };
+    }
+    await setDoc(doc(db, "kasa", "liste"), { data });
+};
+
+document.getElementById("degistirBtn").onclick = async () => {
+    let data = {};
+    for (let i = 0; i < 12; i += 2) {
+        data["kasa" + (i + 1)] = { isim: refs.isimler[i+1].value, barkod: refs.barkodlar[i].value, baslik: refs.basliklar[i].value };
+        data["kasa" + (i + 2)] = { isim: refs.isimler[i].value, barkod: refs.barkodlar[i+1].value, baslik: refs.basliklar[i+1].value };
+    }
+    await setDoc(doc(db, "kasa", "liste"), { data });
+};
+
+onSnapshot(doc(db, "kasa", "personel"), snap => {
+    if (snap.exists()) personeller = snap.data().liste || [];
+    listeGoster();
 });
 
-/* GİRİŞ */
-window.giris=function(){
-
-let k=kullanici.value.trim();
-let s=sifre.value.trim();
-
-localStorage.removeItem("kullanici");
-
-if(k===admin.k && s===admin.s){
-adminMi=true;
-mesajBtn.style.display="block";
-panelBtn.style.display="block";
-kaydetBtn.style.display="block";
-kaydirBtn.style.display="block";
-degistirBtn.style.display="block";
-}else{
-let bulundu=personeller.find(p=>p.k===k && p.s===s);
-if(!bulundu){alert("Hatalı giriş");return;}
-}
-
-localStorage.setItem("kullanici",k);
-document.body.classList.add("girisYapildi");
-login.style.display="none";
-
-olustur();
-}
-
-/* KASA */
-function cinsiyet(isim){
-let kadin=["ayşe","fatma","zeynep","elif","buse"];
-return kadin.includes((isim||"").toLowerCase())?"kadin":"erkek";
-}
-
-function moladaMi(isim){
-if(!isim)return false;
-
-let now=new Date();
-let gruplar=["cay","yemek","son"];
-
-for(let g of gruplar){
-for(let i=1;i<=4;i++){
-let key=g+i;
-let saat=molaData[key]?.saat;
-let kisiler=molaData[key]?.kisiler||[];
-
-if(!saat)continue;
-
-let [h,m]=saat.split(":");
-let hedef=new Date();
-hedef.setHours(h,m,0);
-
-let sure=(molaData[g+"Sure"]?.sure||15)*60;
-let fark=(hedef-now)/1000;
-
-if(fark<=0 && fark>-sure){
-if(kisiler.map(x=>x.toLowerCase()).includes(isim.toLowerCase())) return true;
-}
-}
-}
-return false;
-}
-
-function olustur(){
-onSnapshot(doc(db,"kasa","liste"),snap=>{
-
-let kayit=snap.exists()?snap.data().data:{};
-alan.innerHTML="";
-inputs=[];
-
-for(let i=0;i<6;i++){
-
-let div=document.createElement("div");
-div.className="kasa";
-
-let i1=document.createElement("input");
-let i2=document.createElement("input");
-
-let k=kayit["kasa"+(i+1)];
-if(k){
-i1.value=k.sol;
-i2.value=k.sag;
-}
-
-i1.disabled=!adminMi;
-i2.disabled=!adminMi;
-
-div.classList.add(cinsiyet(i1.value||i2.value));
-
-if(moladaMi(i1.value)) i1.classList.add("molada");
-if(moladaMi(i2.value)) i2.classList.add("molada");
-
-div.classList.add("aktif");
-
-div.appendChild(i1);
-div.appendChild(i2);
-alan.appendChild(div);
-
-inputs.push(i1,i2);
-}
-});
-}
-
-/* ADMIN */
-window.kaydet=async function(){
-let data={};
-for(let i=0;i<inputs.length;i+=2){
-data["kasa"+(i/2+1)]={sol:inputs[i].value,sag:inputs[i+1].value};
-}
-await setDoc(doc(db,"kasa","liste"),{data});
-}
-
-window.kaydir=async function(){
-let yeni=[];
-for(let i=0;i<inputs.length;i+=2){
-yeni.push({sol:inputs[i].value,sag:inputs[i+1].value});
-}
-let son=yeni.pop();
-yeni.unshift(son);
-
-yeni.forEach((k,i)=>{
-inputs[i*2].value=k.sol;
-inputs[i*2+1].value=k.sag;
+onSnapshot(doc(db, "kasa", "mola"), snap => {
+    molaData = snap.exists() ? snap.data().data : {};
+    if(document.body.classList.contains("girisYapildi")) olustur();
 });
 
-let data={};
-yeni.forEach((k,i)=>data["kasa"+(i+1)]=k);
-await setDoc(doc(db,"kasa","liste"),{data});
+window.ekle = async () => {
+    const k = document.getElementById("yeniK").value;
+    const s = document.getElementById("yeniS").value;
+    if(k && s) {
+        personeller.push({ k, s });
+        await setDoc(doc(db, "kasa", "personel"), { liste: personeller });
+        document.getElementById("yeniK").value = ""; document.getElementById("yeniS").value = "";
+    }
+};
+
+function listeGoster() {
+    const l = document.getElementById("liste"); l.innerHTML = "";
+    personeller.forEach((p, i) => {
+        l.innerHTML += `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid var(--border)"><span>${p.k}</span> <button onclick="sil(${i})" style="color:red; background:none; border:none; cursor:pointer;">Sil</button></div>`;
+    });
 }
 
-window.degistir=async function(){
-let yeni=[];
-for(let i=0;i<inputs.length;i+=2){
-yeni.push({sol:inputs[i].value,sag:inputs[i+1].value});
-}
-
-yeni.forEach(k=>[k.sol,k.sag]=[k.sag,k.sol]);
-
-yeni.forEach((k,i)=>{
-inputs[i*2].value=k.sol;
-inputs[i*2+1].value=k.sag;
-});
-
-let data={};
-yeni.forEach((k,i)=>data["kasa"+(i+1)]=k);
-await setDoc(doc(db,"kasa","liste"),{data});
-}
-
-/* PERSONEL */
-window.panelToggle=function(){
-panel.classList.toggle("acik");
-}
-
-window.ekle=async function(){
-personeller.push({k:yeniK.value,s:yeniS.value});
-await setDoc(doc(db,"kasa","personel"),{liste:personeller});
-}
-
-function listeGoster(){
-liste.innerHTML="";
-personeller.forEach((p,i)=>{
-let d=document.createElement("div");
-d.innerHTML=p.k+" <button onclick='sil("+i+")'>❌</button>";
-liste.appendChild(d);
-});
-}
-
-window.sil=async function(i){
-personeller.splice(i,1);
-await setDoc(doc(db,"kasa","personel"),{liste:personeller});
-}
-
+window.sil = async (i) => {
+    if(confirm("Silinsin mi?")) {
+        personeller.splice(i, 1);
+        await setDoc(doc(db, "kasa", "personel"), { liste: personeller });
+    }
+};
 </script>
-
 </body>
 </html>
