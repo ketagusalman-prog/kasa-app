@@ -1,136 +1,127 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kişisel Panel</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <title>Kişisel Panel - Premium</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { 
+            --bg: #0b0f1a; --card: rgba(22, 30, 49, 0.85); --accent: #3b82f6; 
+            --text: #ffffff; --border: rgba(255, 255, 255, 0.1);
+            --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
+        }
+        
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--bg) no-repeat center center fixed; 
+            background-size: cover; 
+            color: var(--text); 
+            min-height: 100vh; 
+        }
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        body::before { 
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0, 0, 0, 0.6); z-index: -1; 
+        }
 
-<style>
-body {
-    margin:0;
-    background:linear-gradient(135deg,#0f172a,#020617);
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-    font-family:"Segoe UI";
-}
+        .appbar { 
+            position: fixed; top: 0; width: 100%; height: 50px; 
+            background: rgba(11, 15, 26, 0.9); backdrop-filter: blur(20px); 
+            display: flex; justify-content: center; align-items: center; 
+            font-weight: 800; z-index: 1000; border-bottom: 1px solid var(--border); 
+            color: var(--accent); font-size: 14px; 
+        }
 
-.phone {
-    width:390px;
-    height:800px;
-    background:black;
-    border-radius:35px;
-    padding:10px;
-    box-shadow:0 0 40px rgba(0,0,0,0.8);
-}
+        .container { width: 100%; max-width: 500px; margin: 0 auto; padding: 70px 15px 120px 15px; }
 
-.app {
-    width:100%;
-    height:100%;
-    background:#020617;
-    border-radius:25px;
-    overflow-y:auto;
-    color:white;
-    padding:15px;
-}
+        /* Setup / Giriş */
+        #setup { text-align: center; padding: 40px 20px; }
+        .panel-input { 
+            width: 100%; padding: 14px; margin-bottom: 10px; 
+            background: rgba(0,0,0,0.3); border: 1px solid var(--border); 
+            color: white; border-radius: 12px; font-size: 14px; font-family: inherit;
+        }
 
-.topbar {
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-}
+        /* Kart Yapısı */
+        .kart { 
+            background: var(--card); padding: 20px; border-radius: 20px; 
+            margin-top: 15px; border: 1px solid var(--border); 
+            backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .kart h3 { color: var(--accent); font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+        .kart p { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; font-weight: 500; color: #cbd5e1; }
+        .kart p b { color: white; }
 
-/* 🔥 YANIP SÖNEN MESAJ */
-.alertBlink {
-    background:red;
-    padding:6px 12px;
-    border-radius:10px;
-    animation:blink 1s infinite;
-}
+        .high { color: var(--success) !important; }
+        .low { color: var(--danger) !important; }
 
-@keyframes blink {
-    0%{opacity:1;}
-    50%{opacity:0.3;}
-    100%{opacity:1;}
-}
+        /* Butonlar */
+        .btn { 
+            width: 100%; padding: 12px; border-radius: 12px; border: none; 
+            font-weight: 800; color: white; font-size: 12px; cursor: pointer; 
+            text-transform: uppercase; transition: opacity 0.2s;
+        }
+        .btn-green { background: var(--success); }
+        .btn-blue { background: var(--accent); }
+        .btn-danger { background: var(--danger); margin-bottom: 5px; }
+        .btn-outline { background: rgba(255,255,255,0.05); border: 1px solid var(--border); }
 
-#sayac {
-    background:red;
-    padding:5px 10px;
-    border-radius:50%;
-    font-size:12px;
-}
+        /* Mesajlar */
+        .mesaj-baslik { font-size: 16px; font-weight: 800; margin: 25px 0 10px 0; color: var(--warning); display: flex; align-items: center; gap: 8px; }
+        .yeniMesaj { border-left: 4px solid var(--danger) !important; }
+        .alertBlink { background: var(--danger); padding: 2px 8px; border-radius: 20px; font-size: 10px; animation: blink 1s infinite; color: white; margin-left: 10px; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-input {
-    width:100%;
-    padding:10px;
-    margin:10px 0;
-    border-radius:10px;
-    border:none;
-}
+        .mesaj-item { margin-bottom: 10px; }
+        .mesaj-item small { font-size: 10px; opacity: 0.5; display: block; margin-top: 5px; }
+        .mesaj-btn-grup { display: flex; gap: 5px; margin-top: 10px; }
+        .mesaj-btn-grup button { flex: 1; padding: 6px; font-size: 10px; }
 
-button {
-    width:100%;
-    padding:10px;
-    border-radius:10px;
-    border:none;
-    background:#4CAF50;
-    color:white;
-    margin-top:5px;
-}
+        /* Tabbar */
+        .tabbar { position: fixed; bottom: 0; left: 0; width: 100%; height: 70px; background: rgba(22, 30, 49, 0.95); backdrop-filter: blur(20px); display: flex; justify-content: space-around; align-items: center; border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; z-index: 1000; }
+        .tab-btn { background: none; border: none; color: white; font-size: 24px; cursor: pointer; opacity: 0.6; }
+        .tab-btn.active { opacity: 1; color: var(--accent); }
 
-.kart {
-    background:#1e293b;
-    padding:15px;
-    border-radius:20px;
-    margin-top:10px;
-}
-
-.kart p {
-    display:flex;
-    justify-content:space-between;
-    font-size:14px;
-}
-
-.high { color:#22c55e; }
-.low { color:#ef4444; }
-
-.yeniMesaj { border-left:4px solid red; }
-
-canvas { margin-top:10px; }
-
-</style>
+        canvas { max-height: 200px; margin-top: 15px; }
+    </style>
 </head>
-
 <body>
 
-<div class="phone">
-<div class="app">
-
-<div class="topbar">
-    <h3>⚡ Panel</h3>
-    <div id="sayac"></div>
+<div class="appbar">
+    KİŞİSEL PERFORMANS PANELİ
+    <span id="sayac" class="alertBlink" style="display:none;">0</span>
 </div>
 
-<div id="setup"></div>
-<div id="kart"></div>
-<canvas id="grafik"></canvas>
+<div class="container">
+    <div id="setup"></div>
+    <div id="kart"></div>
+    
+    <div class="kart" id="grafikKarti" style="display:none;">
+        <h3>📊 Puan Karşılaştırması</h3>
+        <canvas id="grafik"></canvas>
+    </div>
 
-<h3>📩 Mesajlar</h3>
-
-<button onclick="tumunuSil()">🧹 Tümünü Sil</button>
-<button onclick="okunanlariSil()">✔ Okunanları Sil</button>
-
-<div id="mesajAlani"></div>
-
+    <div id="mesajBolumu" style="display:none;">
+        <div class="mesaj-baslik">📩 MESAJLARINIZ</div>
+        <div style="display:flex; gap:8px; margin-bottom:15px;">
+            <button class="btn btn-outline" style="flex:1" onclick="tumunuSil()">🧹 TÜMÜNÜ SİL</button>
+            <button class="btn btn-outline" style="flex:1" onclick="okunanlariSil()">✔ OKUNANLARI SİL</button>
+        </div>
+        <div id="mesajAlani"></div>
+    </div>
 </div>
+
+<div class="tabbar">
+    <button class="tab-btn" onclick="location.href='index.html'">🏠</button>
+    <button class="tab-btn" onclick="location.href='mola.html'">☕</button>
+    <button class="tab-btn active">👤</button>
 </div>
 
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -143,35 +134,36 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase();
-
+let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase().trim();
 const URL = "https://script.google.com/macros/s/AKfycbxODlNf0yl2oAtkd5oMw1ghWavKSOO8TmT81uAUN8Oiqbj8yzx81x7iRexwcAHo7ecv4g/exec";
 
 let tumData = [];
 
 init();
 
-/* INIT */
 function init(){
     if(!kullanici){
         document.getElementById("setup").innerHTML = `
-        <input id="nameInput" placeholder="İsmini bir kez yaz">
-        <button onclick="saveUser()">Kaydet</button>`;
+            <div class="kart">
+                <h3>Giriş Yap</h3>
+                <p style="margin-bottom:15px; justify-content:center; text-align:center;">Verilerinizi görmek için isminizi yazın.</p>
+                <input id="nameInput" class="panel-input" placeholder="İsminiz...">
+                <button class="btn btn-blue" onclick="saveUser()">KAYDET VE GİRİŞ YAP</button>
+            </div>`;
     } else {
+        document.getElementById("mesajBolumu").style.display = "block";
         veriCek();
+        mesajlariDinle();
     }
 }
 
-/* SAVE */
 window.saveUser = function(){
     let val = document.getElementById("nameInput").value.toLowerCase().trim();
-    if(!val) return alert("İsim gir");
-
+    if(!val) return alert("Lütfen bir isim girin.");
     localStorage.setItem("kullanici", val);
     location.reload();
 }
 
-/* DATA */
 function veriCek(){
     fetch(URL)
     .then(res => res.json())
@@ -181,32 +173,25 @@ function veriCek(){
     });
 }
 
-/* RENDER */
 function render(){
-
-    let kisi = tumData.find(x =>
-        x.isim.toLowerCase().trim() === kullanici
-    );
-
+    let kisi = tumData.find(x => x.isim.toLowerCase().trim() === kullanici);
     if(!kisi){
-        document.getElementById("kart").innerHTML = "Veri bulunamadı ❌";
+        document.getElementById("kart").innerHTML = `<div class="kart" style="text-align:center;">Henüz adınıza bir veri tanımlanmamış ❌</div>`;
         return;
     }
 
+    document.getElementById("grafikKarti").style.display = "block";
     let avg = tumData.reduce((a,b)=>a+Number(b.kpuan||0),0) / tumData.length;
 
     document.getElementById("kart").innerHTML = `
     <div class="kart">
-        <h3>${kisi.isim || "İsimsiz"}</h3>
-
+        <h3>👤 ${kisi.isim.toUpperCase() || "İsimsiz"}</h3>
         <p>🏢 Ay: <b>${kisi.ay1 || "-"}</b></p>
         <p>🆔 Sicil: <b>${kisi.sicil || "-"}</b></p>
         <p>🧾 Fiş Sayısı: <b>${kisi.fis1 || "-"}</b></p>
         <p>📊 Satır Sayısı: <b>${kisi.satirSayisi || "-"}</b></p>
         <p>⏱️ Fiş Başı Süre: <b>${kisi.fisBasiSure || "-"}</b></p>
         <p>⭐ Kartezyen Puan: <b class="${kisi.kpuan>=avg?'high':'low'}">${kisi.kpuan || "-"}</b></p>
-        <p>🏢 Ay: <b>${kisi.ay || "-"}</b></p>
-        <p>🧾 Fiş Sayısı: <b>${kisi.fis || "-"}</b></p>
         <p>💰 TL Hakediş: <b>${kisi.tl || "-"}</b></p>
         <p>🤑 Euro Hakediş: <b>${kisi.euro || "-"}</b></p>
         <p>🔢 Toplam Adet: <b>${kisi.adet || "-"}</b></p>
@@ -215,91 +200,87 @@ function render(){
     drawChart(kisi, avg);
 }
 
-/* CHART */
 function drawChart(kisi, avg){
     new Chart(document.getElementById("grafik"), {
         type:"doughnut",
         data:{
             labels:["Sen","Ortalama"],
             datasets:[{
-                data:[kisi.kpuan || 0, avg]
+                data:[kisi.kpuan || 0, avg],
+                backgroundColor: ['#3b82f6', 'rgba(255,255,255,0.1)'],
+                borderColor: 'transparent',
+                hoverOffset: 4
             }]
+        },
+        options: {
+            plugins: { legend: { labels: { color: 'white', font: { family: 'Plus Jakarta Sans'} } } }
         }
     });
 }
 
-/* 📩 MESAJ */
-const mesajRef = doc(db, "mesajlar", kullanici);
+function mesajlariDinle(){
+    const mesajRef = doc(db, "mesajlar", kullanici);
+    onSnapshot(mesajRef, (snap)=>{
+        if(!snap.exists()) return;
+        let data = snap.data().liste || [];
+        let div = document.getElementById("mesajAlani");
+        let sayac = document.getElementById("sayac");
+        div.innerHTML = "";
+        let okunmamis = 0;
 
-onSnapshot(mesajRef, (snap)=>{
+        data.slice().reverse().forEach((m,index)=>{
+            let realIndex = data.length - 1 - index;
+            if(!m.okundu) okunmamis++;
 
-    if(!snap.exists()) return;
+            let d = document.createElement("div");
+            d.className = "mesaj-item kart " + (!m.okundu ? "yeniMesaj" : "");
+            d.innerHTML = `
+                <p style="justify-content:flex-start;">${m.text}</p>
+                <small>📅 ${new Date(m.tarih).toLocaleString('tr-TR')}</small>
+                <div class="mesaj-btn-grup">
+                    ${!m.okundu ? `<button class="btn btn-green" onclick="okunduYap(${realIndex})">OKUNDU</button>` : ""}
+                    <button class="btn btn-outline" onclick="silMesaj(${realIndex})">SİL</button>
+                </div>
+            `;
+            div.appendChild(d);
+        });
 
-    let data = snap.data().liste || [];
-
-    let div = document.getElementById("mesajAlani");
-    let sayac = document.getElementById("sayac");
-
-    div.innerHTML = "";
-
-    let okunmamis = 0;
-
-    data.slice().reverse().forEach((m,index)=>{
-
-        let realIndex = data.length - 1 - index;
-
-        if(!m.okundu) okunmamis++;
-
-        let d = document.createElement("div");
-        d.className = "kart " + (!m.okundu ? "yeniMesaj" : "");
-
-        d.innerHTML = `
-            <p>${m.text}</p>
-            <small>${new Date(m.tarih).toLocaleString()}</small><br>
-            ${!m.okundu ? `<button onclick="okunduYap(${realIndex})">✔</button>` : ""}
-            <button onclick="silMesaj(${realIndex})">🗑️</button>
-        `;
-
-        div.appendChild(d);
+        if(okunmamis > 0){
+            sayac.style.display = "inline-block";
+            sayac.innerText = okunmamis;
+        } else {
+            sayac.style.display = "none";
+        }
     });
+}
 
-    /* 🔥 YANIP SÖNEN UYARI */
-    if(okunmamis > 0){
-        sayac.classList.add("alertBlink");
-        sayac.innerText = okunmamis;
-    } else {
-        sayac.classList.remove("alertBlink");
-        sayac.innerText = "";
-    }
+const getRef = () => doc(db, "mesajlar", kullanici);
 
-});
-
-/* ACTIONS */
 window.okunduYap = async function(i){
-    let snap = await getDoc(mesajRef);
+    let snap = await getDoc(getRef());
     let liste = snap.data().liste;
     liste[i].okundu = true;
-    await setDoc(mesajRef,{liste});
+    await setDoc(getRef(),{liste});
 }
 
 window.silMesaj = async function(i){
-    let snap = await getDoc(mesajRef);
+    if(!confirm("Bu mesaj silinecek?")) return;
+    let snap = await getDoc(getRef());
     let liste = snap.data().liste;
     liste.splice(i,1);
-    await setDoc(mesajRef,{liste});
+    await setDoc(getRef(),{liste});
 }
 
 window.tumunuSil = async function(){
-    await setDoc(mesajRef,{liste:[]});
+    if(!confirm("Tüm mesajlar silinecek?")) return;
+    await setDoc(getRef(),{liste:[]});
 }
 
 window.okunanlariSil = async function(){
-    let snap = await getDoc(mesajRef);
+    let snap = await getDoc(getRef());
     let liste = snap.data().liste.filter(x=>!x.okundu);
-    await setDoc(mesajRef,{liste});
+    await setDoc(getRef(),{liste});
 }
-
 </script>
-
 </body>
 </html>
