@@ -6,78 +6,125 @@
     <title>Personel Paneli</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         :root { 
-            --bg: #0b0f1a; --card: rgba(22, 30, 49, 0.85); --accent: #3b82f6; 
+            --bg: #0b0f1a; --card: rgba(22, 30, 49, 0.9); --accent: #3b82f6; 
             --text: #ffffff; --border: rgba(255, 255, 255, 0.1);
             --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
         }
+
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; justify-content: center; }
-        
-        .phone { width: 100%; max-width: 414px; background: #000; height: 100vh; position: relative; overflow: hidden; }
-        .app { width: 100%; height: 100%; background: radial-gradient(circle at top right, #1e293b, #020617); overflow-y: auto; padding: 20px 15px 100px 15px; }
-        
-        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .topbar h3 { font-weight: 800; color: var(--accent); font-size: 18px; }
 
-        .kart { background: var(--card); padding: 20px; border-radius: 24px; margin-top: 15px; border: 1px solid var(--border); backdrop-filter: blur(10px); }
-        .kart h3 { font-size: 16px; margin-bottom: 12px; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 8px; text-transform: uppercase; }
-        .kart p { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; color: #94a3b8; }
-        .kart p b { color: white; }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--bg); color: var(--text); 
+            display: flex; justify-content: center; min-height: 100vh;
+        }
 
-        button { width: 100%; padding: 14px; border-radius: 15px; border: none; font-weight: 800; color: white; cursor: pointer; text-transform: uppercase; font-size: 11px; transition: 0.3s; margin-top: 10px; }
-        .btn-outline { background: transparent; border: 1px solid var(--border); }
-        .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); }
+        .phone {
+            width: 100%; max-width: 414px; height: 100vh;
+            background: #000; position: relative; overflow: hidden;
+        }
 
-        .high { color: var(--success); }
-        .low { color: var(--danger); }
-        
-        #sayac { background: var(--danger); color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; display: none; font-weight: 800; }
-        .alertBlink { animation: blink 1s infinite; }
+        .app {
+            width: 100%; height: 100%;
+            background: radial-gradient(circle at top right, #1e293b, #020617);
+            overflow-y: auto; padding: 20px 15px 100px 15px;
+            scrollbar-width: none;
+        }
+
+        /* Üst Bar */
+        .topbar {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 25px;
+        }
+        .topbar h3 { font-weight: 800; font-size: 20px; color: var(--accent); letter-spacing: -0.5px; }
+
+        /* Bildirim Balonu */
+        #sayac {
+            background: var(--danger); color: white;
+            min-width: 24px; height: 24px; border-radius: 12px;
+            display: none; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 800;
+        }
+        .alertBlink { animation: blink 1s infinite; display: flex !important; }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
-        #loading { text-align: center; margin-top: 50px; color: var(--accent); font-weight: 600; }
+        /* Veri Kartları */
+        .kart { 
+            background: var(--card); padding: 20px; border-radius: 24px; 
+            margin-top: 15px; border: 1px solid var(--border); 
+            backdrop-filter: blur(10px); transition: 0.3s;
+        }
+        .kart h3 { 
+            font-size: 15px; margin-bottom: 15px; color: var(--accent); 
+            border-bottom: 1px solid var(--border); padding-bottom: 10px;
+            text-transform: uppercase;
+        }
+        .kart p { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 10px; color: #94a3b8; }
+        .kart p b { color: white; font-weight: 600; }
+
+        /* Durum Renkleri */
+        .high { color: var(--success) !important; }
+        .low { color: var(--danger) !important; }
+        .yeniMesaj { border-left: 4px solid var(--danger) !important; }
+
+        /* Butonlar */
+        button { 
+            width: 100%; padding: 14px; border-radius: 16px; border: none; 
+            font-weight: 800; color: white; cursor: pointer; transition: 0.3s;
+            font-size: 12px; text-transform: uppercase; margin-top: 10px;
+        }
+        .btn-outline { background: rgba(255,255,255,0.05); border: 1px solid var(--border); }
+        .btn-success { background: var(--success); }
+        .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); }
+
+        canvas { margin: 20px 0; max-height: 220px; }
+        .loading { text-align: center; padding: 40px; color: var(--accent); font-weight: 600; }
     </style>
 </head>
+
 <body>
 
 <div class="phone">
     <div class="app">
         <div class="topbar">
             <h3>⚡ VERİLERİM</h3>
-            <div id="sayac" class="alertBlink">0</div>
+            <div id="sayac">0</div>
         </div>
 
-        <div id="loading">Veriler yükleniyor...</div>
+        <div id="statusMessage" class="loading">Sistem kontrol ediliyor...</div>
+        
         <div id="veriAlani"></div>
-        <canvas id="grafik" style="display:none; margin-top:20px;"></canvas>
+        <canvas id="grafik" style="display:none;"></canvas>
 
-        <div id="mesajAlani" style="margin-top:20px;"></div>
+        <div id="mesajBolumu" style="display:none; margin-top:30px;">
+            <h3 style="font-size:14px; color:var(--warning); margin-bottom:10px;">📩 MESAJLARIM</h3>
+            <div id="mesajListesi"></div>
+        </div>
     </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, onSnapshot, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = { apiKey: "AIzaSy...", authDomain: "ukasa1.firebaseapp.com", projectId: "ukasa1" };
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Google Sheets Veri Kaynağı
 const URL = "https://script.google.com/macros/s/AKfycbxODlNf0yl2oAtkd5oMw1ghWavKSOO8TmT81uAUN8Oiqbj8yzx81x7iRexwcAHo7ecv4g/exec";
 
-// index.html'den gelen ismi al (boşlukları temizle)
+// index.html'den gelen ismi otomatik al
 let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase().trim();
 
 if (!kullanici) {
-    document.getElementById("veriAlani").innerHTML = `
-        <div class="kart" style="text-align:center;">
-            <p style="justify-content:center;">Giriş yapılmamış ⚠️</p>
-            <button class="btn-outline" onclick="location.href='index.html'">GİRİŞE GİT</button>
+    document.getElementById("statusMessage").innerHTML = `
+        <div class="kart">
+            <p style="justify-content:center;">Giriş bulunamadı!</p>
+            <button class="btn-success" onclick="location.href='index.html'">GİRİŞ YAP</button>
         </div>`;
-    document.getElementById("loading").style.display = "none";
 } else {
     veriCek();
     mesajlariDinle();
@@ -85,18 +132,19 @@ if (!kullanici) {
 
 async function veriCek() {
     try {
-        const response = await fetch(URL);
-        const tumData = await response.json();
-        const kisi = tumData.find(x => x.isim && x.isim.toLowerCase().trim() === kullanici);
+        const res = await fetch(URL);
+        const data = await res.json();
+        const tumData = data.filter(x => x.isim && x.isim.trim() !== "");
+        const kisi = tumData.find(x => x.isim.toLowerCase().trim() === kullanici);
 
-        document.getElementById("loading").style.display = "none";
+        document.getElementById("statusMessage").style.display = "none";
 
         if (!kisi) {
             document.getElementById("veriAlani").innerHTML = `
                 <div class="kart" style="text-align:center;">
-                    <p style="justify-content:center;">Veri bulunamadı ❌</p>
-                    <p style="font-size:11px; margin-bottom:10px;">İsim: ${kullanici}</p>
-                    <button class="btn-outline" onclick="location.href='index.html'">İSMİ DÜZELT</button>
+                    <p style="justify-content:center;">Verileriniz henüz işlenmemiş ❌</p>
+                    <p style="font-size:11px; margin-top:5px; opacity:0.5;">Sistemdeki İsim: ${kullanici}</p>
+                    <button class="btn-outline" onclick="location.href='index.html'">İSMİ DEĞİŞTİR</button>
                 </div>`;
             return;
         }
@@ -116,58 +164,81 @@ async function veriCek() {
                 <p>🤑 Euro Hakediş: <b>${kisi.euro || "-"}</b></p>
                 <p>🔢 Toplam Adet: <b>${kisi.adet || "-"}</b></p>
             </div>
-            <button class="btn-danger" onclick="cikisYap()">🚪 OTURUMU KAPAT</button>`;
+            <button class="btn-danger" onclick="cikis()">🚪 OTURUMU KAPAT</button>`;
 
-        renderChart(kisi.kpuan, avg);
+        drawChart(kisi.kpuan, avg);
     } catch (e) {
-        document.getElementById("loading").innerText = "Bağlantı hatası!";
+        document.getElementById("statusMessage").innerText = "Bağlantı hatası!";
     }
 }
 
-function renderChart(puan, ort) {
+function drawChart(puan, avg) {
     const ctx = document.getElementById("grafik");
     ctx.style.display = "block";
     new Chart(ctx, {
-        type: 'doughnut',
+        type: "doughnut",
         data: {
-            labels: ['Puanım', 'Ortalama'],
+            labels: ["Puanım", "Genel Ortalama"],
             datasets: [{
-                data: [Number(puan), ort],
-                backgroundColor: ['#3b82f6', 'rgba(255,255,255,0.05)'],
-                hoverOffset: 4,
+                data: [Number(puan), avg],
+                backgroundColor: ["#3b82f6", "rgba(255,255,255,0.05)"],
                 borderWidth: 0
             }]
         },
-        options: { 
-            cutout: '70%',
-            plugins: { legend: { labels: { color: 'white', font: { family: 'Plus Jakarta Sans'} } } } 
-        }
+        options: { cutout: '75%', plugins: { legend: { labels: { color: 'white', font: { family: 'Plus Jakarta Sans'} } } } }
     });
 }
 
 function mesajlariDinle() {
     const mesajRef = doc(db, "mesajlar", kullanici);
+    document.getElementById("mesajBolumu").style.display = "block";
+    
     onSnapshot(mesajRef, (snap) => {
         if (!snap.exists()) return;
-        let liste = snap.data().liste || [];
+        let data = snap.data().liste || [];
+        let listeDiv = document.getElementById("mesajListesi");
         let sayac = document.getElementById("sayac");
-        let okunmamis = liste.filter(x => !x.okundu).length;
+        let okunmamis = 0;
         
-        if (okunmamis > 0) {
-            sayac.innerText = okunmamis;
-            sayac.style.display = "block";
-        } else {
-            sayac.style.display = "none";
-        }
+        listeDiv.innerHTML = "";
+        data.slice().reverse().forEach((m, i) => {
+            let realIndex = data.length - 1 - i;
+            if (!m.okundu) okunmamis++;
+
+            let d = document.createElement("div");
+            d.className = "kart " + (!m.okundu ? "yeniMesaj" : "");
+            d.innerHTML = `
+                <p style="color:white; justify-content:flex-start; text-align:left;">${m.text}</p>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                    <small style="opacity:0.5; font-size:10px;">${new Date(m.tarih).toLocaleString()}</small>
+                    <div style="display:flex; gap:5px;">
+                        ${!m.okundu ? `<button style="width:auto; padding:5px 10px; margin:0;" class="btn-success" onclick="okundu(${realIndex})">OKUNDU</button>` : ""}
+                    </div>
+                </div>
+            `;
+            listeDiv.appendChild(d);
+        });
+
+        if (okunmamis > 0) { sayac.innerText = okunmamis; sayac.classList.add("alertBlink"); }
+        else { sayac.classList.remove("alertBlink"); }
     });
 }
 
-window.cikisYap = function() {
-    if(confirm("Oturum kapatılsın mı?")) {
+window.okundu = async function(i) {
+    const mesajRef = doc(db, "mesajlar", kullanici);
+    let snap = await getDoc(mesajRef);
+    let liste = snap.data().liste;
+    liste[i].okundu = true;
+    await setDoc(mesajRef, { liste });
+}
+
+window.cikis = function() {
+    if(confirm("Çıkış yapmak istediğine emin misin?")) {
         localStorage.removeItem("kullanici");
         location.href = 'index.html';
     }
-};
+}
 </script>
+
 </body>
 </html>
