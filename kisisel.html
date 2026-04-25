@@ -38,15 +38,14 @@
 
         .container { width: 100%; max-width: 500px; margin: 0 auto; padding: 70px 15px 120px 15px; }
 
-        /* Setup / Giriş Ekranı */
-        #setup { text-align: center; }
+        /* Giriş Formu */
         .panel-input { 
             width: 100%; padding: 14px; margin: 10px 0; 
             background: rgba(0,0,0,0.3); border: 1px solid var(--border); 
             color: white; border-radius: 12px; font-size: 14px; font-family: inherit;
         }
 
-        /* Kart Yapısı */
+        /* Kartlar */
         .kart { 
             background: var(--card); padding: 20px; border-radius: 20px; 
             margin-top: 15px; border: 1px solid var(--border); 
@@ -67,48 +66,43 @@
         }
         .btn-green { background: var(--success); }
         .btn-blue { background: var(--accent); }
-        .btn-danger { background: var(--danger); }
         .btn-outline { background: rgba(255,255,255,0.05); border: 1px solid var(--border); }
 
-        /* Mesaj Alanı */
+        /* Mesajlar */
         .mesaj-baslik { font-size: 16px; font-weight: 800; margin: 25px 0 10px 0; color: var(--warning); display: flex; align-items: center; justify-content: space-between; }
-        #sayac { background: var(--danger); padding: 2px 8px; border-radius: 20px; font-size: 10px; color: white; }
+        #sayac { background: var(--danger); padding: 2px 8px; border-radius: 20px; font-size: 10px; color: white; display: none; }
         .alertBlink { animation: blink 1s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-
         .yeniMesaj { border-left: 4px solid var(--danger) !important; }
-        .mesaj-item small { font-size: 10px; opacity: 0.5; display: block; margin-top: 5px; }
-        .mesaj-btn-grup { display: flex; gap: 5px; margin-top: 10px; }
-        .mesaj-btn-grup button { flex: 1; padding: 8px; font-size: 10px; }
 
-        /* Tabbar */
+        /* Alt Menü */
         .tabbar { position: fixed; bottom: 0; left: 0; width: 100%; height: 70px; background: rgba(22, 30, 49, 0.95); backdrop-filter: blur(20px); display: flex; justify-content: space-around; align-items: center; border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; z-index: 1000; }
         .tab-btn { background: none; border: none; color: white; font-size: 24px; cursor: pointer; opacity: 0.6; }
         .tab-btn.active { opacity: 1; color: var(--accent); }
 
-        canvas { margin-top: 15px; max-height: 220px; }
+        canvas { margin-top: 15px; max-height: 200px; }
     </style>
 </head>
 <body>
 
-<div class="appbar">⚡ KİŞİSEL PANEL</div>
+<div class="appbar">⚡ PANELİM</div>
 
 <div class="container">
     <div id="setup"></div>
     <div id="kart"></div>
     
     <div class="kart" id="grafikKarti" style="display:none;">
-        <h3>📊 Puan Karşılaştırması</h3>
+        <h3>📊 Performans</h3>
         <canvas id="grafik"></canvas>
     </div>
 
     <div id="mesajBolumu" style="display:none;">
         <div class="mesaj-baslik">
             <span>📩 MESAJLAR</span>
-            <span id="sayac">0</span>
+            <span id="sayac" class="alertBlink">0</span>
         </div>
         <div style="display:flex; gap:8px; margin-bottom:15px;">
-            <button class="btn btn-outline" style="margin:0" onclick="tumunuSil()">🧹 SİL</button>
+            <button class="btn btn-outline" style="margin:0" onclick="tumunuSil()">🧹 TEMİZLE</button>
             <button class="btn btn-outline" style="margin:0" onclick="okunanlariSil()">✔ OKUNANLAR</button>
         </div>
         <div id="mesajAlani"></div>
@@ -146,10 +140,10 @@ function init(){
     if(!kullanici){
         document.getElementById("setup").innerHTML = `
             <div class="kart">
-                <h3>Hoş Geldiniz</h3>
-                <p style="justify-content:center; margin-bottom:10px;">Lütfen sicil isminizi giriniz.</p>
-                <input id="nameInput" class="panel-input" placeholder="İsim...">
-                <button class="btn btn-blue" onclick="saveUser()">KAYDET</button>
+                <h3>Giriş</h3>
+                <p style="justify-content:center;">Lütfen isminizi girin.</p>
+                <input id="nameInput" class="panel-input" placeholder="Örn: Ahmet Yılmaz">
+                <button class="btn btn-blue" onclick="saveUser()">GİRİŞ YAP</button>
             </div>`;
     } else {
         document.getElementById("mesajBolumu").style.display = "block";
@@ -165,55 +159,65 @@ window.saveUser = function(){
     location.reload();
 }
 
-function veriCek(){
-    fetch(URL)
-    .then(res => res.json())
-    .then(data => {
+async function veriCek(){
+    try {
+        const response = await fetch(URL);
+        const data = await response.json();
+        // Boş satırları filtrele ve global değişkene ata
         tumData = data.filter(x => x.isim && x.isim.trim() !== "");
         render();
-    });
+    } catch (e) {
+        console.error("Veri çekme hatası:", e);
+    }
 }
 
 function render(){
+    // Giriş yapan kişiyi bul
     let kisi = tumData.find(x => x.isim.toLowerCase().trim() === kullanici);
+    
     if(!kisi){
-        document.getElementById("kart").innerHTML = `<div class="kart" style="text-align:center;">Veri bulunamadı. Lütfen isminizi kontrol edin.</div>`;
+        document.getElementById("kart").innerHTML = `
+            <div class="kart" style="text-align:center;">
+                <p style="justify-content:center;">Veri bulunamadı ❌</p>
+                <p style="justify-content:center; font-size:11px;">"${kullanici}" ismi listede yok.</p>
+                <button class="btn btn-outline" onclick="localStorage.clear();location.reload();">İSİM DEĞİŞTİR</button>
+            </div>`;
         return;
     }
 
-    document.getElementById("grafikKarti").style.display = "block";
+    // Ortalama hesapla
     let avg = tumData.reduce((a,b)=>a+Number(b.kpuan||0),0) / tumData.length;
 
+    // Tüm veri alanlarını (Sheet'teki gibi) ekrana bas
     document.getElementById("kart").innerHTML = `
     <div class="kart">
+        <h3>${kisi.isim.toUpperCase()}</h3>
         <p>🏢 Ay: <b>${kisi.ay1 || "-"}</b></p>
         <p>🆔 Sicil: <b>${kisi.sicil || "-"}</b></p>
         <p>🧾 Fiş Sayısı: <b>${kisi.fis1 || "-"}</b></p>
         <p>📊 Satır Sayısı: <b>${kisi.satirSayisi || "-"}</b></p>
         <p>⏱️ Fiş Başı Süre: <b>${kisi.fisBasiSure || "-"}</b></p>
-        <p>⭐ Kartezyen Puan: <b class="${kisi.kpuan>=avg?'high':'low'}">${kisi.kpuan || "-"}</b></p>
-        <p>🏢 Ay: <b>${kisi.ay || "-"}</b></p>
-        <p>🧾 Fiş Sayısı: <b>${kisi.fis || "-"}</b></p>
+        <p>⭐ Kartezyen Puan: <b class="${Number(kisi.kpuan)>=avg?'high':'low'}">${kisi.kpuan || "-"}</b></p>
+        <p>📅 Ay (Bonus): <b>${kisi.ay || "-"}</b></p>
         <p>💰 TL Hakediş: <b>${kisi.tl || "-"}</b></p>
         <p>🤑 Euro Hakediş: <b>${kisi.euro || "-"}</b></p>
         <p>🔢 Toplam Adet: <b>${kisi.adet || "-"}</b></p>
-
     </div>`;
 
+    document.getElementById("grafikKarti").style.display = "block";
     drawChart(kisi, avg);
 }
 
 function drawChart(kisi, avg){
-    const ctx = document.getElementById("grafik");
-    if(!ctx) return;
+    const ctx = document.getElementById("grafik").getContext('2d');
     new Chart(ctx, {
         type:"doughnut",
         data:{
             labels:["Sen","Ortalama"],
             datasets:[{
-                data:[kisi.kpuan || 0, avg],
+                data:[Number(kisi.kpuan || 0), avg],
                 backgroundColor: ['#3b82f6', 'rgba(255,255,255,0.05)'],
-                borderColor: ['#3b82f6', 'rgba(255,255,255,0.2)'],
+                borderColor: 'rgba(255,255,255,0.1)',
                 borderWidth: 1
             }]
         },
@@ -233,7 +237,7 @@ function mesajlariDinle(){
         div.innerHTML = "";
         let okunmamis = 0;
 
-        data.slice().reverse().forEach((m,index)=>{
+        data.slice().reverse().forEach((m, index)=>{
             let realIndex = data.length - 1 - index;
             if(!m.okundu) okunmamis++;
 
@@ -241,21 +245,19 @@ function mesajlariDinle(){
             d.className = "kart " + (!m.okundu ? "yeniMesaj" : "");
             d.innerHTML = `
                 <p style="justify-content:flex-start;">${m.text}</p>
-                <small>🕒 ${new Date(m.tarih).toLocaleString()}</small>
-                <div class="mesaj-btn-grup">
-                    ${!m.okundu ? `<button class="btn btn-green" onclick="okunduYap(${realIndex})">OKUNDU</button>` : ""}
-                    <button class="btn btn-outline" onclick="silMesaj(${realIndex})">SİL</button>
+                <small style="font-size:10px;opacity:0.5;">🕒 ${new Date(m.tarih).toLocaleString()}</small>
+                <div style="display:flex; gap:5px; margin-top:10px;">
+                    ${!m.okundu ? `<button class="btn btn-green" style="padding:6px; font-size:10px;" onclick="okunduYap(${realIndex})">OKUNDU</button>` : ""}
+                    <button class="btn btn-outline" style="padding:6px; font-size:10px;" onclick="silMesaj(${realIndex})">SİL</button>
                 </div>
             `;
             div.appendChild(d);
         });
 
         if(okunmamis > 0){
-            sayac.classList.add("alertBlink");
             sayac.innerText = okunmamis;
             sayac.style.display = "inline";
         } else {
-            sayac.classList.remove("alertBlink");
             sayac.style.display = "none";
         }
     });
