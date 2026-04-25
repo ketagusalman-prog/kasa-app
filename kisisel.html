@@ -38,10 +38,10 @@
 
         .container { width: 100%; max-width: 500px; margin: 0 auto; padding: 70px 15px 120px 15px; }
 
-        /* Setup / Giriş */
-        #setup { text-align: center; padding: 40px 20px; }
+        /* Setup / Giriş Ekranı */
+        #setup { text-align: center; }
         .panel-input { 
-            width: 100%; padding: 14px; margin-bottom: 10px; 
+            width: 100%; padding: 14px; margin: 10px 0; 
             background: rgba(0,0,0,0.3); border: 1px solid var(--border); 
             color: white; border-radius: 12px; font-size: 14px; font-family: inherit;
         }
@@ -63,38 +63,35 @@
         .btn { 
             width: 100%; padding: 12px; border-radius: 12px; border: none; 
             font-weight: 800; color: white; font-size: 12px; cursor: pointer; 
-            text-transform: uppercase; transition: opacity 0.2s;
+            text-transform: uppercase; margin-top: 5px;
         }
         .btn-green { background: var(--success); }
         .btn-blue { background: var(--accent); }
-        .btn-danger { background: var(--danger); margin-bottom: 5px; }
+        .btn-danger { background: var(--danger); }
         .btn-outline { background: rgba(255,255,255,0.05); border: 1px solid var(--border); }
 
-        /* Mesajlar */
-        .mesaj-baslik { font-size: 16px; font-weight: 800; margin: 25px 0 10px 0; color: var(--warning); display: flex; align-items: center; gap: 8px; }
-        .yeniMesaj { border-left: 4px solid var(--danger) !important; }
-        .alertBlink { background: var(--danger); padding: 2px 8px; border-radius: 20px; font-size: 10px; animation: blink 1s infinite; color: white; margin-left: 10px; }
+        /* Mesaj Alanı */
+        .mesaj-baslik { font-size: 16px; font-weight: 800; margin: 25px 0 10px 0; color: var(--warning); display: flex; align-items: center; justify-content: space-between; }
+        #sayac { background: var(--danger); padding: 2px 8px; border-radius: 20px; font-size: 10px; color: white; }
+        .alertBlink { animation: blink 1s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-        .mesaj-item { margin-bottom: 10px; }
+        .yeniMesaj { border-left: 4px solid var(--danger) !important; }
         .mesaj-item small { font-size: 10px; opacity: 0.5; display: block; margin-top: 5px; }
         .mesaj-btn-grup { display: flex; gap: 5px; margin-top: 10px; }
-        .mesaj-btn-grup button { flex: 1; padding: 6px; font-size: 10px; }
+        .mesaj-btn-grup button { flex: 1; padding: 8px; font-size: 10px; }
 
         /* Tabbar */
         .tabbar { position: fixed; bottom: 0; left: 0; width: 100%; height: 70px; background: rgba(22, 30, 49, 0.95); backdrop-filter: blur(20px); display: flex; justify-content: space-around; align-items: center; border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; z-index: 1000; }
         .tab-btn { background: none; border: none; color: white; font-size: 24px; cursor: pointer; opacity: 0.6; }
         .tab-btn.active { opacity: 1; color: var(--accent); }
 
-        canvas { max-height: 200px; margin-top: 15px; }
+        canvas { margin-top: 15px; max-height: 220px; }
     </style>
 </head>
 <body>
 
-<div class="appbar">
-    KİŞİSEL PERFORMANS PANELİ
-    <span id="sayac" class="alertBlink" style="display:none;">0</span>
-</div>
+<div class="appbar">⚡ KİŞİSEL PANEL</div>
 
 <div class="container">
     <div id="setup"></div>
@@ -106,10 +103,13 @@
     </div>
 
     <div id="mesajBolumu" style="display:none;">
-        <div class="mesaj-baslik">📩 MESAJLARINIZ</div>
+        <div class="mesaj-baslik">
+            <span>📩 MESAJLAR</span>
+            <span id="sayac">0</span>
+        </div>
         <div style="display:flex; gap:8px; margin-bottom:15px;">
-            <button class="btn btn-outline" style="flex:1" onclick="tumunuSil()">🧹 TÜMÜNÜ SİL</button>
-            <button class="btn btn-outline" style="flex:1" onclick="okunanlariSil()">✔ OKUNANLARI SİL</button>
+            <button class="btn btn-outline" style="margin:0" onclick="tumunuSil()">🧹 SİL</button>
+            <button class="btn btn-outline" style="margin:0" onclick="okunanlariSil()">✔ OKUNANLAR</button>
         </div>
         <div id="mesajAlani"></div>
     </div>
@@ -138,6 +138,7 @@ let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase().trim();
 const URL = "https://script.google.com/macros/s/AKfycbxODlNf0yl2oAtkd5oMw1ghWavKSOO8TmT81uAUN8Oiqbj8yzx81x7iRexwcAHo7ecv4g/exec";
 
 let tumData = [];
+const mesajRef = kullanici ? doc(db, "mesajlar", kullanici) : null;
 
 init();
 
@@ -145,10 +146,10 @@ function init(){
     if(!kullanici){
         document.getElementById("setup").innerHTML = `
             <div class="kart">
-                <h3>Giriş Yap</h3>
-                <p style="margin-bottom:15px; justify-content:center; text-align:center;">Verilerinizi görmek için isminizi yazın.</p>
-                <input id="nameInput" class="panel-input" placeholder="İsminiz...">
-                <button class="btn btn-blue" onclick="saveUser()">KAYDET VE GİRİŞ YAP</button>
+                <h3>Hoş Geldiniz</h3>
+                <p style="justify-content:center; margin-bottom:10px;">Lütfen sicil isminizi giriniz.</p>
+                <input id="nameInput" class="panel-input" placeholder="İsim...">
+                <button class="btn btn-blue" onclick="saveUser()">KAYDET</button>
             </div>`;
     } else {
         document.getElementById("mesajBolumu").style.display = "block";
@@ -159,7 +160,7 @@ function init(){
 
 window.saveUser = function(){
     let val = document.getElementById("nameInput").value.toLowerCase().trim();
-    if(!val) return alert("Lütfen bir isim girin.");
+    if(!val) return alert("İsim gerekli!");
     localStorage.setItem("kullanici", val);
     location.reload();
 }
@@ -176,7 +177,7 @@ function veriCek(){
 function render(){
     let kisi = tumData.find(x => x.isim.toLowerCase().trim() === kullanici);
     if(!kisi){
-        document.getElementById("kart").innerHTML = `<div class="kart" style="text-align:center;">Henüz adınıza bir veri tanımlanmamış ❌</div>`;
+        document.getElementById("kart").innerHTML = `<div class="kart" style="text-align:center;">Veri bulunamadı. Lütfen isminizi kontrol edin.</div>`;
         return;
     }
 
@@ -185,7 +186,7 @@ function render(){
 
     document.getElementById("kart").innerHTML = `
     <div class="kart">
-        <h3>👤 ${kisi.isim.toUpperCase() || "İsimsiz"}</h3>
+        <h3>👤 ${kisi.isim.toUpperCase()}</h3>
         <p>🏢 Ay: <b>${kisi.ay1 || "-"}</b></p>
         <p>🆔 Sicil: <b>${kisi.sicil || "-"}</b></p>
         <p>🧾 Fiş Sayısı: <b>${kisi.fis1 || "-"}</b></p>
@@ -201,15 +202,17 @@ function render(){
 }
 
 function drawChart(kisi, avg){
-    new Chart(document.getElementById("grafik"), {
+    const ctx = document.getElementById("grafik");
+    if(!ctx) return;
+    new Chart(ctx, {
         type:"doughnut",
         data:{
             labels:["Sen","Ortalama"],
             datasets:[{
                 data:[kisi.kpuan || 0, avg],
-                backgroundColor: ['#3b82f6', 'rgba(255,255,255,0.1)'],
-                borderColor: 'transparent',
-                hoverOffset: 4
+                backgroundColor: ['#3b82f6', 'rgba(255,255,255,0.05)'],
+                borderColor: ['#3b82f6', 'rgba(255,255,255,0.2)'],
+                borderWidth: 1
             }]
         },
         options: {
@@ -219,7 +222,7 @@ function drawChart(kisi, avg){
 }
 
 function mesajlariDinle(){
-    const mesajRef = doc(db, "mesajlar", kullanici);
+    if(!mesajRef) return;
     onSnapshot(mesajRef, (snap)=>{
         if(!snap.exists()) return;
         let data = snap.data().liste || [];
@@ -233,10 +236,10 @@ function mesajlariDinle(){
             if(!m.okundu) okunmamis++;
 
             let d = document.createElement("div");
-            d.className = "mesaj-item kart " + (!m.okundu ? "yeniMesaj" : "");
+            d.className = "kart " + (!m.okundu ? "yeniMesaj" : "");
             d.innerHTML = `
                 <p style="justify-content:flex-start;">${m.text}</p>
-                <small>📅 ${new Date(m.tarih).toLocaleString('tr-TR')}</small>
+                <small>🕒 ${new Date(m.tarih).toLocaleString()}</small>
                 <div class="mesaj-btn-grup">
                     ${!m.okundu ? `<button class="btn btn-green" onclick="okunduYap(${realIndex})">OKUNDU</button>` : ""}
                     <button class="btn btn-outline" onclick="silMesaj(${realIndex})">SİL</button>
@@ -246,40 +249,40 @@ function mesajlariDinle(){
         });
 
         if(okunmamis > 0){
-            sayac.style.display = "inline-block";
+            sayac.classList.add("alertBlink");
             sayac.innerText = okunmamis;
+            sayac.style.display = "inline";
         } else {
+            sayac.classList.remove("alertBlink");
             sayac.style.display = "none";
         }
     });
 }
 
-const getRef = () => doc(db, "mesajlar", kullanici);
-
 window.okunduYap = async function(i){
-    let snap = await getDoc(getRef());
+    let snap = await getDoc(mesajRef);
     let liste = snap.data().liste;
     liste[i].okundu = true;
-    await setDoc(getRef(),{liste});
+    await setDoc(mesajRef,{liste});
 }
 
 window.silMesaj = async function(i){
-    if(!confirm("Bu mesaj silinecek?")) return;
-    let snap = await getDoc(getRef());
+    let snap = await getDoc(mesajRef);
     let liste = snap.data().liste;
     liste.splice(i,1);
-    await setDoc(getRef(),{liste});
+    await setDoc(mesajRef,{liste});
 }
 
 window.tumunuSil = async function(){
-    if(!confirm("Tüm mesajlar silinecek?")) return;
-    await setDoc(getRef(),{liste:[]});
+    if(confirm("Tüm mesajlar silinsin mi?")) {
+        await setDoc(mesajRef,{liste:[]});
+    }
 }
 
 window.okunanlariSil = async function(){
-    let snap = await getDoc(getRef());
+    let snap = await getDoc(mesajRef);
     let liste = snap.data().liste.filter(x=>!x.okundu);
-    await setDoc(getRef(),{liste});
+    await setDoc(mesajRef,{liste});
 }
 </script>
 </body>
