@@ -35,13 +35,12 @@
 
         .buyukSayac { position: fixed; top: 60px; left: 50%; transform: translateX(-50%); width: 75%; max-width: 280px; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 15px; text-align: center; font-size: 22px; font-weight: 800; color: var(--success); border: 1px solid var(--border); z-index: 1001; backdrop-filter: blur(15px); }
 
-        /* Butonlar Alanı - 3 Buton İçin Dikey/Yatay Düzen */
         .alt-islem { position: fixed; bottom: 80px; left: 0; width: 100%; display: flex; flex-direction: column; gap: 6px; padding: 0 15px; z-index: 999; }
         .row-btns { display: flex; gap: 6px; }
         .btn-main { flex: 1; padding: 12px; border-radius: 12px; border: none; font-weight: 800; color: white; font-size: 11px; cursor: pointer; text-transform: uppercase; }
 
         .tabbar { position: fixed; bottom: 0; width: 100%; height: 70px; background: rgba(22, 30, 49, 0.95); backdrop-filter: blur(20px); display: flex; justify-content: space-around; align-items: center; border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; }
-        .tab-btn { background: none; border: none; color: white; font-size: 22px; }
+        .tab-btn { background: none; border: none; color: white; font-size: 22px; cursor: pointer; }
     </style>
 </head>
 
@@ -63,8 +62,8 @@
 </div>
 
 <div class="tabbar">
-    <button class="tab-btn" onclick="location.href='index.html'">🏠</button>
-    <button class="tab-btn" onclick="location.reload()">☕</button>
+    <button class="tab-btn" onclick="location.href='index.html'" title="Kasalar">🏠</button>
+    <button class="tab-btn" onclick="location.href='kisisel.html'" title="Profil ve Ayarlar">👤</button>
 </div>
 
 <script type="module">
@@ -165,7 +164,6 @@ function blok(key, sureKey){
     return b;
 }
 
-// BÜYÜK SAYAÇ
 let beepCaldi = false;
 setInterval(() => {
     const bs = document.getElementById("buyukSayac");
@@ -184,7 +182,6 @@ setInterval(() => {
     if(enAzSure <= 30) { bs.style.color = "var(--danger)"; } else { bs.style.color = "var(--success)"; }
 }, 500);
 
-// 🔥 KAYDIRMA (1-2-3 DEĞİŞİR, 4 SABİT)
 window.kaydir = function(){
     if(!adminMi) return;
     ["cay","yemek","son"].forEach(grup=>{
@@ -198,14 +195,11 @@ window.kaydir = function(){
     alert("Kaydırıldı! Kaydetmeyi unutmayın.");
 }
 
-// 🔥 AKILLI KAYDET (Çay'ı Yemek ve Son'a Kopyalar)
 window.akilliKaydet = async function(){
     if(!adminMi) return;
     try {
         for(let i=1; i<=4; i++){
-            // Çay grubundaki kişileri al
             let cayKisiler = state["cay"+i]?.kisiler || [];
-            // Yemek ve Son gruplarına aktar
             state["yemek"+i] = state["yemek"+i] || {};
             state["yemek"+i].kisiler = [...cayKisiler];
             state["son"+i] = state["son"+i] || {};
@@ -216,7 +210,6 @@ window.akilliKaydet = async function(){
     } catch(e) { alert("Hata: " + e.message); }
 }
 
-// 🔥 ÖZEL KAYDET (Sadece ekranda yazıanı kaydeder)
 window.ozelKaydet = async function(){
     if(!adminMi) return;
     try {
