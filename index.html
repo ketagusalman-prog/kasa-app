@@ -91,7 +91,6 @@
         .admin-tools { position: fixed; right: 15px; bottom: 80px; display: flex; flex-direction: column; gap: 8px; z-index: 2000; }
         .admin-tools button { width: 45px; height: 45px; border-radius: 12px; border: none; color: white; font-size: 18px; display: none; align-items: center; justify-content: center; }
 
-        /* YENİ PERSONEL PANELİ TASARIMI */
         .panel { 
             background: var(--card); 
             border-radius: 24px; 
@@ -174,7 +173,7 @@
 
 <div class="tabbar">
     <button onclick="location.reload()" style="background:none; border:none; font-size:22px; color:white;">🏠</button>
-    <button style="background:none; border:none; font-size:22px; color:white;">📱</button>
+    <button onclick="location.href='personel.html'" style="background:none; border:none; font-size:22px; color:white;">📱</button>
     <button onclick="location.href='mola.html'" style="background:none; border:none; font-size:22px; color:white;">☕</button>
 </div>
 
@@ -192,16 +191,20 @@ let adminMi = false;
 let molaData = {};
 let refs = { isimler: [], barkodlar: [], basliklar: [] };
 
-onSnapshot(doc(db, "kasa", "ayarlar"), snap => {
-    if (snap.exists() && snap.data().arkaPlan) {
-        document.body.style.backgroundImage = `url('${snap.data().arkaPlan}')`;
-        document.getElementById("bgUrl").value = snap.data().arkaPlan;
-    }
-});
+// --- EKLEDİĞİMİZ SAVEUSER MANTIĞI ---
+window.saveUser = function() {
+    let val = document.getElementById("kullanici").value.toLowerCase().trim();
+    if (!val) return alert("Lütfen isminizi yazın!");
+    localStorage.setItem("kullanici", val);
+}
 
 document.getElementById("girisBtn").onclick = () => {
     const k = document.getElementById("kullanici").value.trim();
     const s = document.getElementById("sifre").value.trim();
+    
+    // Giriş anında ismi hafızaya atıyoruz (Uyuşmazlık çözüldü)
+    if(k) { localStorage.setItem("kullanici", k.toLowerCase().trim()); }
+
     if (k === admin.k && s === admin.s) {
         adminMi = true;
         document.querySelectorAll(".admin-tools button").forEach(el => el.style.display = "flex");
@@ -214,10 +217,17 @@ document.getElementById("girisBtn").onclick = () => {
     document.getElementById("login").style.display = "none";
     olustur();
 };
+// -------------------------------------
+
+onSnapshot(doc(db, "kasa", "ayarlar"), snap => {
+    if (snap.exists() && snap.data().arkaPlan) {
+        document.body.style.backgroundImage = `url('${snap.data().arkaPlan}')`;
+        document.getElementById("bgUrl").value = snap.data().arkaPlan;
+    }
+});
 
 document.getElementById("panelBtn").onclick = () => document.getElementById("panel").classList.toggle("acik");
 
-// SAYAÇ VE MOLA MANTIĞI (Aynen Korundu)
 setInterval(() => {
     if (!molaData) return;
     const simdi = new Date();
