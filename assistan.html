@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Umut Salman Yönetim Paneli</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #0f172a; --accent: #10b981; --text: #f8fafc; --ai-msg: #1e293b; --user-msg: #059669; --border: rgba(255, 255, 255, 0.08); }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* TICKER */
+        #newsTicker { background: #059669; color: white; height: 35px; line-height: 35px; overflow: hidden; position: relative; width: 100%; }
+        #tickerContent { display: inline-block; white-space: nowrap; position: absolute; font-size: 13px; font-weight: 800; animation: tickerScroll 25s linear infinite; }
+        @keyframes tickerScroll { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
+
+        /* CHAT */
+        #chatBox { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .msg { max-width: 80%; padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.5; }
+        .ai { align-self: flex-start; background: var(--ai-msg); border: 1px solid var(--border); }
+        .user { align-self: flex-end; background: var(--user-msg); color: white; }
+
+        /* İZİN FORMU MODAL */
+        #leaveModal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: #1e293b; padding: 25px; border-radius: 25px; width: 100%; max-width: 350px; border: 1px solid var(--border); }
+        .modal-content h3 { color: var(--accent); margin-bottom: 15px; text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 5px; }
+        .form-group input { width: 100%; padding: 10px; border-radius: 10px; background: #0f172a; border: 1px solid var(--border); color: white; }
+        
+        /* ADMIN PANEL */
+        #adminPanel { position: fixed; inset: 0; background: #0f172a; z-index: 3000; padding: 20px; display: none; flex-direction: column; gap: 15px; overflow-y: auto; }
+        .panel-sec { background: #1e293b; padding: 15px; border-radius: 15px; border: 1px solid var(--border); }
+        textarea { width: 100%; height: 80px; background: #0f172a; color: white; border: 1px solid var(--border); border-radius: 10px; padding: 10px; font-size: 12px; }
+
+        /* BUTTONS */
+        .input-container { padding: 15px; background: #0f172a; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+        input { flex: 1; background: #1e293b; border: 1px solid var(--border); padding: 12px 20px; border-radius: 25px; color: white; }
+        .btn { padding: 10px 18px; border-radius: 20px; cursor: pointer; border: none; font-weight: 700; transition: 0.3s; }
+        .btn-accent { background: var(--accent); color: white; }
+        .btn-leave { background: #3b82f6; color: white; }
+
+        #loginOverlay { position: fixed; inset: 0; background: var(--bg); z-index: 6000; display: flex; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body>
+
+<div id="loginOverlay">
+    <div style="background:#1e293b; padding:30px; border-radius:25px; text-align:center; width:320px;">
+        <h2 style="color:var(--accent); margin-bottom:15px;">Sisteme Giriş</h2>
+        <input type="text" id="userNameInput" placeholder="Ad Soyad" style="width:100%; margin-bottom:15px;">
+        <button class="btn btn-accent" style="width:100%" onclick="login()">Bağlan</button>
+    </div>
+</div>
+
+<div id="leaveModal">
+    <div class="modal-content">
+        <h3>İzin Talep Formu</h3>
+        <div class="form-group">
+            <label>Başlangıç Tarihi</label>
+            <input type="date" id="leaveStart" onchange="calcDays()">
+        </div>
+        <div class="form-group">
+            <label>Bitiş Tarihi</label>
+            <input type="date" id="leaveEnd" onchange="calcDays()">
+        </div>
+        <div class="form-group">
+            <label>Toplam Gün</label>
+            <input type="text" id="totalDays" readonly style="background:transparent; border:none; font-weight:800; color:var(--accent);">
+        </div>
+        <div id="errorMsg" style="color:#ef4444; font-size:11px; margin-bottom:10px; display:none;">⚠️ Bu tarihlerde çakışan izin var!</div>
+        <button class="btn btn-accent" style="width:100%" id="sendLeaveBtn" onclick="submitLeave()">Talebi Gönder</button>
+        <button class="btn" style="width:100%; background:transparent; color:#64748b; margin-top:10px;" onclick="closeLeave()">Vazgeç</button>
+    </div>
+</div>
+
+<div class="appbar" style="height:60px; padding:0 20px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border);">
+    <span id="welcomeText" style="font-weight:800; color:var(--accent);">ASİSTAN</span>
+    <div>
+        <button class="btn btn-leave" style="font-size:11px; margin-right:5px;" onclick="openLeave()">📅 İZİN İSTE</button>
+        <button class="btn" style="background:transparent; color:#64748b;" onclick="toggleAdmin()">⚙️</button>
+    </div>
+</div>
+
+<div id="newsTicker"><div id="tickerContent">Yükleniyor...</div></div>
+
+<div id="adminPanel">
+    <h2 style="margin-bottom:10px;">Yönetim Masası</h2>
+    <div class="panel-sec">
+        <h3>📅 ONAY BEKLEYENLER</h3>
+        <div id="requestContainer"></div>
+        <h3 style="margin-top:10px;">✅ ONAYLI İZİNLER</h3>
+        <textarea id="data_izin" placeholder="Örn: 2026-04-29 (Osman)"></textarea>
+    </div>
+    <div class="panel-sec">
+        <h3>📢 DUYURULAR (- ile yazın)</h3>
+        <textarea id="data_magaza"></textarea>
+    </div>
+    <div class="panel-sec">
+        <h3>💰 HAKEDİŞ / KASA</h3>
+        <textarea id="data_kasa"></textarea>
+    </div>
+    <button class="btn btn-accent" style="width:100%; padding:15px;" onclick="saveAllPanels()">💾 KAYDET VE KAPAT</button>
+</div>
+
+<div id="chatBox"></div>
+<div class="input-container">
+    <input type="text" id="userInput" placeholder="Mesajınızı yazın...">
+    <button class="btn btn-accent" onclick="send()">Gönder</button>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyChKcwZnw1fe_SFWy2dJA_JZOMiKghF5_o",
+    authDomain: "ukasa1.firebaseapp.com",
+    projectId: "ukasa1",
+    appId: "1:929741424159:web:733f958e2fe7c13984f72a"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+let currentUser = "";
+let dbData = { izin: "", magaza: "", kasa: "" };
+
+onSnapshot(doc(db, "kasa", "bilgiBankasi"), (snap) => {
+    if (snap.exists()) {
+        dbData = snap.data();
+        document.getElementById("data_izin").value = dbData.izin || "";
+        document.getElementById("data_izin").value = dbData.izin || "";
+        document.getElementById("data_magaza").value = dbData.magaza || "";
+        document.getElementById("data_kasa").value = dbData.kasa || "";
+        const haberler = (dbData.magaza || "").split('\n').filter(l => l.trim().startsWith("-")).map(l => l.trim().substring(1).trim());
+        document.getElementById("tickerContent").innerText = haberler.length > 0 ? haberler.join("   •   ") + "   •   " : "Duyuru yok.";
+    }
+});
+
+onSnapshot(doc(db, "kasa", "talepler"), (snap) => {
+    const cont = document.getElementById("requestContainer");
+    cont.innerHTML = "";
+    if (snap.exists() && snap.data().liste) {
+        snap.data().liste.forEach((t, i) => {
+            const d = document.createElement("div"); d.style.display="flex"; d.style.justifyContent="space-between"; d.style.marginBottom="5px"; d.style.background="#0f172a"; d.style.padding="8px"; d.style.borderRadius="8px";
+            d.innerHTML = `<span style="font-size:11px">${t}</span><button class="btn" style="background:#10b981; color:white; padding:2px 8px; font-size:10px" onclick="approveRequest('${t}', ${i})">Onayla</button>`;
+            cont.appendChild(d);
+        });
+    }
+});
+
+window.login = () => {
+    const n = document.getElementById("userNameInput").value.trim();
+    if (n.length < 2) return;
+    currentUser = n;
+    document.getElementById("loginOverlay").style.display = "none";
+    document.getElementById("welcomeText").innerText = currentUser.toUpperCase();
+};
+
+window.openLeave = () => { document.getElementById("leaveModal").style.display = "flex"; };
+window.closeLeave = () => { document.getElementById("leaveModal").style.display = "none"; };
+
+window.calcDays = () => {
+    const start = new Date(document.getElementById("leaveStart").value);
+    const end = new Date(document.getElementById("leaveEnd").value);
+    const errorMsg = document.getElementById("errorMsg");
+    const sendBtn = document.getElementById("sendLeaveBtn");
+
+    if (start && end && end >= start) {
+        const diff = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+        document.getElementById("totalDays").value = diff + " Gün";
+
+        const dateStr = document.getElementById("leaveStart").value;
+        if (dbData.izin.includes(dateStr)) {
+            errorMsg.style.display = "block";
+            sendBtn.disabled = true;
+            sendBtn.style.opacity = "0.3";
+        } else {
+            errorMsg.style.display = "none";
+            sendBtn.disabled = false;
+            sendBtn.style.opacity = "1";
+        }
+    }
+};
+
+window.submitLeave = async () => {
+    const start = document.getElementById("leaveStart").value;
+    const end = document.getElementById("leaveEnd").value;
+    const days = document.getElementById("totalDays").value;
+    const talepMetni = `${currentUser}: ${start} ile ${end} arası (${days})`;
+    
+    await updateDoc(doc(db, "kasa", "talepler"), { liste: arrayUnion(talepMetni) });
+    appendMsg(`${talepMetni} talebiniz iletildi.`, "ai");
+    closeLeave();
+};
+
+window.send = async () => {
+    const input = document.getElementById("userInput");
+    const text = input.value.trim();
+    if (!text) return;
+    appendMsg(text, "user");
+    input.value = "";
+
+    try {
+        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: { "Authorization": "Bearer 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", "Content-Type": "application/json" },
+            body: JSON.stringify({
+                model: "llama-3.1-8b-instant",
+                messages: [{ 
+                    role: "system", 
+                    content: `Mağaza asistanısın. Kullanıcı: ${currentUser}. 
+                    KURAL 1: Eğer kullanıcı izin, tatil veya rapor gibi bir talepte bulunursa, ona nazikçe yukarıdaki mavi "📅 İZİN İSTE" butonuna basması gerektiğini söyle. Sohbet üzerinden tarih alma.
+                    KURAL 2: Diğer konularda (duyuru, kasa vb.) hafızadaki bilgileri kullan: \n\nHAFIZA:\n${dbData.magaza}\n${dbData.kasa}` 
+                }, { role: "user", content: text }],
+                temperature: 0
+            })
+        });
+        const data = await res.json();
+        appendMsg(data.choices[0].message.content, "ai");
+    } catch (e) { appendMsg("Hata oluştu.", "ai"); }
+};
+
+window.approveRequest = async (talep, i) => {
+    const yeniIzin = (dbData.izin || "") + "\n" + talep + " (ONAYLANDI)";
+    await setDoc(doc(db, "kasa", "bilgiBankasi"), { ...dbData, izin: yeniIzin });
+    const snap = await getDoc(doc(db, "kasa", "talepler"));
+    let liste = snap.data().liste;
+    liste.splice(i, 1);
+    await setDoc(doc(db, "kasa", "talepler"), { liste: liste });
+};
+
+window.saveAllPanels = async () => {
+    const data = {
+        izin: document.getElementById("data_izin").value,
+        magaza: document.getElementById("data_magaza").value,
+        kasa: document.getElementById("data_kasa").value
+    };
+    await setDoc(doc(db, "kasa", "bilgiBankasi"), data);
+    toggleAdmin();
+};
+
+window.toggleAdmin = () => {
+    const p = document.getElementById("adminPanel");
+    p.style.display = (p.style.display === "flex") ? "none" : "flex";
+};
+
+function appendMsg(t, s) {
+    const b = document.getElementById("chatBox");
+    const d = document.createElement("div"); d.className = `msg ${s}`; d.innerText = t;
+    b.appendChild(d); b.scrollTop = b.scrollHeight;
+}
+</script>
+</body>
+</html>
+        
+        #newsTicker { background: #059669; color: white; height: 35px; line-height: 35px; overflow: hidden; position: relative; width: 100%; }
+        #tickerContent { display: inline-block; white-space: nowrap; position: absolute; font-size: 13px; font-weight: 800; animation: tickerScroll 25s linear infinite; }
+        @keyframes tickerScroll { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
+
+        #chatBox { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .msg { max-width: 85%; padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.5; }
+        .ai { align-self: flex-start; background: var(--ai-msg); border: 1px solid var(--border); }
+        .user { align-self: flex-end; background: var(--user-msg); color: white; }
+
+        /* Excel ve Tablo Stilleri */
+        .shift-table { width: 100%; border-collapse: collapse; margin-top: 10px; border-radius: 8px; overflow: hidden; font-size: 11px; }
+        .shift-table th { background: var(--accent); color: white; padding: 8px; }
+        .shift-table td { background: #0f172a; border: 1px solid var(--border); padding: 6px; text-align: center; }
+        .g1 { color: #60a5fa; font-weight: bold; }
+        .g2 { color: #34d399; font-weight: bold; }
+
+        #leaveModal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: #1e293b; padding: 25px; border-radius: 25px; width: 100%; max-width: 350px; border: 1px solid var(--border); }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 5px; }
+        .form-group input { width: 100%; padding: 10px; border-radius: 10px; background: #0f172a; border: 1px solid var(--border); color: white; }
+        
+        #adminPanel { position: fixed; inset: 0; background: #0f172a; z-index: 3000; padding: 20px; display: none; flex-direction: column; gap: 15px; overflow-y: auto; }
+        .panel-sec { background: #1e293b; padding: 15px; border-radius: 15px; border: 1px solid var(--border); }
+        textarea { width: 100%; height: 80px; background: #0f172a; color: white; border: 1px solid var(--border); border-radius: 10px; padding: 10px; font-size: 12px; }
+
+        .input-container { padding: 15px; background: #0f172a; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+        input { flex: 1; background: #1e293b; border: 1px solid var(--border); padding: 12px 20px; border-radius: 25px; color: white; }
+        .btn { padding: 10px 18px; border-radius: 20px; cursor: pointer; border: none; font-weight: 700; transition: 0.3s; }
+        .btn-accent { background: var(--accent); color: white; }
+        .btn-leave { background: #3b82f6; color: white; }
+
+        #loginOverlay { position: fixed; inset: 0; background: var(--bg); z-index: 6000; display: flex; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body>
+
+<div id="loginOverlay">
+    <div style="background:#1e293b; padding:30px; border-radius:25px; text-align:center; width:320px;">
+        <h2 style="color:var(--accent); margin-bottom:15px;">Hoş Geldiniz</h2>
+        <input type="text" id="userNameInput" placeholder="Ad Soyad" style="width:100%; margin-bottom:15px;">
+        <button class="btn btn-accent" style="width:100%" onclick="login()">Giriş Yap</button>
+    </div>
+</div>
+
+<div id="leaveModal">
+    <div class="modal-content">
+        <h3>İzin Talep Formu</h3>
+        <div class="form-group"><label>Başlangıç Tarihi</label><input type="date" id="leaveStart" onchange="calcDays()"></div>
+        <div class="form-group"><label>Bitiş Tarihi</label><input type="date" id="leaveEnd" onchange="calcDays()"></div>
+        <div class="form-group"><label>Toplam Gün</label><input type="text" id="totalDays" readonly style="background:transparent; border:none; font-weight:800; color:var(--accent);"></div>
+        <div id="errorMsg" style="color:#ef4444; font-size:11px; margin-bottom:10px; display:none;">⚠️ Bu aralıkta çakışan bir izin zaten var!</div>
+        <button class="btn btn-accent" style="width:100%" id="sendLeaveBtn" onclick="submitLeave()">Talebi Gönder</button>
+        <button class="btn" style="width:100%; background:transparent; color:#64748b; margin-top:10px;" onclick="closeLeave()">Kapat</button>
+    </div>
+</div>
+
+<div class="appbar" style="height:60px; padding:0 20px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border);">
+    <span id="welcomeText" style="font-weight:800; color:var(--accent);">YÖNETİM</span>
+    <div>
+        <button class="btn btn-leave" style="font-size:11px; margin-right:5px;" onclick="openLeave()">📅 İZİN İSTE</button>
+        <button class="btn" style="background:transparent; color:#64748b;" onclick="toggleAdmin()">⚙️</button>
+    </div>
+</div>
+
+<div id="newsTicker"><div id="tickerContent">Duyurular yükleniyor...</div></div>
+
+<div id="adminPanel">
+    <h2 style="margin-bottom:10px;">Admin Paneli</h2>
+    <div class="panel-sec">
+        <h3>🔔 TALEPLER</h3>
+        <div id="requestContainer"></div>
+        <h3 style="margin-top:10px;">✅ ONAYLI LİSTE</h3>
+        <textarea id="data_izin" placeholder="2026-04-28 (İsim)"></textarea>
+    </div>
+    <div class="panel-sec">
+        <h3>📢 DUYURULAR (- ile)</h3>
+        <textarea id="data_magaza"></textarea>
+    </div>
+    <div class="panel-sec">
+        <h3>💰 KASA / HAKEDİŞ</h3>
+        <textarea id="data_kasa"></textarea>
+    </div>
+    <button class="btn btn-accent" style="width:100%; padding:15px;" onclick="saveAllPanels()">💾 KAYDET</button>
+</div>
+
+<div id="chatBox"></div>
+<div class="input-container">
+    <input type="text" id="userInput" placeholder="Mesajınızı yazın...">
+    <button class="btn btn-accent" onclick="send()">Gönder</button>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = { apiKey: "AIzaSyChKcwZnw1fe_SFWy2dJA_JZOMiKghF5_o", authDomain: "ukasa1.firebaseapp.com", projectId: "ukasa1", appId: "1:929741424159:web:733f958e2fe7c13984f72a" };
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+let currentUser = "";
+let dbData = { izin: "", magaza: "", kasa: "" };
+
+onSnapshot(doc(db, "kasa", "bilgiBankasi"), (snap) => {
+    if (snap.exists()) {
+        dbData = snap.data();
+        document.getElementById("data_izin").value = dbData.izin || "";
+        document.getElementById("data_magaza").value = dbData.magaza || "";
+        document.getElementById("data_kasa").value = dbData.kasa || "";
+        const haberler = (dbData.magaza || "").split('\n').filter(l => l.trim().startsWith("-")).map(l => l.trim().substring(1).trim());
+        document.getElementById("tickerContent").innerText = haberler.join("   •   ") || "Duyuru yok.";
+    }
+});
+
+onSnapshot(doc(db, "kasa", "talepler"), (snap) => {
+    const cont = document.getElementById("requestContainer"); cont.innerHTML = "";
+    if (snap.exists() && snap.data().liste) {
+        snap.data().liste.forEach((t, i) => {
+            const d = document.createElement("div"); d.style.display="flex"; d.style.justifyContent="space-between"; d.style.marginBottom="5px"; d.style.background="#0f172a"; d.style.padding="8px"; d.style.borderRadius="8px";
+            d.innerHTML = `<span style="font-size:11px">${t}</span><button class="btn" style="background:#10b981; color:white; padding:2px 8px; font-size:10px" onclick="approveRequest('${t}', ${i})">Onayla</button>`;
+            cont.appendChild(d);
+        });
+    }
+});
+
+window.login = () => {
+    const n = document.getElementById("userNameInput").value.trim();
+    if (n.length < 2) return;
+    currentUser = n;
+    document.getElementById("loginOverlay").style.display = "none";
+    document.getElementById("welcomeText").innerText = currentUser.toUpperCase();
+};
+
+window.openLeave = () => { document.getElementById("leaveModal").style.display = "flex"; };
+window.closeLeave = () => { document.getElementById("leaveModal").style.display = "none"; };
+
+window.calcDays = () => {
+    const s = document.getElementById("leaveStart").value;
+    const e = document.getElementById("leaveEnd").value;
+    if (!s || !e) return;
+    const start = new Date(s); const end = new Date(e);
+    const err = document.getElementById("errorMsg"); const btn = document.getElementById("sendLeaveBtn");
+    
+    if (end >= start) {
+        document.getElementById("totalDays").value = (Math.ceil((end - start) / 86400000) + 1) + " Gün";
+        let conflict = false;
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+            if (dbData.izin.includes(d.toISOString().split('T')[0])) { conflict = true; break; }
+        }
+        err.style.display = conflict ? "block" : "none";
+        btn.disabled = conflict; btn.style.opacity = conflict ? "0.3" : "1";
+    }
+};
+
+window.submitLeave = async () => {
+    const talep = `${currentUser}: ${document.getElementById("leaveStart").value} / ${document.getElementById("leaveEnd").value}`;
+    await updateDoc(doc(db, "kasa", "talepler"), { liste: arrayUnion(talep) });
+    appendMsg(`Talebiniz Umut Bey'e iletildi.`, "ai");
+    closeLeave();
+};
+
+window.send = async () => {
+    const input = document.getElementById("userInput");
+    const text = input.value.trim(); if (!text) return;
+    appendMsg(text, "user"); input.value = "";
+
+    try {
+        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: { "Authorization": "Bearer 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", "Content-Type": "application/json" },
+            body: JSON.stringify({
+                model: "llama-3.1-8b-instant",
+                messages: [{ role: "system", content: `Umut Salman asistanısın. 
+                1. İzin isteyeni mavi butona yönlendir. 
+                2. Şift soranlara renkli tablo yap (1.Grup: 28-29 Nisan / 2.Grup: 30-01 Mayıs ve böyle devam eder). 
+                3. Tabloyu HTML <table> olarak 'shift-table' classı ile renkli hazırla. 
+                Hafıza:\n${dbData.magaza}\n${dbData.kasa}` }, { role: "user", content: text }],
+                temperature: 0
+            })
+        });
+        const data = await res.json();
+        appendMsg(data.choices[0].message.content, "ai", true);
+    } catch (e) { appendMsg("Sistem meşgul.", "ai"); }
+};
+
+window.approveRequest = async (t, i) => {
+    await setDoc(doc(db, "kasa", "bilgiBankasi"), { ...dbData, izin: (dbData.izin || "") + "\n" + t + " (ONAY)" });
+    const snap = await getDoc(doc(db, "kasa", "talepler"));
+    let l = snap.data().liste; l.splice(i, 1);
+    await setDoc(doc(db, "kasa", "talepler"), { liste: l });
+};
+
+window.saveAllPanels = async () => {
+    await setDoc(doc(db, "kasa", "bilgiBankasi"), { izin: document.getElementById("data_izin").value, magaza: document.getElementById("data_magaza").value, kasa: document.getElementById("data_kasa").value });
+    toggleAdmin();
+};
+
+window.toggleAdmin = () => { const p = document.getElementById("adminPanel"); p.style.display = (p.style.display === "flex") ? "none" : "flex"; };
+
+function appendMsg(t, s, html = false) {
+    const b = document.getElementById("chatBox"); const d = document.createElement("div"); d.className = `msg ${s}`;
+    if(html) d.innerHTML = t; else d.innerText = t;
+    b.appendChild(d); b.scrollTop = b.scrollHeight;
+}
+</script>
+</body>
+</html>
