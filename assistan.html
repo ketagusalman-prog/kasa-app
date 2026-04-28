@@ -8,26 +8,28 @@
     <style>
         :root { --bg: #0f172a; --accent: #10b981; --text: #f8fafc; --ai-msg: #1e293b; --user-msg: #059669; --border: rgba(255, 255, 255, 0.08); }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        #newsTicker { background: #059669; color: white; height: 35px; line-height: 35px; overflow: hidden; position: relative; width: 100%; z-index: 10; }
+        body { background: var(--bg); color: var(--text); height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+        #newsTicker { background: #059669; color: white; height: 35px; line-height: 35px; overflow: hidden; position: relative; width: 100%; flex-shrink: 0; z-index: 10; }
         #tickerContent { display: inline-block; white-space: nowrap; position: absolute; font-size: 13px; font-weight: 800; animation: tickerScroll 25s linear infinite; }
         @keyframes tickerScroll { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
-        #chatBox { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; padding-bottom: 80px; }
-        .msg { max-width: 90%; padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.5; animation: fadeIn 0.3s ease; }
+        #chatBox { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; -webkit-overflow-scrolling: touch; }
+        .msg { max-width: 90%; padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.5; animation: fadeIn 0.3s ease; word-wrap: break-word; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .ai { align-self: flex-start; background: var(--ai-msg); border: 1px solid var(--border); }
         .user { align-self: flex-end; background: var(--user-msg); color: white; }
-        #leaveModal, #adminPanel { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.98); z-index: 5000; display: none; flex-direction: column; padding: 20px; overflow-y: auto; }
+        #leaveModal, #contactModal, #adminPanel { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.98); z-index: 5000; display: none; flex-direction: column; padding: 20px; overflow-y: auto; }
         .modal-content { background: #1e293b; padding: 25px; border-radius: 25px; width: 100%; max-width: 400px; border: 1px solid var(--border); margin: auto; }
         .panel-sec { background: #1e293b; padding: 15px; border-radius: 15px; border: 1px solid var(--border); margin-bottom: 15px; }
         textarea { width: 100%; height: 80px; background: #0f172a; color: white; border: 1px solid var(--border); border-radius: 10px; padding: 10px; font-size: 13px; margin-top: 10px; }
         #loginOverlay { position: fixed; inset: 0; background: var(--bg); z-index: 9000; display: flex; align-items: center; justify-content: center; }
         .login-card { background: #1e293b; padding: 35px; border-radius: 30px; text-align: center; width: 340px; border: 1px solid var(--border); }
         input { width: 100%; background: #1e293b; border: 1px solid var(--border); padding: 12px 20px; border-radius: 25px; color: white; margin-bottom: 10px; outline: none; }
-        .input-container { position: fixed; bottom: 0; width: 100%; padding: 15px; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); display: flex; gap: 8px; border-top: 1px solid var(--border); }
+        .input-container { position: relative; width: 100%; padding: 15px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); display: flex; gap: 8px; border-top: 1px solid var(--border); flex-shrink: 0; }
         .btn { padding: 12px 20px; border-radius: 25px; cursor: pointer; border: none; font-weight: 700; transition: 0.2s; }
         .btn-accent { background: var(--accent); color: white; }
+        .btn-contact { background: #8b5cf6; color: white; font-size: 11px; }
         .btn-leave { background: #3b82f6; color: white; font-size: 11px; }
+        .appbar { flex-shrink: 0; }
         .shift-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
         .shift-table th, .shift-table td { border: 1px solid var(--border); padding: 8px; text-align: left; }
     </style>
@@ -54,9 +56,20 @@
     </div>
 </div>
 
+<div id="contactModal">
+    <div class="modal-content">
+        <h3 style="color:#8b5cf6">✉️ Yöneticiye Not Bırak</h3>
+        <p style="font-size:12px; color:#94a3b8; margin-top:5px;">Umut Salman'a iletmek istediğiniz mesajı yazın.</p>
+        <textarea id="contactMsg" placeholder="Mesajınızı buraya yazın..."></textarea>
+        <button class="btn" style="width:100%; margin-top:10px; background:#8b5cf6; color:white;" onclick="submitContact()">MESAJI İLET</button>
+        <button class="btn" style="width:100%; background:transparent; color:#64748b; margin-top:10px;" onclick="closeContact()">İPTAL</button>
+    </div>
+</div>
+
 <div class="appbar" style="height:60px; padding:0 20px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); background: #1e293b;">
     <span id="welcomeText" style="font-weight:800; color:var(--accent);">ASİSTAN</span>
     <div style="display:flex; gap:10px;">
+        <button class="btn btn-contact" onclick="openContact()">✉️ NOT</button>
         <button class="btn btn-leave" onclick="openLeave()">📅 İZİN</button>
         <button class="btn" id="adminGear" style="background:transparent; color:#64748b; display:none; font-size:20px;" onclick="toggleAdmin()">⚙️</button>
     </div>
@@ -72,7 +85,7 @@
     </div>
     <div class="panel-sec"><h3>📜 Mağaza Kuralları</h3><textarea id="data_kurallar" placeholder="Örn: Geç gelmek yasaktır."></textarea></div>
     <div class="panel-sec"><h3>🛒 Kasaönü Bilgileri</h3><textarea id="data_kasaonu"></textarea></div>
-    <div class="panel-sec"><h3>📩 Bekleyen Talepler</h3><div id="requestContainer"></div></div>
+    <div class="panel-sec"><h3>📩 Bekleyen Talepler & Notlar</h3><div id="requestContainer"></div></div>
     <div class="panel-sec"><h3>✅ Tüm İzin Kayıtları</h3><textarea id="data_izin"></textarea></div>
     <div class="panel-sec"><h3>📢 Mağaza Duyuruları</h3><textarea id="data_magaza"></textarea></div>
     <div style="display:flex; gap:10px;">
@@ -84,7 +97,7 @@
 <div id="chatBox"></div>
 
 <div class="input-container">
-    <input type="text" id="userInput" placeholder="Mesajınızı yazın...">
+    <input type="text" id="userInput" placeholder="Size nasıl yardımcı olabilirim?">
     <button class="btn btn-accent" onclick="send()">GÖNDER</button>
 </div>
 
@@ -112,7 +125,7 @@ onSnapshot(doc(db, "kasa", "bilgiBankasi"), snap => {
         document.getElementById("data_users").value = dbData.users || "";
         document.getElementById("data_kurallar").value = dbData.kurallar || "";
         const haberler = (dbData.magaza || "").split('\n').filter(l => l.trim().startsWith("-")).map(l => l.trim().substring(1).trim());
-        document.getElementById("tickerContent").innerText = haberler.join("    •   ") || "Duyuru yok.";
+        document.getElementById("tickerContent").innerText = haberler.join("    •    ") || "Duyuru yok.";
     }
 });
 
@@ -121,7 +134,8 @@ onSnapshot(doc(db, "kasa", "talepler"), snap => {
     if (snap.exists() && snap.data().liste) {
         snap.data().liste.forEach((t, i) => {
             const d = document.createElement("div"); d.style="display:flex; justify-content:space-between; background:#0f172a; padding:8px; border-radius:8px; margin-bottom:5px; border:1px solid var(--border);";
-            d.innerHTML = `<span style="font-size:11px">${t}</span><button class="btn" style="background:#10b981; padding:3px 8px; font-size:10px" onclick="approveRequest('${t}', ${i})">ONAYLA</button>`;
+            const typeLabel = t.includes("NOT:") ? "🔔 NOT" : "🗓️ İZİN";
+            d.innerHTML = `<span style="font-size:11px"><b>${typeLabel}</b> ${t}</span><button class="btn" style="background:#10b981; padding:3px 8px; font-size:10px" onclick="approveRequest('${t}', ${i})">OKUDUM/ONAYLA</button>`;
             cont.appendChild(d);
         });
     }
@@ -143,12 +157,24 @@ window.login = () => {
         document.getElementById("loginOverlay").style.display = "none";
         document.getElementById("welcomeText").innerText = realName.toUpperCase();
         if (isAdmin) document.getElementById("adminGear").style.display = "block";
-        appendMsg(`Sistem Aktif: ${realName}`, "ai");
+        appendMsg(`Merhabalar ${realName}, ben Umut Salman'ın dijital asistanıyım. Öncelikle Umut Bey'in sizlerle ne kadar gurur duyduğunu ve sizlerden sürekli övgüyle bahsettiğini belirtmek isterim. İş ile ilgili merak ettiğiniz tüm konularda elimden geldiğince size yardımcı olacağım.`, "ai");
     } else { document.getElementById("loginError").style.display = "block"; }
 };
 
 window.openLeave = () => document.getElementById("leaveModal").style.display = "flex";
 window.closeLeave = () => document.getElementById("leaveModal").style.display = "none";
+window.openContact = () => document.getElementById("contactModal").style.display = "flex";
+window.closeContact = () => document.getElementById("contactModal").style.display = "none";
+
+window.submitContact = async () => {
+    const msgText = document.getElementById("contactMsg").value.trim();
+    if(!msgText) return;
+    const finalMsg = `NOT: ${realName.toUpperCase()}: ${msgText}`;
+    await updateDoc(doc(db, "kasa", "talepler"), { liste: arrayUnion(finalMsg) });
+    appendMsg(`Mesajınız Umut Salman'a iletilmek üzere sisteme kaydedildi.`, "ai");
+    document.getElementById("contactMsg").value = "";
+    closeContact();
+};
 
 window.submitLeave = async () => {
     const start = document.getElementById("leaveStart").value;
@@ -157,40 +183,39 @@ window.submitLeave = async () => {
     const sDate = new Date(start); sDate.setHours(0,0,0,0);
     const eDate = new Date(end); eDate.setHours(0,0,0,0);
     if (eDate < sDate) { alert("Bitiş tarihi başlangıçtan önce olamaz!"); return; }
+
     let hasConflict = false;
     const onaylilar = (dbData.izin || "").split('\n');
+    
     onaylilar.forEach(satir => {
         if (satir.includes("/") && satir.includes(":")) {
             const tarihKismi = satir.split(":").pop().trim();
             const dRange = tarihKismi.split(" / ");
-            const dbS = new Date(dRange[0]); dbS.setHours(0,0,0,0);
-            const dbE = new Date(dRange[1]); dbE.setHours(0,0,0,0);
-            if (sDate <= dbE && eDate >= dbS) { hasConflict = true; }
-        }
-    });
-    const talepSnap = await getDoc(doc(db, "kasa", "talepler"));
-    if (talepSnap.exists()) {
-        const liste = talepSnap.data().liste || [];
-        liste.forEach(talep => {
-            const parts = talep.split(": ");
-            if (parts.length > 1) {
-                const dates = parts[1].split(" / ");
-                const dbS = new Date(dates[0]); dbS.setHours(0,0,0,0);
-                const dbE = new Date(dates[1]); dbE.setHours(0,0,0,0);
+            if (dRange.length === 2) {
+                const dbS = new Date(dRange[0]); dbS.setHours(0,0,0,0);
+                const dbE = new Date(dRange[1]); dbE.setHours(0,0,0,0);
                 if (sDate <= dbE && eDate >= dbS) { hasConflict = true; }
             }
-        });
+        }
+    });
+
+    if (hasConflict) { 
+        appendMsg(`⚠️ Üzgünüm ${realName}, seçtiğiniz tarihlerde sistemde başka bir onaylı izin kaydı mevcut.`, "ai");
+        closeLeave();
+        return; 
     }
-    if (hasConflict) { alert("❌ ÇAKIŞMA: Bu tarihlerde başka bir izin mevcut."); return; }
-    const msg = `${realName.toUpperCase()}: ${start} / ${end}`;
+
+    const msg = `İZİN: ${realName.toUpperCase()}: ${start} / ${end}`;
     await updateDoc(doc(db, "kasa", "talepler"), { liste: arrayUnion(msg) });
-    appendMsg(`✅ Talep iletildi: ${start} - ${end}`, "ai"); 
+    appendMsg(`Talebiniz başarıyla alınmıştır.`, "ai"); 
     closeLeave();
 };
 
 window.approveRequest = async (t, i) => {
-    const newIzin = (dbData.izin || "") + "\n✅ " + t;
-    await setDoc(doc(db, "kasa", "bilgiBankasi"), { ...dbData, izin: newIzin });
+    if(!t.includes("NOT:")) {
+        const newIzin = (dbData.izin || "") + "\n✅ " + t.replace("İZİN: ", "");
+        await setDoc(doc(db, "kasa", "bilgiBankasi"), { ...dbData, izin: newIzin });
+    }
     const snap = await getDoc(doc(db, "kasa", "talepler"));
     let l = snap.data().liste; l.splice(i, 1);
     await updateDoc(doc(db, "kasa", "talepler"), { liste: l });
@@ -202,12 +227,13 @@ window.send = async () => {
     if (text.toLowerCase().includes("tablo") || text.toLowerCase().includes("şift") || text.toLowerCase().includes("takvim")) { generateTable(); return; }
 
     let isolatedIzin = ""; let isolatedKasaonu = "";
+    const cleanName = realName.toUpperCase().trim();
+
     if (isAdmin) {
         isolatedIzin = dbData.izin || ""; isolatedKasaonu = dbData.kasaonu || "";
     } else {
-        const filterKey = realName.toUpperCase();
-        isolatedIzin = (dbData.izin || "").split('\n').filter(line => line.toUpperCase().includes(filterKey)).join('\n');
-        isolatedKasaonu = (dbData.kasaonu || "").split('\n').filter(line => line.toUpperCase().includes(filterKey)).join('\n');
+        isolatedIzin = (dbData.izin || "").split('\n').filter(line => line.toUpperCase().includes(cleanName)).join('\n');
+        isolatedKasaonu = (dbData.kasaonu || "").split('\n').filter(line => line.toUpperCase().includes(cleanName)).join('\n');
     }
 
     try {
@@ -218,13 +244,18 @@ window.send = async () => {
                 model: "llama-3.1-8b-instant",
                 messages: [{ 
                     role: "system", 
-                    content: `Sen Umut Salman Asistanısın. Kullanıcı: ${realName}. GİZLİLİK: Sadece bu personelin verilerini paylaş. KURALLAR: ${dbData.kurallar || "Kural girilmedi"}. VERİLER: Duyurular: ${dbData.magaza}. Kasaönü: ${isolatedKasaonu}. İzinler: ${isolatedIzin}. Eğer kullanıcı mağaza kurallarını sorarsa KURALLAR kısmındaki bilgileri kullan.` 
+                    content: `KİMLİK: Sen Umut Salman'ın profesyonel dijital asistanısın. Şu an konuştuğun kişi: ${realName}. 
+                    GÜVENLİK KURALLARI:
+                    1. Kullanıcı başka bir personelin (Örn: Serbay Seçer) verisini sorduğunda, elinde veri olsa dahi "Bu bilgiye erişiminiz bulunmuyor" de.
+                    2. Sadece ve sadece ${realName} ismine ait olan verileri paylaşabilirsin.
+                    3. Kendi kimliğini asla "Umut Salman" olarak tanıtma. Sen onun dijital asistanısın.
+                    4. VERİLER: Duyurular: ${dbData.magaza}. Kasa Verisi: ${isolatedKasaonu}. İzin Verisi: ${isolatedIzin}.` 
                 }, { role: "user", content: text }],
-                temperature: 0
+                temperature: 0.1
             })
         });
         const data = await res.json(); appendMsg(data.choices[0].message.content, "ai");
-    } catch (e) { appendMsg("Cevap verilemedi.", "ai"); }
+    } catch (e) { appendMsg("Sistem hatası.", "ai"); }
 };
 
 function generateTable() {
@@ -249,7 +280,7 @@ window.saveAllPanels = async () => {
         users: document.getElementById("data_users").value,
         kurallar: document.getElementById("data_kurallar").value
     });
-    alert("Mağaza Kuralları ve Tüm Veriler Kaydedildi!"); toggleAdmin();
+    alert("Kayıt başarılı!"); toggleAdmin();
 };
 function appendMsg(t, s, html = false) {
     const b = document.getElementById("chatBox"); const d = document.createElement("div"); d.className = `msg ${s}`;
