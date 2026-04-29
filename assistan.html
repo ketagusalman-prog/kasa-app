@@ -17,21 +17,19 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .ai { align-self: flex-start; background: var(--ai-msg); border: 1px solid var(--border); }
         .user { align-self: flex-end; background: var(--user-msg); color: white; }
-        #leaveModal, #contactModal, #adminPanel { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.98); z-index: 5000; display: none; flex-direction: column; padding: 20px; overflow-y: auto; }
+        #leaveModal, #contactModal, #adminPanel, #feedbackModal, #remindModal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.98); z-index: 5000; display: none; flex-direction: column; padding: 20px; overflow-y: auto; }
         .modal-content { background: #1e293b; padding: 25px; border-radius: 25px; width: 100%; max-width: 400px; border: 1px solid var(--border); margin: auto; }
         .panel-sec { background: #1e293b; padding: 15px; border-radius: 15px; border: 1px solid var(--border); margin-bottom: 15px; }
-        textarea { width: 100%; height: 80px; background: #0f172a; color: white; border: 1px solid var(--border); border-radius: 10px; padding: 10px; font-size: 13px; margin-top: 10px; }
+        textarea, select { width: 100%; background: #0f172a; color: white; border: 1px solid var(--border); border-radius: 10px; padding: 10px; font-size: 13px; margin-top: 10px; outline: none; }
         #loginOverlay { position: fixed; inset: 0; background: var(--bg); z-index: 9000; display: flex; align-items: center; justify-content: center; }
         .login-card { background: #1e293b; padding: 35px; border-radius: 30px; text-align: center; width: 340px; border: 1px solid var(--border); }
         input { width: 100%; background: #1e293b; border: 1px solid var(--border); padding: 12px 20px; border-radius: 25px; color: white; margin-bottom: 10px; outline: none; }
         .input-container { position: relative; width: 100%; padding: 15px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); display: flex; gap: 8px; border-top: 1px solid var(--border); flex-shrink: 0; }
-        .btn { padding: 12px 20px; border-radius: 25px; cursor: pointer; border: none; font-weight: 700; transition: 0.2s; }
+        .btn { padding: 12px 20px; border-radius: 25px; cursor: pointer; border: none; font-weight: 700; transition: 0.2s; display: inline-block; text-align: center; }
         .btn-accent { background: var(--accent); color: white; }
         .btn-contact { background: #8b5cf6; color: white; font-size: 11px; }
+        .btn-remind { background: #f59e0b; color: white; font-size: 11px; }
         .btn-leave { background: #3b82f6; color: white; font-size: 11px; }
-        .appbar { flex-shrink: 0; }
-        .shift-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
-        .shift-table th, .shift-table td { border: 1px solid var(--border); padding: 8px; text-align: left; }
     </style>
 </head>
 <body>
@@ -41,65 +39,44 @@
         <h2 style="color:var(--accent); margin-bottom:20px;">Sistem Girişi</h2>
         <input type="text" id="kullanici" placeholder="Kullanıcı Adı">
         <input type="password" id="sifre" placeholder="Şifre">
-        <button class="btn btn-accent" style="width:100%; margin-top:10px;" onclick="login()">GİRİŞ</button>
-        <p id="loginError" style="color:#ef4444; font-size:12px; margin-top:15px; display:none;">Hatalı giriş!</p>
+        <button class="btn btn-accent" style="width:100%;" onclick="login()">GİRİŞ</button>
+        <p id="loginError" style="color:#ef4444; font-size:12px; margin-top:15px; display:none;">Giriş başarısız!</p>
     </div>
 </div>
 
-<div id="leaveModal">
-    <div class="modal-content">
-        <h3 style="color:var(--accent)">📅 İzin Talebi</h3>
-        <input type="date" id="leaveStart" style="margin-top:10px">
-        <input type="date" id="leaveEnd">
-        <button class="btn btn-accent" style="width:100%; margin-top:10px;" onclick="submitLeave()">GÖNDER</button>
-        <button class="btn" style="width:100%; background:transparent; color:#64748b; margin-top:10px;" onclick="closeLeave()">KAPAT</button>
-    </div>
-</div>
+<div id="remindModal"><div class="modal-content"><h3>⏰ Hatırlatıcı Kur</h3><input type="date" id="remindDate" style="margin-top:15px"><textarea id="remindText" placeholder="Notunuz..."></textarea><button class="btn btn-remind" style="width:100%; margin-top:10px;" onclick="saveReminder()">KAYDET</button><button class="btn" onclick="closeRemind()">İPTAL</button></div></div>
+<div id="feedbackModal"><div class="modal-content"><h3>📝 Geri Bildirim</h3><input type="date" id="fbDate" style="margin-top:15px"><select id="fbUserList"></select><select id="fbType"><option value="Olumlu">Pozitif</option><option value="Olumsuz">Uyarı</option></select><textarea id="fbText"></textarea><button class="btn btn-accent" style="width:100%;" onclick="saveFeedback()">KAYDET</button><button class="btn" onclick="closeFeedback()">İPTAL</button></div></div>
+<div id="leaveModal"><div class="modal-content"><h3>📅 İzin Talebi</h3><input type="date" id="leaveStart" style="margin-top:10px"><input type="date" id="leaveEnd"><button class="btn btn-accent" style="width:100%;" onclick="submitLeave()">GÖNDER</button><button class="btn" onclick="closeLeave()">KAPAT</button></div></div>
+<div id="contactModal"><div class="modal-content"><h3>✉️ Not Bırak</h3><textarea id="contactMsg"></textarea><button class="btn" style="width:100%; background:#8b5cf6; color:white;" onclick="submitContact()">İLET</button><button class="btn" onclick="closeContact()">İPTAL</button></div></div>
 
-<div id="contactModal">
-    <div class="modal-content">
-        <h3 style="color:#8b5cf6">✉️ Yöneticiye Not Bırak</h3>
-        <p style="font-size:12px; color:#94a3b8; margin-top:5px;">Umut Salman'a iletmek istediğiniz mesajı yazın.</p>
-        <textarea id="contactMsg" placeholder="Mesajınızı buraya yazın..."></textarea>
-        <button class="btn" style="width:100%; margin-top:10px; background:#8b5cf6; color:white;" onclick="submitContact()">MESAJI İLET</button>
-        <button class="btn" style="width:100%; background:transparent; color:#64748b; margin-top:10px;" onclick="closeContact()">İPTAL</button>
-    </div>
-</div>
-
-<div class="appbar" style="height:60px; padding:0 20px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); background: #1e293b;">
+<div class="appbar" style="height:60px; padding:0 15px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); background: #1e293b;">
     <span id="welcomeText" style="font-weight:800; color:var(--accent);">ASİSTAN</span>
-    <div style="display:flex; gap:10px;">
+    <div style="display:flex; gap:5px;">
+        <button class="btn btn-remind" onclick="openRemind()">⏰</button>
         <button class="btn btn-contact" onclick="openContact()">✉️ NOT</button>
         <button class="btn btn-leave" onclick="openLeave()">📅 İZİN</button>
-        <button class="btn" id="adminGear" style="background:transparent; color:#64748b; display:none; font-size:20px;" onclick="toggleAdmin()">⚙️</button>
+        <button class="btn" id="adminGear" style="background:transparent; color:#64748b; display:none; font-size:18px;" onclick="toggleAdmin()">⚙️</button>
     </div>
 </div>
 
 <div id="newsTicker"><div id="tickerContent">Yükleniyor...</div></div>
 
 <div id="adminPanel">
-    <h2 style="margin-bottom:20px; color:var(--accent)">⚙️ Yönetim Paneli</h2>
-    <div class="panel-sec">
-        <h3>👤 Kullanıcı Tanımlama (kadi:GerçekAd)</h3>
-        <textarea id="data_users" placeholder="ahmet123:Ahmet Yılmaz"></textarea>
-    </div>
-    <div class="panel-sec"><h3>📜 Mağaza Kuralları</h3><textarea id="data_kurallar" placeholder="Örn: Geç gelmek yasaktır."></textarea></div>
-    <div class="panel-sec"><h3>🛒 Kasaönü Bilgileri</h3><textarea id="data_kasaonu"></textarea></div>
-    <div class="panel-sec"><h3>📩 Bekleyen Talepler & Notlar</h3><div id="requestContainer"></div></div>
-    <div class="panel-sec"><h3>✅ Tüm İzin Kayıtları</h3><textarea id="data_izin"></textarea></div>
-    <div class="panel-sec"><h3>📢 Mağaza Duyuruları</h3><textarea id="data_magaza"></textarea></div>
-    <div style="display:flex; gap:10px;">
-        <button class="btn btn-accent" style="flex:1;" onclick="saveAllPanels()">💾 KAYDET</button>
-        <button class="btn" style="background:#475569; color:white;" onclick="toggleAdmin()">KAPAT</button>
-    </div>
+    <h2 style="margin-bottom:20px; color:var(--accent)">⚙️ Panel</h2>
+    <div class="panel-sec"><button class="btn" style="background:#f59e0b; color:white; width:100%;" onclick="openFeedback()">📣 GERİ BİLDİRİM</button></div>
+    <div class="panel-sec"><h3>👤 Kullanıcılar</h3><textarea id="data_users"></textarea></div>
+    <div class="panel-sec"><h3>📜 Kurallar</h3><textarea id="data_kurallar"></textarea></div>
+    <div class="panel-sec"><h3>🛒 Kasaönü</h3><textarea id="data_kasaonu"></textarea></div>
+    <div class="panel-sec"><h3>📩 Talepler</h3><div id="requestContainer"></div></div>
+    <div class="panel-sec"><h3>📂 Arşiv</h3><textarea id="data_notlar" readonly></textarea></div>
+    <div class="panel-sec"><h3>💬 Geri Bildirimler</h3><textarea id="data_feedback"></textarea></div>
+    <div class="panel-sec"><h3>✅ İzinler</h3><textarea id="data_izin"></textarea></div>
+    <div class="panel-sec"><h3>📢 Duyurular</h3><textarea id="data_magaza"></textarea></div>
+    <div style="display:flex; gap:10px;"><button class="btn btn-accent" style="flex:1;" onclick="saveAllPanels()">💾 KAYDET</button><button class="btn" onclick="toggleAdmin()">KAPAT</button></div>
 </div>
 
 <div id="chatBox"></div>
-
-<div class="input-container">
-    <input type="text" id="userInput" placeholder="Size nasıl yardımcı olabilirim?">
-    <button class="btn btn-accent" onclick="send()">GÖNDER</button>
-</div>
+<div class="input-container"><input type="text" id="userInput" placeholder="Sorunuzu buraya yazın..."><button class="btn btn-accent" onclick="send()">GÖNDER</button></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -109,23 +86,25 @@ const firebaseConfig = { apiKey: "AIzaSyChKcwZnw1fe_SFWy2dJA_JZOMiKghF5_o", auth
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let currentUserKadi = "";
-let realName = "";
-let isAdmin = false;
-let dbData = { izin: "", magaza: "", kasaonu: "", users: "", kurallar: "" };
+let currentUserKadi = ""; let realName = ""; let isAdmin = false;
+let dbData = { izin: "", magaza: "", kasaonu: "", users: "", kurallar: "", notlar: "", feedback: "", reminders: [] };
 let personeller = [];
+let reminderCounter = 0;
 
 onSnapshot(doc(db, "kasa", "personel"), snap => { if (snap.exists()) personeller = snap.data().liste || []; });
 onSnapshot(doc(db, "kasa", "bilgiBankasi"), snap => {
     if (snap.exists()) {
-        dbData = snap.data();
+        dbData = { ...dbData, ...snap.data() };
         document.getElementById("data_izin").value = dbData.izin || "";
         document.getElementById("data_magaza").value = dbData.magaza || "";
         document.getElementById("data_kasaonu").value = dbData.kasaonu || "";
         document.getElementById("data_users").value = dbData.users || "";
         document.getElementById("data_kurallar").value = dbData.kurallar || "";
+        document.getElementById("data_notlar").value = dbData.notlar || "";
+        document.getElementById("data_feedback").value = dbData.feedback || "";
         const haberler = (dbData.magaza || "").split('\n').filter(l => l.trim().startsWith("-")).map(l => l.trim().substring(1).trim());
         document.getElementById("tickerContent").innerText = haberler.join("    •    ") || "Duyuru yok.";
+        updatePersonelSelect();
     }
 });
 
@@ -134,17 +113,23 @@ onSnapshot(doc(db, "kasa", "talepler"), snap => {
     if (snap.exists() && snap.data().liste) {
         snap.data().liste.forEach((t, i) => {
             const d = document.createElement("div"); d.style="display:flex; justify-content:space-between; background:#0f172a; padding:8px; border-radius:8px; margin-bottom:5px; border:1px solid var(--border);";
-            const typeLabel = t.includes("NOT:") ? "🔔 NOT" : "🗓️ İZİN";
-            d.innerHTML = `<span style="font-size:11px"><b>${typeLabel}</b> ${t}</span><button class="btn" style="background:#10b981; padding:3px 8px; font-size:10px" onclick="approveRequest('${t}', ${i})">OKUDUM/ONAYLA</button>`;
+            d.innerHTML = `<span style="font-size:11px">${t}</span><button class="btn" style="background:#10b981; padding:3px 8px; font-size:10px" onclick="approveRequest('${t}', ${i})">ONAYLA</button>`;
             cont.appendChild(d);
         });
     }
 });
 
+function updatePersonelSelect() {
+    const sel = document.getElementById("fbUserList"); if(!sel) return;
+    const users = (dbData.users || "").split('\n');
+    sel.innerHTML = '<option value="">Personel Seçin</option>';
+    users.forEach(u => { if(u.includes(":")) { const name = u.split(":")[1].trim(); sel.innerHTML += `<option value="${name.toUpperCase()}">${name}</option>`; } });
+}
+
 window.login = () => {
     const k = document.getElementById("kullanici").value.trim().toLowerCase();
     const s = document.getElementById("sifre").value.trim();
-    if (k === "admin" && s === "1234") { currentUserKadi = "admin"; realName = "Yönetici"; isAdmin = true; }
+    if (k === "admin" && s === "1234") { currentUserKadi = "admin"; realName = "Umut Salman"; isAdmin = true; }
     else {
         const p = personeller.find(x => x.k.toLowerCase() === k && x.s === s);
         if (p) { 
@@ -157,84 +142,58 @@ window.login = () => {
         document.getElementById("loginOverlay").style.display = "none";
         document.getElementById("welcomeText").innerText = realName.toUpperCase();
         if (isAdmin) document.getElementById("adminGear").style.display = "block";
-        appendMsg(`Merhabalar ${realName}, ben Umut Salman'ın dijital asistanıyım. Öncelikle Umut Bey'in sizlerle ne kadar gurur duyduğunu ve sizlerden sürekli övgüyle bahsettiğini belirtmek isterim. İş ile ilgili merak ettiğiniz tüm konularda elimden geldiğince size yardımcı olacağım.`, "ai");
+        appendMsg(`Hoş geldin ${realName.toUpperCase()}, Umut Salman'ın dijital asistanıyım. Sana nasıl yardımcı olabilirim?`, "ai");
+        checkReminders();
     } else { document.getElementById("loginError").style.display = "block"; }
 };
 
-window.openLeave = () => document.getElementById("leaveModal").style.display = "flex";
-window.closeLeave = () => document.getElementById("leaveModal").style.display = "none";
-window.openContact = () => document.getElementById("contactModal").style.display = "flex";
-window.closeContact = () => document.getElementById("contactModal").style.display = "none";
-
-window.submitContact = async () => {
-    const msgText = document.getElementById("contactMsg").value.trim();
-    if(!msgText) return;
-    const finalMsg = `NOT: ${realName.toUpperCase()}: ${msgText}`;
-    await updateDoc(doc(db, "kasa", "talepler"), { liste: arrayUnion(finalMsg) });
-    appendMsg(`Mesajınız Umut Salman'a iletilmek üzere sisteme kaydedildi.`, "ai");
-    document.getElementById("contactMsg").value = "";
-    closeContact();
+window.saveReminder = async () => {
+    const date = document.getElementById("remindDate").value;
+    const text = document.getElementById("remindText").value.trim();
+    if(!date || !text) return;
+    const newRemind = { id: Date.now(), user: realName.toUpperCase(), date: date, text: text, done: false };
+    await setDoc(doc(db, "kasa", "bilgiBankasi"), { ...dbData, reminders: [...(dbData.reminders || []), newRemind] });
+    alert("Hatırlatıcı kuruldu!"); closeRemind();
 };
 
-window.submitLeave = async () => {
-    const start = document.getElementById("leaveStart").value;
-    const end = document.getElementById("leaveEnd").value;
-    if (!start || !end) { alert("Lütfen tarih seçin!"); return; }
-    const sDate = new Date(start); sDate.setHours(0,0,0,0);
-    const eDate = new Date(end); eDate.setHours(0,0,0,0);
-    if (eDate < sDate) { alert("Bitiş tarihi başlangıçtan önce olamaz!"); return; }
-
-    let hasConflict = false;
-    const onaylilar = (dbData.izin || "").split('\n');
-    
-    onaylilar.forEach(satir => {
-        if (satir.includes("/") && satir.includes(":")) {
-            const tarihKismi = satir.split(":").pop().trim();
-            const dRange = tarihKismi.split(" / ");
-            if (dRange.length === 2) {
-                const dbS = new Date(dRange[0]); dbS.setHours(0,0,0,0);
-                const dbE = new Date(dRange[1]); dbE.setHours(0,0,0,0);
-                if (sDate <= dbE && eDate >= dbS) { hasConflict = true; }
-            }
-        }
-    });
-
-    if (hasConflict) { 
-        appendMsg(`⚠️ Üzgünüm ${realName}, seçtiğiniz tarihlerde sistemde başka bir onaylı izin kaydı mevcut.`, "ai");
-        closeLeave();
-        return; 
-    }
-
-    const msg = `İZİN: ${realName.toUpperCase()}: ${start} / ${end}`;
-    await updateDoc(doc(db, "kasa", "talepler"), { liste: arrayUnion(msg) });
-    appendMsg(`Talebiniz başarıyla alınmıştır.`, "ai"); 
-    closeLeave();
+window.saveFeedback = async () => {
+    const user = document.getElementById("fbUserList").value;
+    const date = document.getElementById("fbDate").value;
+    const type = document.getElementById("fbType").value;
+    const text = document.getElementById("fbText").value.trim();
+    if(!user || !date || !text) { alert("Lütfen tüm alanları doldurun!"); return; }
+    const entry = `${user} | ${date} | ${type} | ${text}`;
+    const newFeedback = dbData.feedback ? dbData.feedback + "\n" + entry : entry;
+    await setDoc(doc(db, "kasa", "bilgiBankasi"), { ...dbData, feedback: newFeedback });
+    alert("Geri bildirim kaydedildi!"); closeFeedback();
 };
 
-window.approveRequest = async (t, i) => {
-    if(!t.includes("NOT:")) {
-        const newIzin = (dbData.izin || "") + "\n✅ " + t.replace("İZİN: ", "");
-        await setDoc(doc(db, "kasa", "bilgiBankasi"), { ...dbData, izin: newIzin });
+function checkReminders() {
+    const today = new Date().toISOString().split('T')[0];
+    const myReminds = (dbData.reminders || []).filter(r => r.user === realName.toUpperCase() && r.date === today && !r.done);
+    if(myReminds.length > 0 && reminderCounter < 1) {
+        myReminds.forEach(r => {
+            const html = `⏰ <b>HATIRLATMA:</b> ${r.text}<br><button class="btn btn-accent" style="margin-top:8px; font-size:10px" onclick="completeReminder(${r.id})">YAPTIM / KAPAT</button>`;
+            appendMsg(html, "ai", true);
+        });
+        reminderCounter++;
     }
-    const snap = await getDoc(doc(db, "kasa", "talepler"));
-    let l = snap.data().liste; l.splice(i, 1);
-    await updateDoc(doc(db, "kasa", "talepler"), { liste: l });
+}
+
+window.completeReminder = async (id) => {
+    const updated = dbData.reminders.filter(r => r.id !== id);
+    await setDoc(doc(db, "kasa", "bilgiBankasi"), { ...dbData, reminders: updated });
+    appendMsg("Harika! Hatırlatma başarıyla kapatıldı.", "ai");
 };
 
 window.send = async () => {
     const input = document.getElementById("userInput"); const text = input.value.trim(); if (!text) return;
     appendMsg(text, "user"); input.value = "";
-    if (text.toLowerCase().includes("tablo") || text.toLowerCase().includes("şift") || text.toLowerCase().includes("takvim")) { generateTable(); return; }
-
-    let isolatedIzin = ""; let isolatedKasaonu = "";
+    
     const cleanName = realName.toUpperCase().trim();
-
-    if (isAdmin) {
-        isolatedIzin = dbData.izin || ""; isolatedKasaonu = dbData.kasaonu || "";
-    } else {
-        isolatedIzin = (dbData.izin || "").split('\n').filter(line => line.toUpperCase().includes(cleanName)).join('\n');
-        isolatedKasaonu = (dbData.kasaonu || "").split('\n').filter(line => line.toUpperCase().includes(cleanName)).join('\n');
-    }
+    let userIzin = (dbData.izin || "").split('\n').filter(l => l.toUpperCase().includes(cleanName)).join('\n');
+    let userKasa = (dbData.kasaonu || "").split('\n').filter(l => l.toUpperCase().includes(cleanName)).join('\n');
+    let userFeedback = (dbData.feedback || "").split('\n').filter(l => l.toUpperCase().includes(cleanName)).join('\n');
 
     try {
         const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -244,49 +203,68 @@ window.send = async () => {
                 model: "llama-3.1-8b-instant",
                 messages: [{ 
                     role: "system", 
-                    content: `KİMLİK: Sen Umut Salman'ın profesyonel dijital asistanısın. Şu an konuştuğun kişi: ${realName}. 
-                    GÜVENLİK KURALLARI:
-                    1. Kullanıcı başka bir personelin (Örn: Serbay Seçer) verisini sorduğunda, elinde veri olsa dahi "Bu bilgiye erişiminiz bulunmuyor" de.
-                    2. Sadece ve sadece ${realName} ismine ait olan verileri paylaşabilirsin.
-                    3. Kendi kimliğini asla "Umut Salman" olarak tanıtma. Sen onun dijital asistanısın.
-                    4. VERİLER: Duyurular: ${dbData.magaza}. Kasa Verisi: ${isolatedKasaonu}. İzin Verisi: ${isolatedIzin}.` 
+                    content: `Sen Umut Salman'ın akıllı dijital asistanısın. Görevin paneldeki verileri kullanıcıya profesyonelce sunmaktır.
+                    
+                    KİMLİK BİLGİLERİ:
+                    - Sen bir asistansın (Umut Salman değilsin). 
+                    - Şuan konuştuğun kişi: ${realName}. Ona ismiyle hitap et.
+                    
+                    PANEL VERİLERİ (MUTLAK DOĞRU):
+                    - Mağaza Duyuruları: ${dbData.magaza}
+                    - Seninle (${realName}) ilgili Geri Bildirimler: ${userFeedback || "Kayıt yok."}
+                    - Seninle (${realName}) ilgili Kasa Satış Verileri: ${userKasa || "Kayıt yok."}
+                    - Seninle (${realName}) ilgili İzin Durumu: ${userIzin || "Kayıt yok."}
+                    
+                    ÖNEMLİ KURALLAR:
+                    1. Asla uydurma veri (2016, 2020 gibi eski tarihler) söyleme. Sadece yukarıdaki listeyi kullan.
+                    2. "Fiş adedi" veya "Satış sayısı" sorulduğunda Kasa Satış verisindeki sayısal değeri ver.
+                    3. Her zaman motive edici, nazik ve çözüm odaklı ol.
+                    4. Eğer veri panelde yoksa 'Panelde buna dair bir bilgi bulamadım Ahmet' şeklinde cevap ver.` 
                 }, { role: "user", content: text }],
-                temperature: 0.1
+                temperature: 0
             })
         });
         const data = await res.json(); appendMsg(data.choices[0].message.content, "ai");
-    } catch (e) { appendMsg("Sistem hatası.", "ai"); }
+        checkReminders();
+    } catch (e) { appendMsg("Sistem meşgul, lütfen tekrar deneyin.", "ai"); }
 };
 
-function generateTable() {
-    let ref = new Date("2026-04-28"); let today = new Date();
-    let html = `<table class="shift-table"><tr><th>Tarih</th><th>Durum</th></tr>`;
-    for (let i = 0; i < 30; i++) {
-        let cur = new Date(); cur.setDate(today.getDate() + i);
-        let diff = Math.floor((cur - ref) / 86400000);
-        let cycle = ((diff % 4) + 4) % 4;
-        let grp = (cycle < 2) ? `<span style="color:#60a5fa">1. GRUP</span>` : `<span style="color:#fbbf24">2. GRUP</span>`;
-        html += `<tr><td>${cur.toLocaleDateString('tr-TR')}</td><td>${grp}</td></tr>`;
-    }
-    html += `</table>`; appendMsg(html, "ai", true);
-}
+window.submitLeave = async () => {
+    const s = document.getElementById("leaveStart").value; const e = document.getElementById("leaveEnd").value;
+    if (!s || !e) return;
+    await updateDoc(doc(db, "kasa", "talepler"), { liste: arrayUnion(`İZİN: ${realName.toUpperCase()}: ${s} / ${e}`) });
+    appendMsg(`İzin talebin iletildi ${realName.split(' ')[0]}.`, "ai"); closeLeave();
+};
 
-window.toggleAdmin = () => document.getElementById("adminPanel").style.display = (document.getElementById("adminPanel").style.display === "flex") ? "none" : "flex";
+window.submitContact = async () => {
+    const m = document.getElementById("contactMsg").value.trim(); if(!m) return;
+    await updateDoc(doc(db, "kasa", "talepler"), { liste: arrayUnion(`NOT: ${realName.toUpperCase()}: ${m}`) });
+    appendMsg(`Notunu Umut Salman'a iletilmek üzere kaydettim.`, "ai"); closeContact();
+};
+
 window.saveAllPanels = async () => {
-    await setDoc(doc(db, "kasa", "bilgiBankasi"), { 
-        izin: document.getElementById("data_izin").value, 
-        magaza: document.getElementById("data_magaza").value, 
-        kasaonu: document.getElementById("data_kasaonu").value,
-        users: document.getElementById("data_users").value,
-        kurallar: document.getElementById("data_kurallar").value
+    await setDoc(doc(db, "kasa", "bilgiBankasi"), { ...dbData,
+        izin: document.getElementById("data_izin").value, magaza: document.getElementById("data_magaza").value, 
+        kasaonu: document.getElementById("data_kasaonu").value, users: document.getElementById("data_users").value,
+        kurallar: document.getElementById("data_kurallar").value, feedback: document.getElementById("data_feedback").value
     });
-    alert("Kayıt başarılı!"); toggleAdmin();
+    alert("Panel verileri güncellendi!"); toggleAdmin();
 };
+
 function appendMsg(t, s, html = false) {
     const b = document.getElementById("chatBox"); const d = document.createElement("div"); d.className = `msg ${s}`;
     if(html) d.innerHTML = t; else d.innerText = t;
     b.appendChild(d); b.scrollTop = b.scrollHeight;
 }
+window.toggleAdmin = () => document.getElementById("adminPanel").style.display = (document.getElementById("adminPanel").style.display === "flex") ? "none" : "flex";
+window.openRemind = () => document.getElementById("remindModal").style.display = "flex";
+window.closeRemind = () => document.getElementById("remindModal").style.display = "none";
+window.openLeave = () => document.getElementById("leaveModal").style.display = "flex";
+window.closeLeave = () => document.getElementById("leaveModal").style.display = "none";
+window.openContact = () => document.getElementById("contactModal").style.display = "flex";
+window.closeContact = () => document.getElementById("contactModal").style.display = "none";
+window.openFeedback = () => document.getElementById("feedbackModal").style.display = "flex";
+window.closeFeedback = () => document.getElementById("feedbackModal").style.display = "none";
 </script>
 </body>
 </html>
