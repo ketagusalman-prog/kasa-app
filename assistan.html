@@ -80,7 +80,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, getDoc, arrayRemove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = { apiKey: "AIzaSyChKcwZnw1fe_SFWy2dJA_JZOMiKghF5_o", authDomain: "ukasa1.firebaseapp.com", projectId: "ukasa1", appId: "1:929741424159:web:733f958e2fe7c13984f72a" };
 const app = initializeApp(firebaseConfig);
@@ -112,12 +112,32 @@ onSnapshot(doc(db, "kasa", "talepler"), snap => {
     const cont = document.getElementById("requestContainer"); cont.innerHTML = "";
     if (snap.exists() && snap.data().liste) {
         snap.data().liste.forEach((t, i) => {
-            const d = document.createElement("div"); d.style="display:flex; justify-content:space-between; background:#0f172a; padding:8px; border-radius:8px; margin-bottom:5px; border:1px solid var(--border);";
-            d.innerHTML = `<span style="font-size:11px">${t}</span><button class="btn" style="background:#10b981; padding:3px 8px; font-size:10px" onclick="approveRequest('${t}', ${i})">ONAYLA</button>`;
+            const d = document.createElement("div"); d.style="display:flex; justify-content:space-between; align-items:center; background:#0f172a; padding:8px; border-radius:8px; margin-bottom:5px; border:1px solid var(--border);";
+            d.innerHTML = `<span style="font-size:11px; flex:1;">${t}</span><button class="btn" style="background:#10b981; padding:5px 10px; font-size:10px; margin-left:5px;" onclick="approveRequest('${t}', ${i})">ONAYLA</button>`;
             cont.appendChild(d);
         });
     }
 });
+
+// ONARILAN ONAYLA FONKSİYONU
+window.approveRequest = async (text, index) => {
+    try {
+        const ref = doc(db, "kasa", "talepler");
+        await updateDoc(ref, { liste: arrayRemove(text) });
+        
+        if (text.startsWith("İZİN:")) {
+            const izinDetay = text.replace("İZİN: ", "");
+            const newIzin = dbData.izin ? dbData.izin + "\n" + izinDetay : izinDetay;
+            await setDoc(doc(db, "kasa", "bilgiBankasi"), { ...dbData, izin: newIzin });
+            alert("İzin onaylandı ve panele işlendi.");
+        } else {
+            const arsivDetay = text.replace("NOT: ", "");
+            const newNotlar = dbData.notlar ? dbData.notlar + "\n" + arsivDetay : arsivDetay;
+            await setDoc(doc(db, "kasa", "bilgiBankasi"), { ...dbData, notlar: newNotlar });
+            alert("Not arşivlendi.");
+        }
+    } catch (e) { alert("Onaylama sırasında hata oluştu!"); }
+};
 
 function updatePersonelSelect() {
     const sel = document.getElementById("fbUserList"); if(!sel) return;
@@ -191,9 +211,10 @@ window.send = async () => {
     appendMsg(text, "user"); input.value = "";
     
     const cleanName = realName.toUpperCase().trim();
-    let userIzin = (dbData.izin || "").split('\n').filter(l => l.toUpperCase().includes(cleanName)).join('\n');
-    let userKasa = (dbData.kasaonu || "").split('\n').filter(l => l.toUpperCase().includes(cleanName)).join('\n');
-    let userFeedback = (dbData.feedback || "").split('\n').filter(l => l.toUpperCase().includes(cleanName)).join('\n');
+    // YÖNETİCİ RAPORLAMA MANTIĞI
+    let contextIzin = isAdmin ? dbData.izin : (dbData.izin || "").split('\n').filter(l => l.toUpperCase().includes(cleanName)).join('\n');
+    let contextKasa = isAdmin ? dbData.kasaonu : (dbData.kasaonu || "").split('\n').filter(l => l.toUpperCase().includes(cleanName)).join('\n');
+    let contextFeedback = isAdmin ? dbData.feedback : (dbData.feedback || "").split('\n').filter(l => l.toUpperCase().includes(cleanName)).join('\n');
 
     try {
         const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -203,43 +224,40 @@ window.send = async () => {
                 model: "llama-3.1-8b-instant",
                 messages: [{ 
                     role: "system", 
-                    content: `Sen Umut Salman'ın akıllı dijital asistanısın. Görevin paneldeki verileri kullanıcıya profesyonelce sunmaktır.
+                    content: `Sen Umut Salman'ın akıllı dijital asistanısın. Şuan konuşan: ${realName}.
+                    YETKİ: ${isAdmin ? 'YÖNETİCİ/ADMİN (Tüm verileri görebilir ve raporlayabilir)' : 'PERSONEL (Sadece kendi verilerini görebilir)'}.
                     
-                    KİMLİK BİLGİLERİ:
-                    - Sen bir asistansın (Umut Salman değilsin). 
-                    - Şuan konuştuğun kişi: ${realName}. Ona ismiyle hitap et.
+                    PANEL VERİLERİ:
+                    - Duyurular: ${dbData.magaza}
+                    - Geri Bildirimler: ${contextFeedback || "Kayıt yok."}
+                    - Kasa Satışları: ${contextKasa || "Kayıt yok."}
+                    - İzinler: ${contextIzin || "Kayıt yok."}
                     
-                    PANEL VERİLERİ (MUTLAK DOĞRU):
-                    - Mağaza Duyuruları: ${dbData.magaza}
-                    - Seninle (${realName}) ilgili Geri Bildirimler: ${userFeedback || "Kayıt yok."}
-                    - Seninle (${realName}) ilgili Kasa Satış Verileri: ${userKasa || "Kayıt yok."}
-                    - Seninle (${realName}) ilgili İzin Durumu: ${userIzin || "Kayıt yok."}
-                    
-                    ÖNEMLİ KURALLAR:
-                    1. Asla uydurma veri (2016, 2020 gibi eski tarihler) söyleme. Sadece yukarıdaki listeyi kullan.
-                    2. "Fiş adedi" veya "Satış sayısı" sorulduğunda Kasa Satış verisindeki sayısal değeri ver.
-                    3. Her zaman motive edici, nazik ve çözüm odaklı ol.
-                    4. Eğer veri panelde yoksa 'Panelde buna dair bir bilgi bulamadım Ahmet' şeklinde cevap ver.` 
+                    KURALLAR:
+                    1. Eğer Admin rapor istiyorsa, paneldeki TÜM isimleri ve verileri analiz ederek profesyonel bir özet sun.
+                    2. Personel rapor istiyorsa sadece ona ait verileri nazikçe sun.
+                    3. Asla panelde olmayan tarihleri veya uydurma verileri kullanma.
+                    4. Fiş sayısı, tutar gibi teknik soruları paneldeki Kasa Satış verilerinden tam sayı olarak cevapla.` 
                 }, { role: "user", content: text }],
                 temperature: 0
             })
         });
         const data = await res.json(); appendMsg(data.choices[0].message.content, "ai");
         checkReminders();
-    } catch (e) { appendMsg("Sistem meşgul, lütfen tekrar deneyin.", "ai"); }
+    } catch (e) { appendMsg("Sistem şuan yoğun, lütfen tekrar dene.", "ai"); }
 };
 
 window.submitLeave = async () => {
     const s = document.getElementById("leaveStart").value; const e = document.getElementById("leaveEnd").value;
     if (!s || !e) return;
     await updateDoc(doc(db, "kasa", "talepler"), { liste: arrayUnion(`İZİN: ${realName.toUpperCase()}: ${s} / ${e}`) });
-    appendMsg(`İzin talebin iletildi ${realName.split(' ')[0]}.`, "ai"); closeLeave();
+    appendMsg(`İzin talebin iletildi.`, "ai"); closeLeave();
 };
 
 window.submitContact = async () => {
     const m = document.getElementById("contactMsg").value.trim(); if(!m) return;
     await updateDoc(doc(db, "kasa", "talepler"), { liste: arrayUnion(`NOT: ${realName.toUpperCase()}: ${m}`) });
-    appendMsg(`Notunu Umut Salman'a iletilmek üzere kaydettim.`, "ai"); closeContact();
+    appendMsg(`Notunu Umut Salman'a iletilmek üzere sisteme ekledim.`, "ai"); closeContact();
 };
 
 window.saveAllPanels = async () => {
@@ -248,7 +266,7 @@ window.saveAllPanels = async () => {
         kasaonu: document.getElementById("data_kasaonu").value, users: document.getElementById("data_users").value,
         kurallar: document.getElementById("data_kurallar").value, feedback: document.getElementById("data_feedback").value
     });
-    alert("Panel verileri güncellendi!"); toggleAdmin();
+    alert("Tüm panel verileri milimetrik olarak kaydedildi!"); toggleAdmin();
 };
 
 function appendMsg(t, s, html = false) {
