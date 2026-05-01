@@ -44,6 +44,7 @@
     </div>
 </div>
 
+<!-- Modallar -->
 <div id="remindModal"><div class="modal-content"><h3>⏰ Hatırlatıcı Kur</h3><input type="date" id="remindDate" style="margin-top:15px"><textarea id="remindText" placeholder="Notunuz..."></textarea><button class="btn btn-remind" style="width:100%; margin-top:10px;" onclick="saveReminder()">KAYDET</button><button class="btn" onclick="closeRemind()">İPTAL</button></div></div>
 <div id="feedbackModal"><div class="modal-content"><h3>📝 Geri Bildirim</h3><input type="date" id="fbDate" style="margin-top:15px"><select id="fbUserList"></select><select id="fbType"><option value="Olumlu">Pozitif</option><option value="Olumsuz">Uyarı</option></select><textarea id="fbText"></textarea><button class="btn btn-accent" style="width:100%;" onclick="saveFeedback()">KAYDET</button><button class="btn" onclick="closeFeedback()">İPTAL</button></div></div>
 <div id="leaveModal"><div class="modal-content"><h3>📅 İzin Talebi</h3><input type="date" id="leaveStart" style="margin-top:10px"><input type="date" id="leaveEnd"><button class="btn btn-accent" style="width:100%;" onclick="submitLeave()">GÖNDER</button><button class="btn" onclick="closeLeave()">KAPAT</button></div></div>
@@ -89,7 +90,6 @@ const db = getFirestore(app);
 let currentUserKadi = ""; let realName = ""; let isAdmin = false;
 let dbData = { izin: "", magaza: "", kasaonu: "", users: "", kurallar: "", notlar: "", feedback: "", reminders: [] };
 let personeller = [];
-let reminderCounter = 0;
 
 onSnapshot(doc(db, "kasa", "personel"), snap => { if (snap.exists()) personeller = snap.data().liste || []; });
 onSnapshot(doc(db, "kasa", "bilgiBankasi"), snap => {
@@ -108,44 +108,6 @@ onSnapshot(doc(db, "kasa", "bilgiBankasi"), snap => {
     }
 });
 
-onSnapshot(doc(db, "kasa", "talepler"), snap => {
-    const cont = document.getElementById("requestContainer"); cont.innerHTML = "";
-    if (snap.exists() && snap.data().liste) {
-        snap.data().liste.forEach((t, i) => {
-            const d = document.createElement("div"); d.style="display:flex; justify-content:space-between; align-items:center; background:#0f172a; padding:8px; border-radius:8px; margin-bottom:5px; border:1px solid var(--border);";
-            d.innerHTML = `<span style="font-size:11px; flex:1;">${t}</span><button class="btn" style="background:#10b981; padding:5px 10px; font-size:10px; margin-left:5px;" onclick="approveRequest('${t}', ${i})">ONAYLA</button>`;
-            cont.appendChild(d);
-        });
-    }
-});
-
-// ONARILAN ONAYLA FONKSİYONU
-window.approveRequest = async (text, index) => {
-    try {
-        const ref = doc(db, "kasa", "talepler");
-        await updateDoc(ref, { liste: arrayRemove(text) });
-        
-        if (text.startsWith("İZİN:")) {
-            const izinDetay = text.replace("İZİN: ", "");
-            const newIzin = dbData.izin ? dbData.izin + "\n" + izinDetay : izinDetay;
-            await setDoc(doc(db, "kasa", "bilgiBankasi"), { ...dbData, izin: newIzin });
-            alert("İzin onaylandı ve panele işlendi.");
-        } else {
-            const arsivDetay = text.replace("NOT: ", "");
-            const newNotlar = dbData.notlar ? dbData.notlar + "\n" + arsivDetay : arsivDetay;
-            await setDoc(doc(db, "kasa", "bilgiBankasi"), { ...dbData, notlar: newNotlar });
-            alert("Not arşivlendi.");
-        }
-    } catch (e) { alert("Onaylama sırasında hata oluştu!"); }
-};
-
-function updatePersonelSelect() {
-    const sel = document.getElementById("fbUserList"); if(!sel) return;
-    const users = (dbData.users || "").split('\n');
-    sel.innerHTML = '<option value="">Personel Seçin</option>';
-    users.forEach(u => { if(u.includes(":")) { const name = u.split(":")[1].trim(); sel.innerHTML += `<option value="${name.toUpperCase()}">${name}</option>`; } });
-}
-
 window.login = () => {
     const k = document.getElementById("kullanici").value.trim().toLowerCase();
     const s = document.getElementById("sifre").value.trim();
@@ -163,88 +125,78 @@ window.login = () => {
         document.getElementById("welcomeText").innerText = realName.toUpperCase();
         if (isAdmin) document.getElementById("adminGear").style.display = "block";
         appendMsg(`Hoş geldin ${realName.toUpperCase()}, Umut Salman'ın dijital asistanıyım. Sana nasıl yardımcı olabilirim?`, "ai");
-        checkReminders();
     } else { document.getElementById("loginError").style.display = "block"; }
 };
 
-window.saveReminder = async () => {
-    const date = document.getElementById("remindDate").value;
-    const text = document.getElementById("remindText").value.trim();
-    if(!date || !text) return;
-    const newRemind = { id: Date.now(), user: realName.toUpperCase(), date: date, text: text, done: false };
-    await setDoc(doc(db, "kasa", "bilgiBankasi"), { ...dbData, reminders: [...(dbData.reminders || []), newRemind] });
-    alert("Hatırlatıcı kuruldu!"); closeRemind();
-};
-
-window.saveFeedback = async () => {
-    const user = document.getElementById("fbUserList").value;
-    const date = document.getElementById("fbDate").value;
-    const type = document.getElementById("fbType").value;
-    const text = document.getElementById("fbText").value.trim();
-    if(!user || !date || !text) { alert("Lütfen tüm alanları doldurun!"); return; }
-    const entry = `${user} | ${date} | ${type} | ${text}`;
-    const newFeedback = dbData.feedback ? dbData.feedback + "\n" + entry : entry;
-    await setDoc(doc(db, "kasa", "bilgiBankasi"), { ...dbData, feedback: newFeedback });
-    alert("Geri bildirim kaydedildi!"); closeFeedback();
-};
-
-function checkReminders() {
-    const today = new Date().toISOString().split('T')[0];
-    const myReminds = (dbData.reminders || []).filter(r => r.user === realName.toUpperCase() && r.date === today && !r.done);
-    if(myReminds.length > 0 && reminderCounter < 1) {
-        myReminds.forEach(r => {
-            const html = `⏰ <b>HATIRLATMA:</b> ${r.text}<br><button class="btn btn-accent" style="margin-top:8px; font-size:10px" onclick="completeReminder(${r.id})">YAPTIM / KAPAT</button>`;
-            appendMsg(html, "ai", true);
-        });
-        reminderCounter++;
-    }
-}
-
-window.completeReminder = async (id) => {
-    const updated = dbData.reminders.filter(r => r.id !== id);
-    await setDoc(doc(db, "kasa", "bilgiBankasi"), { ...dbData, reminders: updated });
-    appendMsg("Harika! Hatırlatma başarıyla kapatıldı.", "ai");
-};
-
 window.send = async () => {
-    const input = document.getElementById("userInput"); const text = input.value.trim(); if (!text) return;
-    appendMsg(text, "user"); input.value = "";
+    const input = document.getElementById("userInput"); 
+    const text = input.value.trim(); 
+    if (!text) return;
+    
+    appendMsg(text, "user"); 
+    input.value = "";
     
     const cleanName = realName.toUpperCase().trim();
-    // YÖNETİCİ RAPORLAMA MANTIĞI
     let contextIzin = isAdmin ? dbData.izin : (dbData.izin || "").split('\n').filter(l => l.toUpperCase().includes(cleanName)).join('\n');
     let contextKasa = isAdmin ? dbData.kasaonu : (dbData.kasaonu || "").split('\n').filter(l => l.toUpperCase().includes(cleanName)).join('\n');
     let contextFeedback = isAdmin ? dbData.feedback : (dbData.feedback || "").split('\n').filter(l => l.toUpperCase().includes(cleanName)).join('\n');
 
     try {
-        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
-            headers: { "Authorization": "Bearer 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", "Content-Type": "application/json" },
+            headers: { 
+                "Authorization": "Bearer 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", 
+                "Content-Type": "application/json" 
+            },
             body: JSON.stringify({
                 model: "llama-3.1-8b-instant",
                 messages: [{ 
                     role: "system", 
-                    content: `Sen Umut Salman'ın akıllı dijital asistanısın. Şuan konuşan: ${realName}.
-                    YETKİ: ${isAdmin ? 'YÖNETİCİ/ADMİN (Tüm verileri görebilir ve raporlayabilir)' : 'PERSONEL (Sadece kendi verilerini görebilir)'}.
-                    
-                    PANEL VERİLERİ:
-                    - Duyurular: ${dbData.magaza}
-                    - Geri Bildirimler: ${contextFeedback || "Kayıt yok."}
-                    - Kasa Satışları: ${contextKasa || "Kayıt yok."}
-                    - İzinler: ${contextIzin || "Kayıt yok."}
-                    
-                    KURALLAR:
-                    1. Eğer Admin rapor istiyorsa, paneldeki TÜM isimleri ve verileri analiz ederek profesyonel bir özet sun.
-                    2. Personel rapor istiyorsa sadece ona ait verileri nazikçe sun.
-                    3. Asla panelde olmayan tarihleri veya uydurma verileri kullanma.
-                    4. Fiş sayısı, tutar gibi teknik soruları paneldeki Kasa Satış verilerinden tam sayı olarak cevapla.` 
+                    content: `Sen Umut Salman'ın akıllı dijital asistanısın. Kullanıcı: ${realName}. Yetki: ${isAdmin ? 'Admin' : 'Personel'}. Veriler: Duyuru:${dbData.magaza}, GeriBildirim:${contextFeedback}, Kasa:${contextKasa}, İzin:${contextIzin}. Kurallar: Sadece sağlanan verilere sadık kal. Kibar ve profesyonel ol.` 
                 }, { role: "user", content: text }],
-                temperature: 0
+                temperature: 0.1
             })
         });
-        const data = await res.json(); appendMsg(data.choices[0].message.content, "ai");
-        checkReminders();
-    } catch (e) { appendMsg("Sistem şuan yoğun, lütfen tekrar dene.", "ai"); }
+
+        if (!response.ok) throw new Error(`Hata Kodu: ${response.status}`);
+        const data = await response.json();
+        appendMsg(data.choices[0].message.content, "ai");
+    } catch (e) {
+        appendMsg("Bağlantı sorunu: " + e.message, "ai");
+    }
+};
+
+function appendMsg(t, s) {
+    const b = document.getElementById("chatBox");
+    const d = document.createElement("div"); d.className = `msg ${s}`;
+    d.innerText = t;
+    b.appendChild(d); b.scrollTop = b.scrollHeight;
+}
+
+function updatePersonelSelect() {
+    const sel = document.getElementById("fbUserList"); if(!sel) return;
+    const users = (dbData.users || "").split('\n');
+    sel.innerHTML = '<option value="">Personel Seçin</option>';
+    users.forEach(u => { if(u.includes(":")) { const name = u.split(":")[1].trim(); sel.innerHTML += `<option value="${name.toUpperCase()}">${name}</option>`; } });
+}
+
+window.toggleAdmin = () => document.getElementById("adminPanel").style.display = (document.getElementById("adminPanel").style.display === "flex") ? "none" : "flex";
+window.openRemind = () => document.getElementById("remindModal").style.display = "flex";
+window.closeRemind = () => document.getElementById("remindModal").style.display = "none";
+window.openLeave = () => document.getElementById("leaveModal").style.display = "flex";
+window.closeLeave = () => document.getElementById("leaveModal").style.display = "none";
+window.openContact = () => document.getElementById("contactModal").style.display = "flex";
+window.closeContact = () => document.getElementById("contactModal").style.display = "none";
+window.openFeedback = () => document.getElementById("feedbackModal").style.display = "flex";
+window.closeFeedback = () => document.getElementById("feedbackModal").style.display = "none";
+
+window.saveAllPanels = async () => {
+    await updateDoc(doc(db, "kasa", "bilgiBankasi"), { 
+        izin: document.getElementById("data_izin").value, magaza: document.getElementById("data_magaza").value, 
+        kasaonu: document.getElementById("data_kasaonu").value, users: document.getElementById("data_users").value,
+        kurallar: document.getElementById("data_kurallar").value, feedback: document.getElementById("data_feedback").value
+    });
+    alert("Kaydedildi!"); toggleAdmin();
 };
 
 window.submitLeave = async () => {
@@ -257,32 +209,8 @@ window.submitLeave = async () => {
 window.submitContact = async () => {
     const m = document.getElementById("contactMsg").value.trim(); if(!m) return;
     await updateDoc(doc(db, "kasa", "talepler"), { liste: arrayUnion(`NOT: ${realName.toUpperCase()}: ${m}`) });
-    appendMsg(`Notunu Umut Salman'a iletilmek üzere sisteme ekledim.`, "ai"); closeContact();
+    appendMsg(`Not iletildi.`, "ai"); closeContact();
 };
-
-window.saveAllPanels = async () => {
-    await setDoc(doc(db, "kasa", "bilgiBankasi"), { ...dbData,
-        izin: document.getElementById("data_izin").value, magaza: document.getElementById("data_magaza").value, 
-        kasaonu: document.getElementById("data_kasaonu").value, users: document.getElementById("data_users").value,
-        kurallar: document.getElementById("data_kurallar").value, feedback: document.getElementById("data_feedback").value
-    });
-    alert("Tüm panel verileri milimetrik olarak kaydedildi!"); toggleAdmin();
-};
-
-function appendMsg(t, s, html = false) {
-    const b = document.getElementById("chatBox"); const d = document.createElement("div"); d.className = `msg ${s}`;
-    if(html) d.innerHTML = t; else d.innerText = t;
-    b.appendChild(d); b.scrollTop = b.scrollHeight;
-}
-window.toggleAdmin = () => document.getElementById("adminPanel").style.display = (document.getElementById("adminPanel").style.display === "flex") ? "none" : "flex";
-window.openRemind = () => document.getElementById("remindModal").style.display = "flex";
-window.closeRemind = () => document.getElementById("remindModal").style.display = "none";
-window.openLeave = () => document.getElementById("leaveModal").style.display = "flex";
-window.closeLeave = () => document.getElementById("leaveModal").style.display = "none";
-window.openContact = () => document.getElementById("contactModal").style.display = "flex";
-window.closeContact = () => document.getElementById("contactModal").style.display = "none";
-window.openFeedback = () => document.getElementById("feedbackModal").style.display = "flex";
-window.closeFeedback = () => document.getElementById("feedbackModal").style.display = "none";
 </script>
 </body>
 </html>
