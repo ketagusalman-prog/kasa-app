@@ -56,7 +56,7 @@
         <button id="yemekDagitBtn" class="btn-main" onclick="yemekDagit()" style="display:none; background: var(--purple);">🍴 YEMEK DAĞIT & SON MOLA AYARLA</button>
         
         <div class="row-btns">
-            <button id="yemekTakasBtn" class="btn-main" onclick="yemekTakas()" style="display:none; background: var(--pink);">🔄 YEMEK 1-2 YER DEĞİŞTİR</button>
+            <button id="yemekTakasBtn" class="btn-main" onclick="yemekTakas()" style="display:none; background: var(--pink);">🔄 YEMEK 1-2 YER DEĞİŞTİR & ÇAY 4 TAKAS</button>
             <button id="kaydirBtn" class="btn-main" onclick="kaydir()" style="display:none; background: var(--accent);">🔄 1-2-3 KAYDIR</button>
         </div>
 
@@ -185,11 +185,9 @@ window.kaydir = function(){
     alert("Kaydırıldı! Manuel Kaydet butonuna basmayı unutmayın.");
 }
 
-// Güncellenmiş Yemek Dağıt Fonksiyonu
 window.yemekDagit = async function() {
     if(!adminMi) return;
     try {
-        // --- Yemek Dağılımı ---
         let cay1 = (state["cay1"]?.kisiler || []).filter(x => x && x.trim() !== "");
         let yarisi = Math.ceil(cay1.length / 2);
         
@@ -205,20 +203,15 @@ window.yemekDagit = async function() {
         state["yemek4"] = state["yemek4"] || {};
         state["yemek4"].kisiler = [...(state["cay3"]?.kisiler || [])];
 
-        // --- Yeni Son Mola Dağılımı ---
-        // Çay 4 -> Son 1
         state["son1"] = state["son1"] || {};
         state["son1"].kisiler = [...(state["cay4"]?.kisiler || [])];
 
-        // Çay 1 -> Son 2
         state["son2"] = state["son2"] || {};
         state["son2"].kisiler = [...(state["cay1"]?.kisiler || [])];
 
-        // Çay 2 -> Son 3
         state["son3"] = state["son3"] || {};
         state["son3"].kisiler = [...(state["cay2"]?.kisiler || [])];
 
-        // Çay 3 -> Son 4
         state["son4"] = state["son4"] || {};
         state["son4"].kisiler = [...(state["cay3"]?.kisiler || [])];
 
@@ -230,6 +223,7 @@ window.yemekDagit = async function() {
 window.yemekTakas = async function() {
     if(!adminMi) return;
     try {
+        // --- Yemek 1 ve Yemek 2 Takas ---
         let y1 = state["yemek1"]?.kisiler || [];
         let y2 = state["yemek2"]?.kisiler || [];
         state["yemek1"] = state["yemek1"] || {};
@@ -237,8 +231,23 @@ window.yemekTakas = async function() {
         state["yemek2"] = state["yemek2"] || {};
         state["yemek2"].kisiler = y1;
 
+        // --- Çay 4 İlk İki ve Son İki Takas ---
+        let c4 = [...(state["cay4"]?.kisiler || [])];
+        if(c4.length > 0) {
+            let ilkIki = [c4[0], c4[1]];
+            let sonIki = [c4[4], c4[5]];
+            
+            c4[0] = sonIki[0] || "";
+            c4[1] = sonIki[1] || "";
+            c4[4] = ilkIki[0] || "";
+            c4[5] = ilkIki[1] || "";
+            
+            state["cay4"] = state["cay4"] || {};
+            state["cay4"].kisiler = c4;
+        }
+
         await setDoc(doc(db,"kasa","mola"),{data:state});
-        alert("Yemek 1 ve Yemek 2 yer değiştirdi!");
+        alert("Yemek 1-2 ve Çay 4 (İlk/Son) takası yapıldı!");
     } catch(e) { alert("Hata: " + e.message); }
 }
 
