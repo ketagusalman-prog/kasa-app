@@ -229,18 +229,19 @@ window.yemekTakas = async function() {
         state["yemek1"] = { ...state["yemek1"], kisiler: y2 };
         state["yemek2"] = { ...state["yemek2"], kisiler: y1 };
 
-        // 2. Son 1'deki kişileri al ve ters çevir
-        let s1_kisiler = [...(state["son1"]?.kisiler || [])];
-        let s1_ters = s1_kisiler.reverse(); 
+        // 2. Son 1'deki kişileri al, boşlukları temizle ve ters çevir
+        // Bu işlem isimlerin her zaman en üstten başlamasını sağlar
+        let s1_temiz = (state["son1"]?.kisiler || []).filter(isim => isim && isim.trim() !== "");
+        let s1_ters = s1_temiz.reverse(); 
         
         // 3. Ters çevrilmiş listeyi Çay 4'e ata
         state["cay4"] = { ...state["cay4"], kisiler: s1_ters };
 
-        // 4. Çay 4'ün son halini Son 1'e kopyala (İsteğine göre ikisi eşitleniyor)
+        // 4. Çay 4'ün bu temizlenmiş halini Son 1'e de kopyala (Bloklar arası uyum için)
         state["son1"] = { ...state["son1"], kisiler: [...state["cay4"].kisiler] };
 
         await setDoc(doc(db, "kasa", "mola"), { data: state });
-        alert("Yemek 1-2 takas edildi. Son 1 ters çevrilerek Çay 4'e aktarıldı ve Son 1 güncellendi!");
+        alert("Yemek 1-2 takas edildi. Son 1 ters çevrilerek en üstten başlayacak şekilde Çay 4'e aktarıldı!");
     } catch(e) { alert("Hata: " + e.message); }
 }
 
