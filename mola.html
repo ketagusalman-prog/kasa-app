@@ -56,7 +56,7 @@
         <button id="yemekDagitBtn" class="btn-main" onclick="yemekDagit()" style="display:none; background: var(--purple);">🍴 YEMEK DAĞIT & SON MOLA AYARLA</button>
         
         <div class="row-btns">
-            <button id="yemekTakasBtn" class="btn-main" onclick="yemekTakas()" style="display:none; background: var(--pink);">🔄 YEMEK 1-2 YER DEĞİŞTİR & ÇAY 4 TAKAS</button>
+            <button id="yemekTakasBtn" class="btn-main" onclick="yemekTakas()" style="display:none; background: var(--pink);">🔄 YEMEK 1-2 & SON1-YEMEK4 TAKAS</button>
             <button id="kaydirBtn" class="btn-main" onclick="kaydir()" style="display:none; background: var(--accent);">🔄 1-2-3 KAYDIR</button>
         </div>
 
@@ -223,31 +223,23 @@ window.yemekDagit = async function() {
 window.yemekTakas = async function() {
     if(!adminMi) return;
     try {
-        // --- Yemek 1 ve Yemek 2 Takas ---
+        // 1. Yemek 1 ve Yemek 2 Takas
         let y1 = state["yemek1"]?.kisiler || [];
         let y2 = state["yemek2"]?.kisiler || [];
-        state["yemek1"] = state["yemek1"] || {};
-        state["yemek1"].kisiler = y2;
-        state["yemek2"] = state["yemek2"] || {};
-        state["yemek2"].kisiler = y1;
+        state["yemek1"] = { ...state["yemek1"], kisiler: y2 };
+        state["yemek2"] = { ...state["yemek2"], kisiler: y1 };
 
-        // --- Çay 4 İlk İki ve Son İki Takas ---
-        let c4 = [...(state["cay4"]?.kisiler || [])];
-        if(c4.length > 0) {
-            let ilkIki = [c4[0], c4[1]];
-            let sonIki = [c4[4], c4[5]];
-            
-            c4[0] = sonIki[0] || "";
-            c4[1] = sonIki[1] || "";
-            c4[4] = ilkIki[0] || "";
-            c4[5] = ilkIki[1] || "";
-            
-            state["cay4"] = state["cay4"] || {};
-            state["cay4"].kisiler = c4;
-        }
+        // 2. Son 1'deki kişileri al, ters çevir ve Yemek 4'e ata
+        let s1_kisiler = [...(state["son1"]?.kisiler || [])];
+        let s1_ters = s1_kisiler.reverse(); // En alttaki en üste gelir
+        
+        state["yemek4"] = { ...state["yemek4"], kisiler: s1_ters };
 
-        await setDoc(doc(db,"kasa","mola"),{data:state});
-        alert("Yemek 1-2 ve Çay 4 (İlk/Son) takası yapıldı!");
+        // 3. Yemek 4'ün son halini Son 1'e kopyala
+        state["son1"] = { ...state["son1"], kisiler: [...state["yemek4"].kisiler] };
+
+        await setDoc(doc(db, "kasa", "mola"), { data: state });
+        alert("Yemek 1-2 takas edildi ve Son 1 ters çevrilerek Yemek 4'e aktarıldı!");
     } catch(e) { alert("Hata: " + e.message); }
 }
 
