@@ -27,7 +27,6 @@
         .input-container { position: relative; width: 100%; padding: 15px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); display: flex; gap: 8px; border-top: 1px solid var(--border); flex-shrink: 0; }
         .btn { padding: 12px 20px; border-radius: 25px; cursor: pointer; border: none; font-weight: 700; transition: 0.2s; display: inline-block; text-align: center; }
         .btn-accent { background: var(--accent); color: white; }
-        
         .request-item { background: #0f172a; padding: 15px; border-radius: 15px; border: 1px solid var(--border); margin-bottom: 10px; }
         .request-btns { display: flex; gap: 10px; margin-top: 10px; }
         .btn-ok { background: #059669; color: white; flex: 1; padding: 8px; border-radius: 10px; font-size: 12px; }
@@ -89,7 +88,7 @@ const firebaseConfig = { apiKey: "AIzaSyChKcwZnw1fe_SFWy2dJA_JZOMiKghF5_o", auth
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Sizin API Key'iniz buraya entegre edildi
+// Sizin API Key'iniz doğrudan buraya tanımlandı
 const GROQ_API_KEY = "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";
 
 let currentUserKadi = ""; let realName = ""; let isAdmin = false;
@@ -117,7 +116,6 @@ function isConflict(startStr, endStr, userName) {
     const start = new Date(startStr).getTime();
     const end = new Date(endStr).getTime();
     const izinSatirlari = (dbData.izin || "").split('\n');
-    
     for (let satir of izinSatirlari) {
         if (satir.toUpperCase().includes(userName.toUpperCase())) {
             const parts = satir.split(':');
@@ -125,9 +123,7 @@ function isConflict(startStr, endStr, userName) {
                 const dates = parts[2].split('/');
                 const exStart = new Date(dates[0].trim()).getTime();
                 const exEnd = new Date(dates[1].trim()).getTime();
-                if ((start <= exEnd && start >= exStart) || (end <= exEnd && end >= exStart) || (start <= exStart && end >= exEnd)) {
-                    return true;
-                }
+                if ((start <= exEnd && start >= exStart) || (end <= exEnd && end >= exStart) || (start <= exStart && end >= exEnd)) return true;
             }
         }
     }
@@ -151,14 +147,11 @@ onSnapshot(doc(db, "kasa", "talepler"), snap => {
             `;
             talepDiv.appendChild(item);
             document.getElementById(`approve-${i}`).onclick = async () => {
-                if(!confirm("Bu talebi onaylayıp 'Onaylı İzinler' listesine taşımak istiyor musunuz?")) return;
                 await updateDoc(doc(db, "kasa", "bilgiBankasi"), { izin: (dbData.izin || "") + "\n" + t });
                 await updateDoc(doc(db, "kasa", "talepler"), { liste: arrayRemove(t) });
             };
             document.getElementById(`reject-${i}`).onclick = async () => {
-                if(confirm("Talebi silmek istediğinize emin misiniz?")) {
-                    await updateDoc(doc(db, "kasa", "talepler"), { liste: arrayRemove(t) });
-                }
+                await updateDoc(doc(db, "kasa", "talepler"), { liste: arrayRemove(t) });
             };
         });
     }
@@ -181,57 +174,45 @@ document.getElementById("loginBtn").addEventListener("click", () => {
         document.getElementById("loginOverlay").style.display = "none";
         document.getElementById("welcomeText").innerText = realName.toUpperCase();
         if (isAdmin) document.getElementById("adminGear").style.display = "block";
-        
-        let msg = (realName.toUpperCase().includes("AHMET KANDİŞ")) 
-            ? `Merhaba AHMET KANDİŞ! Ben Umut Salman'ın kişisel dijital asistanıyım. Size nasıl yardımcı olabilirim?`
-            : `Merhaba ${realName}! Ben Umut Salman'ın kişisel dijital asistanıyım. Size nasıl yardımcı olabilirim?`;
-        appendMsg(msg, "ai");
+        appendMsg(`Merhaba ${realName}! Ben Umut Salman'ın dijital asistanıyım. Size nasıl yardımcı olabilirim?`, "ai");
     } else { document.getElementById("loginError").style.display = "block"; }
 });
 
-document.getElementById("submitLeaveBtn").onclick = async () => {
-    const s = document.getElementById("leaveStart").value;
-    const e = document.getElementById("leaveEnd").value;
-    if (!s || !e) { alert("Lütfen tarihleri seçin."); return; }
-    if (isConflict(s, e, realName)) {
-        alert("Üzgünüm, seçtiğiniz tarihlerde zaten onaylanmış bir izniniz bulunuyor. Lütfen tarihleri kontrol edip tekrar deneyin.");
-        return; 
-    }
-    if(!confirm(`${s} - ${e} tarihleri için izin talebi gönderilsin mi?`)) return;
-    await updateDoc(doc(db, "kasa", "talepler"), { liste: arrayUnion(`İZİN: ${realName.toUpperCase()}: ${s} / ${e}`) });
-    appendMsg("Umut Salman'ın dijital asistanıyım; talebiniz incelenmek üzere başarıyla iletildi.", "ai"); 
-    document.getElementById("leaveModal").style.display = "none";
-};
-
 document.getElementById("sendBtn").addEventListener("click", async () => {
-    const input = document.getElementById("userInput"); const text = input.value.trim(); if (!text) return;
+    const input = document.getElementById("userInput"); 
+    const text = input.value.trim(); 
+    if (!text) return;
     
-    appendMsg(text, "user"); input.value = "";
+    appendMsg(text, "user"); 
+    input.value = "";
     const filterData = (str) => isAdmin ? str : (str || "").split('\n').filter(l => l.toUpperCase().includes(realName.toUpperCase())).join('\n');
     const context = `PANEL: Duyuru:${dbData.magaza}, Kural:${dbData.kurallar}, İzin:${filterData(dbData.izin)}, Kasa:${filterData(dbData.kasaonu)}`;
+    
     try {
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST", 
-            headers: { 
-                "Authorization": `Bearer ${GROQ_API_KEY}`, 
-                "Content-Type": "application/json" 
-            },
+            headers: { "Authorization": `Bearer ${GROQ_API_KEY}`, "Content-Type": "application/json" },
             body: JSON.stringify({ 
                 model: "llama-3.1-8b-instant", 
                 messages: [{role:"system", content:`Umut Salman asistanıyım. Kullanıcı: ${realName}. Veriler: ${context}`}, ...chatHistory, {role:"user", content:text}], 
                 temperature: 0.1 
             })
         });
-        const data = await response.json(); const aiResp = data.choices[0].message.content;
+        const data = await response.json(); 
+        const aiResp = data.choices[0].message.content;
         chatHistory.push({role:"user", content:text}, {role:"assistant", content:aiResp});
         if(chatHistory.length > 10) chatHistory.splice(0,2);
         appendMsg(aiResp, "ai");
-    } catch (e) { appendMsg("Hata oluştu.", "ai"); }
+    } catch (e) { appendMsg("Bağlantı hatası.", "ai"); }
 });
 
 function appendMsg(t, s) {
-    const b = document.getElementById("chatBox"); const d = document.createElement("div"); 
-    d.className = `msg ${s}`; d.innerText = t; b.appendChild(d); b.scrollTop = b.scrollHeight;
+    const b = document.getElementById("chatBox"); 
+    const d = document.createElement("div"); 
+    d.className = `msg ${s}`; 
+    d.innerText = t; 
+    b.appendChild(d); 
+    b.scrollTop = b.scrollHeight;
 }
 
 function updatePersonelSelect() {
@@ -252,17 +233,26 @@ document.getElementById("savePanelsBtn").onclick = async () => {
 document.getElementById("adminGear").onclick = () => document.getElementById("adminPanel").style.display = "flex";
 document.getElementById("closeAdminBtn").onclick = () => document.getElementById("adminPanel").style.display = "none";
 
+document.getElementById("submitLeaveBtn").onclick = async () => {
+    const s = document.getElementById("leaveStart").value;
+    const e = document.getElementById("leaveEnd").value;
+    if (!s || !e) { alert("Tarih seçin."); return; }
+    if (isConflict(s, e, realName)) { alert("Çakışan izin var!"); return; }
+    await updateDoc(doc(db, "kasa", "talepler"), { liste: arrayUnion(`İZİN: ${realName.toUpperCase()}: ${s} / ${e}`) });
+    appendMsg("Talebiniz iletildi.", "ai"); document.getElementById("leaveModal").style.display = "none";
+};
+
 document.getElementById("submitContactBtn").onclick = async () => {
     const m = document.getElementById("contactMsg").value;
     await updateDoc(doc(db, "kasa", "talepler"), { liste: arrayUnion(`NOT: ${realName.toUpperCase()}: ${m}`) });
-    appendMsg("Umut Salman'ın dijital asistanıyım, notunuz başarıyla iletildi.", "ai"); document.getElementById("contactModal").style.display = "none";
+    appendMsg("Not iletildi.", "ai"); document.getElementById("contactModal").style.display = "none";
 };
 
 document.getElementById("saveFbBtn").onclick = async () => {
     const user = document.getElementById("fbUserList").value;
     const newFb = `\n[${document.getElementById("fbDate").value}] ${user}: ${document.getElementById("fbType").value} - ${document.getElementById("fbText").value}`;
     await updateDoc(doc(db, "kasa", "bilgiBankasi"), { feedback: (dbData.feedback || "") + newFb });
-    alert("Geri bildirim kaydedildi."); document.getElementById("feedbackModal").style.display = "none";
+    alert("Kaydedildi."); document.getElementById("feedbackModal").style.display = "none";
 };
 </script>
 </body>
