@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Yönetim Paneli v17</title>
+    <title>Sistem Yönetim Paneli v2026</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #10b981; --danger: #ef4444; --admin: #8b5cf6; --text: #f8fafc; --warning: #f59e0b; }
@@ -11,9 +11,10 @@
         
         .container { width: 100%; max-width: 550px; }
         
-        /* PANEL KART STİLLERİ */
+        /* PANEL KARTLARI */
         .card { background: var(--card); padding: 25px; border-radius: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); margin-bottom: 30px; position: relative; overflow: hidden; }
         .card::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 5px; }
+        
         .card-izin::before { background: var(--warning); }
         .card-diger::before { background: var(--accent); }
         .card-admin::before { background: var(--admin); }
@@ -24,7 +25,7 @@
 
         label { display: block; margin-bottom: 8px; font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; }
         select, input { width: 100%; background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; color: white; outline: none; margin-bottom: 15px; font-size: 15px; box-sizing: border-box; transition: 0.3s; }
-        select:focus, input:focus { border-color: inherit; box-shadow: 0 0 10px rgba(255,255,255,0.05); }
+        select:focus, input:focus { border-color: #64748b; }
 
         .btn { width: 100%; padding: 16px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; transition: 0.3s; font-size: 14px; margin-bottom: 10px; text-transform: uppercase; }
         .btn-check { background: var(--warning); color: #000; }
@@ -32,11 +33,12 @@
         .btn-save-diger { background: var(--accent); color: white; }
         .btn-admin { background: var(--admin); color: white; }
         .btn-danger { background: var(--danger); color: white; }
+        
         .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         #izinFormArea, #adminPanel { display: none; animation: slideIn 0.4s ease-out; }
-        #status { text-align: center; margin-top: 15px; font-weight: 700; font-size: 14px; }
+        #status { text-align: center; margin-top: 15px; font-weight: 700; font-size: 14px; min-height: 20px; }
 
         @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -73,18 +75,18 @@
         <button id="digerSaveBtn" class="btn btn-save-diger" style="display:none;" onclick="saveDiger()">VERİYİ KAYDET</button>
     </div>
 
-    <!-- GİZLİ AYARLAR BUTONU -->
+    <!-- GİZLİ YÖNETİCİ TETİKLEYİCİ -->
     <div style="text-align: center; margin-bottom: 20px;">
-        <button style="background:none; border:none; color:#475569; font-size:11px; cursor:pointer; text-decoration: underline;" onclick="openAdmin()">⚙️ Yönetici Araçları (Şifreli)</button>
+        <button style="background:none; border:none; color:#475569; font-size:11px; cursor:pointer; text-decoration: underline;" onclick="openAdmin()">⚙️ Yapısal Ayarlar (Şifreli)</button>
     </div>
 
     <!-- YÖNETİCİ PANELİ -->
     <div id="adminPanel" class="card card-admin">
         <h2 style="color:var(--admin)">🛠 SAYFA & YAPI YÖNETİMİ</h2>
-        <label>Hedef Sayfa Adı</label>
-        <input type="text" id="targetSheetName">
-        <label>Sütun Başlıkları (Virgül ile)</label>
-        <input type="text" id="headerInput" placeholder="Sütun1, Sütun2, Sütun3">
+        <label>Sayfa Adı</label>
+        <input type="text" id="targetSheetName" placeholder="Örn: Personel_Listesi">
+        <label>Sütunlar (Virgül ile ayırın)</label>
+        <input type="text" id="headerInput" placeholder="Ad, Soyad, Plaka, Not">
         <button class="btn btn-admin" onclick="manageSheet('updateHeaders')">SAYFAYI OLUŞTUR / GÜNCELLE</button>
         <button class="btn btn-danger" onclick="manageSheet('deleteSheet')">SAYFAYI SİL</button>
     </div>
@@ -92,16 +94,17 @@
 </div>
 
 <script>
-    const scriptUrl = "https://script.google.com/macros/s/AKfycbyQykdqPlc71wvdWB4O5RZ8rLZdhE_W64o6DSFjYldu01l1zV_I5tdptyj7U5x6Bco7/exec";
+    // GÜNCEL SCRIPT URL (v15)
+    const scriptUrl = "https://script.google.com/macros/s/AKfycbzOYP6ZkasqD8bZs4WJzRgqHgUrmaKJaX3irVlToH9XIFnw6DmvJ90ps82srKFzTn_E/exec";
 
     window.onload = fetchSheets;
 
-    // --- İZİN FONKSİYONLARI ---
+    // --- İZİN KONTROL FONKSİYONLARI ---
     async function checkConflict() {
         const start = document.getElementById("startDate").value;
         const end = document.getElementById("endDate").value;
         const status = document.getElementById("status");
-        if(!start || !end) return alert("Tarih seçiniz!");
+        if(!start || !end) return alert("Lütfen tarih seçin!");
 
         status.innerText = "⏳ Kontrol ediliyor...";
         status.style.color = "var(--warning)";
@@ -111,16 +114,16 @@
             const result = await resp.json();
 
             if (result.exists) {
-                status.innerText = "❌ ÇAKIŞMA: Bu tarihler dolu!";
+                status.innerText = "❌ BU TARİHLER DOLU!";
                 status.style.color = "var(--danger)";
                 document.getElementById("izinFormArea").style.display = "none";
             } else {
-                status.innerText = "✅ UYGUN: Tarihler müsait.";
+                status.innerText = "✅ TARİHLER UYGUN.";
                 status.style.color = "var(--accent)";
                 await loadHeadersInto("İzin", "izinInputs");
                 document.getElementById("izinFormArea").style.display = "block";
             }
-        } catch (e) { status.innerText = "Bağlantı hatası!"; }
+        } catch (e) { status.innerText = "❌ Bağlantı hatası!"; }
     }
 
     function resetIzin() {
@@ -128,7 +131,7 @@
         document.getElementById("status").innerText = "";
     }
 
-    // --- GENEL SAYFA FONKSİYONLARI ---
+    // --- GENEL VERİ GİRİŞ FONKSİYONLARI ---
     async function loadDigerHeaders() {
         const sheetName = document.getElementById("sheetSelector").value;
         if (!sheetName) return;
@@ -138,7 +141,7 @@
 
     async function loadHeadersInto(sheetName, containerId) {
         const container = document.getElementById(containerId);
-        container.innerHTML = "⌛ Başlıklar yükleniyor...";
+        container.innerHTML = "⌛ Sütunlar getiriliyor...";
         try {
             const resp = await fetch(scriptUrl + "?sheet=" + encodeURIComponent(sheetName));
             const data = await resp.json();
@@ -151,17 +154,31 @@
                 }
                 container.innerHTML += `<label>${h}</label><input type="text" class="input-${containerId}" value="${val}">`;
             });
-        } catch (e) { container.innerHTML = "Başlıklar alınamadı."; }
+        } catch (e) { container.innerHTML = "❌ Başlıklar alınamadı."; }
     }
 
     async function saveData(sheetName, containerId) {
         const inputs = document.querySelectorAll(`.input-${containerId}`);
         const rowData = Array.from(inputs).map(i => i.value);
+        
+        const btn = event.target;
+        const originalText = btn.innerText;
+        btn.disabled = true;
+        btn.innerText = "KAYDEDİLİYOR...";
+
         try {
-            await fetch(scriptUrl, { method: "POST", mode: "no-cors", body: JSON.stringify({ rowData: rowData, sheetName: sheetName }) });
-            alert("🚀 Başarıyla Kaydedildi!");
+            await fetch(scriptUrl, { 
+                method: "POST", 
+                mode: "no-cors", 
+                body: JSON.stringify({ rowData: rowData, sheetName: sheetName }) 
+            });
+            alert("✅ Veri başarıyla kaydedildi!");
             location.reload();
-        } catch (e) { alert("Hata oluştu!"); }
+        } catch (e) { 
+            alert("❌ Kayıt sırasında hata oluştu!"); 
+            btn.disabled = false;
+            btn.innerText = originalText;
+        }
     }
 
     function saveDiger() {
@@ -169,35 +186,47 @@
         saveData(sheetName, "digerInputs");
     }
 
-    // --- SİSTEM & YÖNETİCİ FONKSİYONLARI ---
+    // --- YÖNETİCİ & SAYFA LİSTELEME ---
     async function fetchSheets() {
         try {
             const resp = await fetch(scriptUrl + "?action=getSheets");
             const data = await resp.json();
             const sel = document.getElementById("sheetSelector");
-            const filtered = data.sheets.filter(s => s.toLowerCase() !== "izin");
-            sel.innerHTML = '<option value="">Sayfa Seçin...</option>' + 
+            
+            // "İzin" sayfasını hem GAS tarafında hem burada filtreliyoruz (Garanti çözüm)
+            const filtered = data.sheets.filter(s => s.trim().toLowerCase() !== "izin");
+            
+            sel.innerHTML = '<option value="">Sayfa Seçiniz...</option>' + 
                             filtered.map(s => `<option value="${s}">${s}</option>`).join("");
-        } catch (e) {}
+        } catch (e) {
+            console.error("Sayfa listesi alınamadı.");
+            document.getElementById("sheetSelector").innerHTML = '<option value="">Hata!</option>';
+        }
     }
 
     function openAdmin() {
-        if (prompt("Yönetici Şifresi:") === "685450") {
+        if (prompt("Yönetici Şifresini Giriniz:") === "685450") {
             document.getElementById("adminPanel").style.display = "block";
             window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-        } else { alert("Şifre Yanlış!"); }
+        } else { alert("Hatalı şifre!"); }
     }
 
     async function manageSheet(action) {
         const sheetName = document.getElementById("targetSheetName").value;
         const headers = document.getElementById("headerInput").value.split(",").map(h => h.trim());
-        if(!sheetName) return alert("Sayfa adı girin!");
+        if(!sheetName) return alert("Lütfen bir sayfa adı belirtin!");
         
+        if(action === 'deleteSheet' && !confirm("Bu sayfayı silmek istediğinize emin misiniz?")) return;
+
         try {
-            await fetch(scriptUrl, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: action, sheetName: sheetName, newHeaders: headers }) });
+            await fetch(scriptUrl, { 
+                method: "POST", 
+                mode: "no-cors", 
+                body: JSON.stringify({ action: action, sheetName: sheetName, newHeaders: headers }) 
+            });
             alert("İşlem Başarılı!");
             location.reload();
-        } catch (e) { alert("İşlem hatası!"); }
+        } catch (e) { alert("İşlem başarısız."); }
     }
 </script>
 </body>
