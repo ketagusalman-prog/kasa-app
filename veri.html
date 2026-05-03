@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Yönetim Paneli v17</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #10b981; --danger: #ef4444; --admin: #8b5cf6; --text: #f8fafc; --warning: #f59e0b; }
+        body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        
+        .container { width: 100%; max-width: 550px; }
+        
+        /* PANEL KART STİLLERİ */
+        .card { background: var(--card); padding: 25px; border-radius: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); margin-bottom: 30px; position: relative; overflow: hidden; }
+        .card::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 5px; }
+        .card-izin::before { background: var(--warning); }
+        .card-diger::before { background: var(--accent); }
+        .card-admin::before { background: var(--admin); }
+
+        h2 { text-align: center; margin-bottom: 20px; font-weight: 800; text-transform: uppercase; font-size: 16px; letter-spacing: 1.5px; }
+        .title-izin { color: var(--warning); }
+        .title-diger { color: var(--accent); }
+
+        label { display: block; margin-bottom: 8px; font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; }
+        select, input { width: 100%; background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; color: white; outline: none; margin-bottom: 15px; font-size: 15px; box-sizing: border-box; transition: 0.3s; }
+        select:focus, input:focus { border-color: inherit; box-shadow: 0 0 10px rgba(255,255,255,0.05); }
+
+        .btn { width: 100%; padding: 16px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; transition: 0.3s; font-size: 14px; margin-bottom: 10px; text-transform: uppercase; }
+        .btn-check { background: var(--warning); color: #000; }
+        .btn-save-izin { background: var(--warning); color: #000; }
+        .btn-save-diger { background: var(--accent); color: white; }
+        .btn-admin { background: var(--admin); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        #izinFormArea, #adminPanel { display: none; animation: slideIn 0.4s ease-out; }
+        #status { text-align: center; margin-top: 15px; font-weight: 700; font-size: 14px; }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <!-- İZİN PANELİ -->
+    <div class="card card-izin">
+        <h2 class="title-izin">📅 İZİN ÇAKIŞMA KONTROLÜ</h2>
+        <div style="display: flex; gap: 10px;">
+            <div style="flex: 1;"><label>Başlangıç Tarihi</label><input type="date" id="startDate" onchange="resetIzin()"></div>
+            <div style="flex: 1;"><label>Bitiş Tarihi</label><input type="date" id="endDate" onchange="resetIzin()"></div>
+        </div>
+        <button id="checkBtn" class="btn btn-check" onclick="checkConflict()">MÜSAİTLİK KONTROL ET</button>
+        
+        <div id="izinFormArea">
+            <div id="izinInputs"></div>
+            <button class="btn btn-save-izin" onclick="saveData('İzin', 'izinInputs')">İZİN KAYDINI ONAYLA</button>
+        </div>
+        <div id="status"></div>
+    </div>
+
+    <!-- DİĞER SAYFALAR PANELİ -->
+    <div class="card card-diger">
+        <h2 class="title-diger">📝 GENEL VERİ GİRİŞİ</h2>
+        <label>İşlem Yapılacak Sayfa</label>
+        <select id="sheetSelector" onchange="loadDigerHeaders()">
+            <option value="">Sayfalar Yükleniyor...</option>
+        </select>
+        
+        <div id="digerInputs"></div>
+        <button id="digerSaveBtn" class="btn btn-save-diger" style="display:none;" onclick="saveDiger()">VERİYİ KAYDET</button>
+    </div>
+
+    <!-- GİZLİ AYARLAR BUTONU -->
+    <div style="text-align: center; margin-bottom: 20px;">
+        <button style="background:none; border:none; color:#475569; font-size:11px; cursor:pointer; text-decoration: underline;" onclick="openAdmin()">⚙️ Yönetici Araçları (Şifreli)</button>
+    </div>
+
+    <!-- YÖNETİCİ PANELİ -->
+    <div id="adminPanel" class="card card-admin">
+        <h2 style="color:var(--admin)">🛠 SAYFA & YAPI YÖNETİMİ</h2>
+        <label>Hedef Sayfa Adı</label>
+        <input type="text" id="targetSheetName">
+        <label>Sütun Başlıkları (Virgül ile)</label>
+        <input type="text" id="headerInput" placeholder="Sütun1, Sütun2, Sütun3">
+        <button class="btn btn-admin" onclick="manageSheet('updateHeaders')">SAYFAYI OLUŞTUR / GÜNCELLE</button>
+        <button class="btn btn-danger" onclick="manageSheet('deleteSheet')">SAYFAYI SİL</button>
+    </div>
+
+</div>
+
+<script>
+    const scriptUrl = "https://script.google.com/macros/s/AKfycbyQykdqPlc71wvdWB4O5RZ8rLZdhE_W64o6DSFjYldu01l1zV_I5tdptyj7U5x6Bco7/exec";
+
+    window.onload = fetchSheets;
+
+    // --- İZİN FONKSİYONLARI ---
+    async function checkConflict() {
+        const start = document.getElementById("startDate").value;
+        const end = document.getElementById("endDate").value;
+        const status = document.getElementById("status");
+        if(!start || !end) return alert("Tarih seçiniz!");
+
+        status.innerText = "⏳ Kontrol ediliyor...";
+        status.style.color = "var(--warning)";
+
+        try {
+            const resp = await fetch(`${scriptUrl}?action=checkConflict&start=${start}&end=${end}`);
+            const result = await resp.json();
+
+            if (result.exists) {
+                status.innerText = "❌ ÇAKIŞMA: Bu tarihler dolu!";
+                status.style.color = "var(--danger)";
+                document.getElementById("izinFormArea").style.display = "none";
+            } else {
+                status.innerText = "✅ UYGUN: Tarihler müsait.";
+                status.style.color = "var(--accent)";
+                await loadHeadersInto("İzin", "izinInputs");
+                document.getElementById("izinFormArea").style.display = "block";
+            }
+        } catch (e) { status.innerText = "Bağlantı hatası!"; }
+    }
+
+    function resetIzin() {
+        document.getElementById("izinFormArea").style.display = "none";
+        document.getElementById("status").innerText = "";
+    }
+
+    // --- GENEL SAYFA FONKSİYONLARI ---
+    async function loadDigerHeaders() {
+        const sheetName = document.getElementById("sheetSelector").value;
+        if (!sheetName) return;
+        await loadHeadersInto(sheetName, "digerInputs");
+        document.getElementById("digerSaveBtn").style.display = "block";
+    }
+
+    async function loadHeadersInto(sheetName, containerId) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = "⌛ Başlıklar yükleniyor...";
+        try {
+            const resp = await fetch(scriptUrl + "?sheet=" + encodeURIComponent(sheetName));
+            const data = await resp.json();
+            container.innerHTML = "";
+            data.headers.forEach((h, i) => {
+                let val = "";
+                if(sheetName === "İzin") {
+                    if(i === 0) val = document.getElementById("startDate").value;
+                    if(i === 1) val = document.getElementById("endDate").value;
+                }
+                container.innerHTML += `<label>${h}</label><input type="text" class="input-${containerId}" value="${val}">`;
+            });
+        } catch (e) { container.innerHTML = "Başlıklar alınamadı."; }
+    }
+
+    async function saveData(sheetName, containerId) {
+        const inputs = document.querySelectorAll(`.input-${containerId}`);
+        const rowData = Array.from(inputs).map(i => i.value);
+        try {
+            await fetch(scriptUrl, { method: "POST", mode: "no-cors", body: JSON.stringify({ rowData: rowData, sheetName: sheetName }) });
+            alert("🚀 Başarıyla Kaydedildi!");
+            location.reload();
+        } catch (e) { alert("Hata oluştu!"); }
+    }
+
+    function saveDiger() {
+        const sheetName = document.getElementById("sheetSelector").value;
+        saveData(sheetName, "digerInputs");
+    }
+
+    // --- SİSTEM & YÖNETİCİ FONKSİYONLARI ---
+    async function fetchSheets() {
+        try {
+            const resp = await fetch(scriptUrl + "?action=getSheets");
+            const data = await resp.json();
+            const sel = document.getElementById("sheetSelector");
+            const filtered = data.sheets.filter(s => s.toLowerCase() !== "izin");
+            sel.innerHTML = '<option value="">Sayfa Seçin...</option>' + 
+                            filtered.map(s => `<option value="${s}">${s}</option>`).join("");
+        } catch (e) {}
+    }
+
+    function openAdmin() {
+        if (prompt("Yönetici Şifresi:") === "685450") {
+            document.getElementById("adminPanel").style.display = "block";
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        } else { alert("Şifre Yanlış!"); }
+    }
+
+    async function manageSheet(action) {
+        const sheetName = document.getElementById("targetSheetName").value;
+        const headers = document.getElementById("headerInput").value.split(",").map(h => h.trim());
+        if(!sheetName) return alert("Sayfa adı girin!");
+        
+        try {
+            await fetch(scriptUrl, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: action, sheetName: sheetName, newHeaders: headers }) });
+            alert("İşlem Başarılı!");
+            location.reload();
+        } catch (e) { alert("İşlem hatası!"); }
+    }
+</script>
+</body>
+</html>
