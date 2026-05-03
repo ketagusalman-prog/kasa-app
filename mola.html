@@ -17,10 +17,10 @@
         body::before { content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: -1; }
 
         .appbar { position: fixed; top: 0; width: 100%; height: 50px; background: rgba(11, 15, 26, 0.9); backdrop-filter: blur(20px); display: flex; justify-content: center; align-items: center; font-weight: 800; z-index: 1000; border-bottom: 1px solid var(--border); color: var(--accent); font-size: 14px; }
-        .container { width: 100%; max-width: 600px; margin: 0 auto; padding: 100px 8px 220px 8px; }
+        .container { width: 100%; max-width: 600px; margin: 0 auto; padding: 100px 8px 250px 8px; }
 
         .baslik { display: flex; justify-content: space-between; align-items: center; margin: 20px 0 8px 0; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 10px; font-weight: 800; color: #FFD700; border: 1px solid var(--border); font-size: 12px; }
-        .grid { display: flex; gap: 6px; width: 100%; justify-content: space-between; }
+        .grid { display: flex; gap: 6px; width: 100%; justify-content: space-between; margin-bottom: 15px; }
 
         .blok { width: calc(25% - 5px); background: var(--card); border-radius: 12px; padding: 8px 4px; border: 1px solid var(--border); backdrop-filter: blur(10px); display: flex; flex-direction: column; gap: 4px; }
         h4 { font-size: 8px; color: var(--accent); text-transform: uppercase; text-align: center; opacity: 0.8; }
@@ -35,11 +35,12 @@
 
         .buyukSayac { position: fixed; top: 60px; left: 50%; transform: translateX(-50%); width: 75%; max-width: 280px; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 15px; text-align: center; font-size: 22px; font-weight: 800; color: var(--success); border: 1px solid var(--border); z-index: 1001; backdrop-filter: blur(15px); }
 
-        .alt-islem { position: fixed; bottom: 80px; left: 0; width: 100%; display: flex; flex-direction: column; gap: 6px; padding: 0 15px; z-index: 999; }
+        .alt-islem { position: fixed; bottom: 80px; left: 0; width: 100%; display: flex; flex-direction: column; gap: 6px; padding: 0 15px; z-index: 999; pointer-events: none; }
+        .alt-islem button, .alt-islem .row-btns { pointer-events: auto; }
         .row-btns { display: flex; gap: 6px; }
-        .btn-main { flex: 1; padding: 12px; border-radius: 12px; border: none; font-weight: 800; color: white; font-size: 10px; cursor: pointer; text-transform: uppercase; }
+        .btn-main { flex: 1; padding: 12px; border-radius: 12px; border: none; font-weight: 800; color: white; font-size: 10px; cursor: pointer; text-transform: uppercase; display: none; }
 
-        .tabbar { position: fixed; bottom: 0; width: 100%; height: 70px; background: rgba(22, 30, 49, 0.95); backdrop-filter: blur(20px); display: flex; justify-content: space-around; align-items: center; border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; }
+        .tabbar { position: fixed; bottom: 0; width: 100%; height: 70px; background: rgba(22, 30, 49, 0.95); backdrop-filter: blur(20px); display: flex; justify-content: space-around; align-items: center; border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; z-index: 1000; }
         .tab-btn { background: none; border: none; color: white; font-size: 22px; cursor: pointer; }
     </style>
 </head>
@@ -53,16 +54,16 @@
     <div id="alan"></div>
 
     <div class="alt-islem">
-        <button id="yemekDagitBtn" class="btn-main" onclick="yemekDagit()" style="display:none; background: var(--purple);">🍴 YEMEK DAĞIT & SON MOLA AYARLA</button>
+        <button id="yemekDagitBtn" class="btn-main" onclick="yemekDagit()" style="background: var(--purple);">🍴 YEMEK DAĞIT & SON MOLA AYARLA</button>
         
         <div class="row-btns">
-            <button id="yemekTakasBtn" class="btn-main" onclick="yemekTakas()" style="display:none; background: var(--pink);">🔄 YEMEK 1-2 YER DEĞİŞTİR & ÇAY 4 TAKAS</button>
-            <button id="kaydirBtn" class="btn-main" onclick="kaydir()" style="display:none; background: var(--accent);">🔄 1-2-3 KAYDIR</button>
+            <button id="yemekTakasBtn" class="btn-main" onclick="yemekTakas()" style="background: var(--pink);">🔄 YEMEK 1-2 TAKAS</button>
+            <button id="kaydirBtn" class="btn-main" onclick="kaydir()" style="background: var(--accent);">🔄 1-2-3 KAYDIR</button>
         </div>
 
         <div class="row-btns">
-            <button id="akilliKaydetBtn" class="btn-main" onclick="akilliKaydet()" style="display:none; background: var(--success);">✅ TÜMÜNE KOPYALA</button>
-            <button id="ozelKaydetBtn" class="btn-main" onclick="ozelKaydet()" style="display:none; background: var(--warning);">📝 MANUEL KAYDET</button>
+            <button id="akilliKaydetBtn" class="btn-main" onclick="akilliKaydet()" style="background: var(--success);">✅ TÜMÜNE KOPYALA</button>
+            <button id="ozelKaydetBtn" class="btn-main" onclick="ozelKaydet()" style="background: var(--warning);">📝 MANUEL KAYDET</button>
         </div>
     </div>
 </div>
@@ -80,16 +81,23 @@ const firebaseConfig = { apiKey: "AIzaSy...", authDomain: "ukasa1.firebaseapp.co
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// --- ADMIN KONTROLÜ (Garantili Çalışma) ---
 let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase().trim();
 let adminMi = (kullanici === "admin");
 
-if(adminMi) {
-    document.getElementById("akilliKaydetBtn").style.display = "block";
-    document.getElementById("ozelKaydetBtn").style.display = "block";
-    document.getElementById("kaydirBtn").style.display = "block";
-    document.getElementById("yemekDagitBtn").style.display = "block";
-    document.getElementById("yemekTakasBtn").style.display = "block";
+function adminPaneliniGoster() {
+    if(adminMi) {
+        const butonlar = ["akilliKaydetBtn", "ozelKaydetBtn", "kaydirBtn", "yemekDagitBtn", "yemekTakasBtn"];
+        butonlar.forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.style.display = "block";
+        });
+    }
 }
+
+// Sayfa yüklenince butonları kontrol et
+window.addEventListener('DOMContentLoaded', adminPaneliniGoster);
+// ------------------------------------------
 
 let alan = document.getElementById("alan");
 let state = {};
@@ -223,7 +231,6 @@ window.yemekDagit = async function() {
 window.yemekTakas = async function() {
     if(!adminMi) return;
     try {
-        // --- Yemek 1 ve Yemek 2 Takas ---
         let y1 = state["yemek1"]?.kisiler || [];
         let y2 = state["yemek2"]?.kisiler || [];
         state["yemek1"] = state["yemek1"] || {};
@@ -231,23 +238,20 @@ window.yemekTakas = async function() {
         state["yemek2"] = state["yemek2"] || {};
         state["yemek2"].kisiler = y1;
 
-        // --- Çay 4 İlk İki ve Son İki Takas ---
         let c4 = [...(state["cay4"]?.kisiler || [])];
         if(c4.length > 0) {
             let ilkIki = [c4[0], c4[1]];
             let sonIki = [c4[4], c4[5]];
-            
             c4[0] = sonIki[0] || "";
             c4[1] = sonIki[1] || "";
             c4[4] = ilkIki[0] || "";
             c4[5] = ilkIki[1] || "";
-            
             state["cay4"] = state["cay4"] || {};
             state["cay4"].kisiler = c4;
         }
 
         await setDoc(doc(db,"kasa","mola"),{data:state});
-        alert("Yemek 1-2 ve Çay 4 (İlk/Son) takası yapıldı!");
+        alert("Yemek 1-2 ve Çay 4 takası yapıldı!");
     } catch(e) { alert("Hata: " + e.message); }
 }
 
@@ -262,7 +266,7 @@ window.akilliKaydet = async function(){
             state["son"+i].kisiler = [...cayKisiler];
         }
         await setDoc(doc(db,"kasa","mola"),{data:state});
-        alert("Çay verileri Yemek ve Son molaya kopyalandı!");
+        alert("Çay verileri kopyalandı!");
     } catch(e) { alert("Hata: " + e.message); }
 }
 
@@ -273,6 +277,10 @@ window.ozelKaydet = async function(){
         alert("Tüm değişiklikler başarıyla kaydedildi!");
     } catch(e) { alert("Hata: " + e.message); }
 }
+
+// Fonksiyonları globale bağla (type module olduğu için gerekli)
+window.adminPaneliniGoster = adminPaneliniGoster;
+adminPaneliniGoster(); 
 </script>
 </body>
 </html>
