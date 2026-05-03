@@ -94,8 +94,8 @@
 </div>
 
 <script>
-    // GÜNCEL SCRIPT URL (v15)
-    const scriptUrl = "https://script.google.com/macros/s/AKfycbzOYP6ZkasqD8bZs4WJzRgqHgUrmaKJaX3irVlToH9XIFnw6DmvJ90ps82srKFzTn_E/exec";
+    // GÜNCEL SCRIPT URL (v16)
+    const scriptUrl = "https://script.google.com/macros/s/AKfycbyUx6BTRmMNOXbIv3ekIO3emh0Jnivc9diu1U7U2JSk94YS3slTPm3M71r8pp-aTR_S/exec";
 
     window.onload = fetchSheets;
 
@@ -110,7 +110,8 @@
         status.style.color = "var(--warning)";
 
         try {
-            const resp = await fetch(`${scriptUrl}?action=checkConflict&start=${start}&end=${end}`);
+            // URL'ye timestamp ekleyerek cache (önbellek) sorunlarını önlüyoruz
+            const resp = await fetch(`${scriptUrl}?action=checkConflict&start=${start}&end=${end}&t=${new Date().getTime()}`);
             const result = await resp.json();
 
             if (result.exists) {
@@ -161,6 +162,9 @@
         const inputs = document.querySelectorAll(`.input-${containerId}`);
         const rowData = Array.from(inputs).map(i => i.value);
         
+        // Boş veri kontrolü
+        if(rowData.filter(r => r.trim() !== "").length === 0) return alert("Lütfen verileri doldurun!");
+
         const btn = event.target;
         const originalText = btn.innerText;
         btn.disabled = true;
@@ -193,14 +197,14 @@
             const data = await resp.json();
             const sel = document.getElementById("sheetSelector");
             
-            // "İzin" sayfasını hem GAS tarafında hem burada filtreliyoruz (Garanti çözüm)
+            // "İzin" sayfasını listeden kesin olarak filtrele
             const filtered = data.sheets.filter(s => s.trim().toLowerCase() !== "izin");
             
             sel.innerHTML = '<option value="">Sayfa Seçiniz...</option>' + 
                             filtered.map(s => `<option value="${s}">${s}</option>`).join("");
         } catch (e) {
             console.error("Sayfa listesi alınamadı.");
-            document.getElementById("sheetSelector").innerHTML = '<option value="">Hata!</option>';
+            document.getElementById("sheetSelector").innerHTML = '<option value="">Yükleme Hatası!</option>';
         }
     }
 
