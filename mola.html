@@ -35,7 +35,6 @@
 
         .alt-islem { position: fixed; bottom: 80px; left: 0; width: 100%; display: flex; flex-direction: column; gap: 6px; padding: 0 15px; z-index: 1001; }
         .row-btns { display: flex; gap: 6px; }
-        /* Butonlar varsayılan olarak gizli */
         .btn-main { flex: 1; padding: 12px; border-radius: 12px; border: none; font-weight: 800; color: white; font-size: 10px; cursor: pointer; text-transform: uppercase; display: none; }
 
         .tabbar { position: fixed; bottom: 0; width: 100%; height: 70px; background: rgba(22, 30, 49, 0.95); backdrop-filter: blur(20px); display: flex; justify-content: space-around; align-items: center; border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; z-index: 1000; }
@@ -78,23 +77,12 @@ const firebaseConfig = { apiKey: "AIzaSy...", authDomain: "ukasa1.firebaseapp.co
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- KRİTİK ADMİN KONTROLÜ ---
-// Tarayıcı hafızasındaki kullanıcıyı kontrol et
 const girisYapan = (localStorage.getItem("kullanici") || "").toLowerCase().trim();
 const adminMi = (girisYapan === "admin");
 
-// Butonları görünür yapma fonksiyonu
 function adminArayuzunuHazirla() {
     if (adminMi) {
-        console.log("Admin girişi tespit edildi. Panel açılıyor...");
-        const adminButonlari = [
-            "akilliKaydetBtn", 
-            "ozelKaydetBtn", 
-            "kaydirBtn", 
-            "yemekDagitBtn", 
-            "yemekTakasBtn"
-        ];
-        
+        const adminButonlari = ["akilliKaydetBtn", "ozelKaydetBtn", "kaydirBtn", "yemekDagitBtn", "yemekTakasBtn"];
         adminButonlari.forEach(id => {
             const btn = document.getElementById(id);
             if (btn) btn.style.display = "block";
@@ -102,15 +90,12 @@ function adminArayuzunuHazirla() {
     }
 }
 
-// Sayfa yüklendiğinde çalıştır
 window.addEventListener('DOMContentLoaded', adminArayuzunuHazirla);
-// Modül yüklendiğinde hemen çalıştır (Hız için)
 adminArayuzunuHazirla();
 
 let alan = document.getElementById("alan");
 let state = {};
 
-// Veri Çekme
 onSnapshot(doc(db, "kasa", "mola"), (snap) => {
     state = snap.exists() ? snap.data().data : {};
     alan.innerHTML = "";
@@ -191,16 +176,15 @@ function blok(key, sureKey){
     return b;
 }
 
-// --- FONKSİYONLAR ---
 window.kaydir = function(){
     if(!adminMi) return;
     ["cay","yemek","son"].forEach(grup=>{
         let p1 = state[grup+"1"]?.kisiler || [];
         let p2 = state[grup+"2"]?.kisiler || [];
         let p3 = state[grup+"3"]?.kisiler || [];
-        state[grup+"1"] = state[grup+"1"] || {}; state[grup+"1"].kisiler = p3;
-        state[grup+"2"] = state[grup+"2"] || {}; state[grup+"2"].kisiler = p1;
-        state[grup+"3"] = state[grup+"3"] || {}; state[grup+"3"].kisiler = p2;
+        state[grup+"1"] = { ...state[grup+"1"], kisiler: p3 };
+        state[grup+"2"] = { ...state[grup+"2"], kisiler: p1 };
+        state[grup+"3"] = { ...state[grup+"3"], kisiler: p2 };
     });
     alert("Kaydırıldı! Manuel Kaydet yapmayı unutmayın.");
 }
@@ -210,16 +194,19 @@ window.yemekDagit = async function() {
     try {
         let cay1 = (state["cay1"]?.kisiler || []).filter(x => x && x.trim() !== "");
         let yarisi = Math.ceil(cay1.length / 2);
-        state["yemek1"] = { kisiler: cay1.slice(0, yarisi) };
-        state["yemek2"] = { kisiler: cay1.slice(yarisi) };
-        state["yemek3"] = { kisiler: [...(state["cay2"]?.kisiler || [])] };
-        state["yemek4"] = { kisiler: [...(state["cay3"]?.kisiler || [])] };
-        state["son1"] = { kisiler: [...(state["cay4"]?.kisiler || [])] };
-        state["son2"] = { kisiler: [...(state["cay1"]?.kisiler || [])] };
-        state["son3"] = { kisiler: [...(state["cay2"]?.kisiler || [])] };
-        state["son4"] = { kisiler: [...(state["cay3"]?.kisiler || [])] };
+        
+        state["yemek1"] = { ...state["yemek1"], kisiler: cay1.slice(0, yarisi) };
+        state["yemek2"] = { ...state["yemek2"], kisiler: cay1.slice(yarisi) };
+        state["yemek3"] = { ...state["yemek3"], kisiler: [...(state["cay2"]?.kisiler || [])] };
+        state["yemek4"] = { ...state["yemek4"], kisiler: [...(state["cay3"]?.kisiler || [])] };
+        
+        state["son1"] = { ...state["son1"], kisiler: [...(state["cay4"]?.kisiler || [])] };
+        state["son2"] = { ...state["son2"], kisiler: [...(state["cay1"]?.kisiler || [])] };
+        state["son3"] = { ...state["son3"], kisiler: [...(state["cay2"]?.kisiler || [])] };
+        state["son4"] = { ...state["son4"], kisiler: [...(state["cay3"]?.kisiler || [])] };
+        
         await setDoc(doc(db,"kasa","mola"),{data:state});
-        alert("Dağıtım Yapıldı!");
+        alert("Dağıtım Yapıldı! Saatler korundu.");
     } catch(e) { alert("Hata: " + e.message); }
 }
 
@@ -231,7 +218,7 @@ window.yemekTakas = async function() {
         state["yemek1"] = { ...state["yemek1"], kisiler: y2 };
         state["yemek2"] = { ...state["yemek2"], kisiler: y1 };
         await setDoc(doc(db,"kasa","mola"),{data:state});
-        alert("Yemekler Takas Edildi!");
+        alert("Yemekler Takas Edildi! Saatler korundu.");
     } catch(e) { alert("Hata: " + e.message); }
 }
 
@@ -244,7 +231,7 @@ window.akilliKaydet = async function(){
             state["son"+i] = { ...state["son"+i], kisiler: [...cayKisiler] };
         }
         await setDoc(doc(db,"kasa","mola"),{data:state});
-        alert("Tümüne Kopyalandı!");
+        alert("Tümüne Kopyalandı! Saatler korundu.");
     } catch(e) { alert("Hata: " + e.message); }
 }
 
