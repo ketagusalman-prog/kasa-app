@@ -91,7 +91,6 @@
         .admin-tools { position: fixed; right: 15px; bottom: 80px; display: flex; flex-direction: column; gap: 8px; z-index: 2000; }
         .admin-tools button { width: 45px; height: 45px; border-radius: 12px; border: none; color: white; font-size: 18px; display: none; align-items: center; justify-content: center; }
 
-        /* YENİ PERSONEL PANELİ TASARIMI */
         .panel { 
             background: var(--card); 
             border-radius: 24px; 
@@ -125,7 +124,6 @@
         }
         .personel-row:last-child { border: none; }
         .btn-sil { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: none; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; }
-
     </style>
 </head>
 <body>
@@ -192,6 +190,18 @@ let adminMi = false;
 let molaData = {};
 let refs = { isimler: [], barkodlar: [], basliklar: [] };
 
+// Sayfa yenilendiğinde adminliği hatırla
+window.addEventListener('DOMContentLoaded', () => {
+    const hafiza = localStorage.getItem("kullanici");
+    if (hafiza === "admin") {
+        adminMi = true;
+        document.body.classList.add("girisYapildi");
+        document.getElementById("login").style.display = "none";
+        document.querySelectorAll(".admin-tools button").forEach(el => el.style.display = "flex");
+        olustur();
+    }
+});
+
 onSnapshot(doc(db, "kasa", "ayarlar"), snap => {
     if (snap.exists() && snap.data().arkaPlan) {
         document.body.style.backgroundImage = `url('${snap.data().arkaPlan}')`;
@@ -202,13 +212,18 @@ onSnapshot(doc(db, "kasa", "ayarlar"), snap => {
 document.getElementById("girisBtn").onclick = () => {
     const k = document.getElementById("kullanici").value.trim();
     const s = document.getElementById("sifre").value.trim();
+    
     if (k === admin.k && s === admin.s) {
         adminMi = true;
+        // BİLGİYİ HAFIZAYA KAYDET
+        localStorage.setItem("kullanici", "admin");
         document.querySelectorAll(".admin-tools button").forEach(el => el.style.display = "flex");
     } else {
         const p = personeller.find(x => x.k === k && x.s === s);
         if (!p) { alert("Hatalı Giriş!"); return; }
         adminMi = false;
+        // NORMAL KULLANICIYI KAYDET
+        localStorage.setItem("kullanici", k);
     }
     document.body.classList.add("girisYapildi");
     document.getElementById("login").style.display = "none";
@@ -217,7 +232,6 @@ document.getElementById("girisBtn").onclick = () => {
 
 document.getElementById("panelBtn").onclick = () => document.getElementById("panel").classList.toggle("acik");
 
-// SAYAÇ VE MOLA MANTIĞI (Aynen Korundu)
 setInterval(() => {
     if (!molaData) return;
     const simdi = new Date();
@@ -334,6 +348,7 @@ document.getElementById("kaydetBtn").onclick = async () => {
 };
 
 document.getElementById("kaydirBtn").onclick = async () => {
+    if (!adminMi) return;
     let isimler = refs.isimler.map(r => r.value);
     let sonIki = isimler.splice(-2);
     isimler.unshift(...sonIki);
@@ -345,6 +360,7 @@ document.getElementById("kaydirBtn").onclick = async () => {
 };
 
 document.getElementById("degistirBtn").onclick = async () => {
+    if (!adminMi) return;
     let data = {};
     for (let i = 0; i < 12; i += 2) {
         data["kasa" + (i + 1)] = { isim: refs.isimler[i+1].value, barkod: refs.barkodlar[i].value, baslik: refs.basliklar[i].value };
@@ -364,6 +380,7 @@ onSnapshot(doc(db, "kasa", "mola"), snap => {
 });
 
 window.ekle = async () => {
+    if (!adminMi) return;
     const k = document.getElementById("yeniK").value.trim();
     const s = document.getElementById("yeniS").value.trim();
     if(k && s) {
@@ -372,8 +389,6 @@ window.ekle = async () => {
         document.getElementById("yeniK").value = ""; 
         document.getElementById("yeniS").value = "";
         alert("Personel Eklendi!");
-    } else {
-        alert("Lütfen tüm alanları doldurun.");
     }
 };
 
@@ -388,7 +403,8 @@ function listeGoster() {
 }
 
 window.sil = async (i) => {
-    if(confirm("Bu personeli silmek istediğinize emin misiniz?")) {
+    if (!adminMi) return;
+    if(confirm("Silinsin mi?")) {
         personeller.splice(i, 1);
         await setDoc(doc(db, "kasa", "personel"), { liste: personeller });
     }
