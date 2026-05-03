@@ -89,6 +89,9 @@ const firebaseConfig = { apiKey: "AIzaSyChKcwZnw1fe_SFWy2dJA_JZOMiKghF5_o", auth
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// Sizin API Key'iniz buraya entegre edildi
+const GROQ_API_KEY = "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";
+
 let currentUserKadi = ""; let realName = ""; let isAdmin = false;
 let dbData = { izin: "", magaza: "", kasaonu: "", users: "", kurallar: "", feedback: "" };
 let personeller = [];
@@ -110,7 +113,6 @@ onSnapshot(doc(db, "kasa", "bilgiBankasi"), snap => {
     }
 });
 
-// Gelişmiş Çakışma Kontrolü (Client-Side)
 function isConflict(startStr, endStr, userName) {
     const start = new Date(startStr).getTime();
     const end = new Date(endStr).getTime();
@@ -123,8 +125,6 @@ function isConflict(startStr, endStr, userName) {
                 const dates = parts[2].split('/');
                 const exStart = new Date(dates[0].trim()).getTime();
                 const exEnd = new Date(dates[1].trim()).getTime();
-                
-                // Karşılıklı çakışma mantığı
                 if ((start <= exEnd && start >= exStart) || (end <= exEnd && end >= exStart) || (start <= exStart && end >= exEnd)) {
                     return true;
                 }
@@ -193,13 +193,10 @@ document.getElementById("submitLeaveBtn").onclick = async () => {
     const s = document.getElementById("leaveStart").value;
     const e = document.getElementById("leaveEnd").value;
     if (!s || !e) { alert("Lütfen tarihleri seçin."); return; }
-    
-    // PERSONEL GÖNDERMEDEN ÖNCE ÇAKIŞMA KONTROLÜ
     if (isConflict(s, e, realName)) {
         alert("Üzgünüm, seçtiğiniz tarihlerde zaten onaylanmış bir izniniz bulunuyor. Lütfen tarihleri kontrol edip tekrar deneyin.");
         return; 
     }
-
     if(!confirm(`${s} - ${e} tarihleri için izin talebi gönderilsin mi?`)) return;
     await updateDoc(doc(db, "kasa", "talepler"), { liste: arrayUnion(`İZİN: ${realName.toUpperCase()}: ${s} / ${e}`) });
     appendMsg("Umut Salman'ın dijital asistanıyım; talebiniz incelenmek üzere başarıyla iletildi.", "ai"); 
@@ -208,15 +205,22 @@ document.getElementById("submitLeaveBtn").onclick = async () => {
 
 document.getElementById("sendBtn").addEventListener("click", async () => {
     const input = document.getElementById("userInput"); const text = input.value.trim(); if (!text) return;
-    let savedKey = localStorage.getItem("groq_api_key");
-    if (!savedKey) { savedKey = prompt("Groq API Key?"); if (savedKey) localStorage.setItem("groq_api_key", savedKey.trim()); else return; }
+    
     appendMsg(text, "user"); input.value = "";
     const filterData = (str) => isAdmin ? str : (str || "").split('\n').filter(l => l.toUpperCase().includes(realName.toUpperCase())).join('\n');
     const context = `PANEL: Duyuru:${dbData.magaza}, Kural:${dbData.kurallar}, İzin:${filterData(dbData.izin)}, Kasa:${filterData(dbData.kasaonu)}`;
     try {
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST", headers: { "Authorization": `Bearer ${savedKey}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ model: "llama-3.1-8b-instant", messages: [{role:"system", content:`Umut Salman asistanıyım. Kullanıcı: ${realName}. Veriler: ${context}`}, ...chatHistory, {role:"user", content:text}], temperature: 0.1 })
+            method: "POST", 
+            headers: { 
+                "Authorization": `Bearer ${GROQ_API_KEY}`, 
+                "Content-Type": "application/json" 
+            },
+            body: JSON.stringify({ 
+                model: "llama-3.1-8b-instant", 
+                messages: [{role:"system", content:`Umut Salman asistanıyım. Kullanıcı: ${realName}. Veriler: ${context}`}, ...chatHistory, {role:"user", content:text}], 
+                temperature: 0.1 
+            })
         });
         const data = await response.json(); const aiResp = data.choices[0].message.content;
         chatHistory.push({role:"user", content:text}, {role:"assistant", content:aiResp});
