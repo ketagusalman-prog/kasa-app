@@ -91,7 +91,6 @@
         .admin-tools { position: fixed; right: 15px; bottom: 80px; display: flex; flex-direction: column; gap: 8px; z-index: 2000; }
         .admin-tools button { width: 45px; height: 45px; border-radius: 12px; border: none; color: white; font-size: 18px; display: none; align-items: center; justify-content: center; }
 
-        /* YENİ PERSONEL PANELİ TASARIMI */
         .panel { 
             background: var(--card); 
             border-radius: 24px; 
@@ -146,7 +145,8 @@
 </div>
 
 <div id="app">
-    <button class="btn-primary" style="background: linear-gradient(135deg, #6366f1, #4f46e5); margin-bottom:15px; height:40px;" onclick="location.href='mola.html'">☕ MOLA DURUMU</button>
+    <!-- Mola Durumu Butonu: Sadece Adminlere Gösterilecek -->
+    <button id="molaDurumBtn" class="btn-primary" style="display:none; background: linear-gradient(135deg, #6366f1, #4f46e5); margin-bottom:15px; height:40px;" onclick="location.href='mola.html'">☕ MOLA DURUMU</button>
     
     <div id="alan"></div>
 
@@ -174,8 +174,9 @@
 
 <div class="tabbar">
     <button onclick="location.reload()" style="background:none; border:none; font-size:22px; color:white;">🏠</button>
-        <button onclick="location.href='kasadeğişim.html'" style="background:none; border:none; font-size:22px; color:white;">🧭</button>
-    <button onclick="location.href='mola.html'" style="background:none; border:none; font-size:22px; color:white;">☕</button>
+    <button onclick="location.href='kasadeğişim.html'" style="background:none; border:none; font-size:22px; color:white;">🧭</button>
+    <!-- Tabbar Mola Simgesi: Sadece Adminlere Gösterilecek -->
+    <button id="tabMolaBtn" onclick="location.href='mola.html'" style="display:none; background:none; border:none; font-size:22px; color:white;">☕</button>
 </div>
 
 <script type="module">
@@ -202,14 +203,22 @@ onSnapshot(doc(db, "kasa", "ayarlar"), snap => {
 document.getElementById("girisBtn").onclick = () => {
     const k = document.getElementById("kullanici").value.trim();
     const s = document.getElementById("sifre").value.trim();
+    
     if (k === admin.k && s === admin.s) {
         adminMi = true;
+        // Admin yetkilerini aç
         document.querySelectorAll(".admin-tools button").forEach(el => el.style.display = "flex");
+        document.getElementById("molaDurumBtn").style.display = "block";
+        document.getElementById("tabMolaBtn").style.display = "block";
     } else {
         const p = personeller.find(x => x.k === k && x.s === s);
         if (!p) { alert("Hatalı Giriş!"); return; }
         adminMi = false;
+        // Normal kullanıcı için mola butonlarını gizle
+        document.getElementById("molaDurumBtn").style.display = "none";
+        document.getElementById("tabMolaBtn").style.display = "none";
     }
+    
     document.body.classList.add("girisYapildi");
     document.getElementById("login").style.display = "none";
     olustur();
@@ -217,7 +226,7 @@ document.getElementById("girisBtn").onclick = () => {
 
 document.getElementById("panelBtn").onclick = () => document.getElementById("panel").classList.toggle("acik");
 
-// SAYAÇ VE MOLA MANTIĞI (Aynen Korundu)
+// SAYAÇ VE MOLA MANTIĞI
 setInterval(() => {
     if (!molaData) return;
     const simdi = new Date();
