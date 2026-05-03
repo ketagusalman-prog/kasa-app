@@ -1,407 +1,795 @@
  <!DOCTYPE html>
+
 <html lang="tr">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+
     <meta name="apple-mobile-web-app-capable" content="yes">
+
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
     <title>Kasa Kontrol Premium V12</title>
+
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+
     <style>
+
         :root { 
+
             --bg: #0b0f1a; 
+
             --card: rgba(22, 30, 49, 0.85); 
+
             --accent: #3b82f6; 
+
             --text: #ffffff;
+
             --border: rgba(255, 255, 255, 0.1);
+
             --green: #10b981;
+
             --orange: #f59e0b;
+
             --purple: #a855f7;
+
             --danger: #ef4444;
+
         }
+
         
+
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
 
+
+
         body { 
+
             font-family: 'Plus Jakarta Sans', sans-serif; 
+
             background: var(--bg);
+
             background-size: cover;
+
             background-position: center;
+
             background-attachment: fixed;
+
             color: var(--text); 
+
             margin: 0; 
+
             min-height: 100vh;
+
             transition: background 0.5s ease;
+
         }
+
+
 
         body::before {
+
             content: "";
+
             position: fixed;
+
             top: 0; left: 0; width: 100%; height: 100%;
+
             background: rgba(0, 0, 0, 0.4);
+
             z-index: -1;
+
         }
 
+
+
         .appbar { display: none; position: fixed; top: 0; width: 100%; height: 50px; background: rgba(11, 15, 26, 0.8); backdrop-filter: blur(20px); justify-content: center; align-items: center; font-weight: 800; z-index: 1000; border-bottom: 1px solid var(--border); color: var(--accent); letter-spacing: 1px; font-size: 14px; }
+
         .tabbar { display: none; position: fixed; bottom: 0; width: 100%; height: 60px; background: rgba(22, 30, 49, 0.9); backdrop-filter: blur(25px); justify-content: space-around; align-items: center; z-index: 1000; border-top: 1px solid var(--border); padding-bottom: env(safe-area-inset-bottom); border-radius: 20px 20px 0 0; }
+
         body.girisYapildi .appbar, body.girisYapildi .tabbar { display: flex; }
 
+
+
         #anaSayac { font-size: 32px; font-weight: 800; margin-bottom: 10px; color: var(--orange); text-shadow: 0 0 15px rgba(245, 158, 11, 0.4); font-variant-numeric: tabular-nums; }
+
         #anaGrup { font-size: 11px; color: #94a3b8; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 1px; }
 
+
+
         #login { height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+
         .loginCard { width: 100%; max-width: 350px; background: var(--card); padding: 30px; border-radius: 25px; text-align: center; border: 1px solid var(--border); backdrop-filter: blur(15px); }
 
+
+
         #app { display: none; padding: 60px 10px 100px 10px; max-width: 600px; margin: 0 auto; }
+
         body.girisYapildi #app { display: block; }
+
+
 
         #alan { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 
+
+
         .kasa-birimi { 
+
             background: var(--card); border-radius: 16px; padding: 8px; 
+
             border: 1px solid var(--border); display: flex; flex-direction: column; 
+
             gap: 6px; min-height: 110px; backdrop-filter: blur(10px);
+
             box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.2s;
+
             border-left: 4px solid transparent;
+
         }
+
         
+
         .kasa-birimi.mola-aktif {
+
             animation: mola-blink 1s infinite !important;
+
             border: 1.5px solid var(--danger) !important;
+
             border-left: 6px solid var(--danger) !important;
+
         }
+
+
 
         @keyframes mola-blink {
+
             0%, 100% { background: rgba(22, 30, 49, 0.85); }
+
             50% { background: rgba(239, 68, 68, 0.2); }
+
         }
+
+
 
         .g-mavi { border-left-color: var(--accent) !important; }
+
         .g-turuncu { border-left-color: var(--orange) !important; }
+
         .g-mor { border-left-color: var(--purple) !important; }
 
+
+
         .sabit-no { font-size: 9px; font-weight: 800; color: #94a3b8; }
+
         .kasa-baslik-input { background: transparent; border: none; color: var(--accent); font-weight: 800; font-size: 12px; width: 100%; }
+
         .barkod-konteynir { background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 8px; border: 1px solid var(--border); }
+
         .barkod-input { background: transparent; border: none; color: #cbd5e1; font-size: 10px; width: 100%; }
+
         .personel-input { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 10px; color: white; padding: 8px; font-size: 11px; font-weight: 600; text-align: center; width: 100%; }
 
+
+
         .btn-primary { width: 100%; height: 45px; border-radius: 12px; border: none; font-weight: 800; color: white; cursor: pointer; font-size: 13px; }
+
         
+
         .admin-tools { position: fixed; right: 15px; bottom: 80px; display: flex; flex-direction: column; gap: 8px; z-index: 2000; }
+
         .admin-tools button { width: 45px; height: 45px; border-radius: 12px; border: none; color: white; font-size: 18px; display: none; align-items: center; justify-content: center; }
 
+
+
+        /* YENİ PERSONEL PANELİ TASARIMI */
+
         .panel { 
+
             background: var(--card); 
+
             border-radius: 24px; 
+
             overflow: hidden; 
+
             max-height: 0; 
+
             transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); 
+
             backdrop-filter: blur(25px);
+
             box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+
             border: 0 solid var(--border);
+
         }
+
         .panel.acik { 
+
             max-height: 600px; 
+
             padding: 20px; 
+
             border: 1px solid var(--border); 
+
             margin-bottom: 20px;
+
             overflow-y: auto;
+
         }
+
+
 
         .panel-header { color: var(--accent); font-size: 14px; font-weight: 800; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+
         .panel-input { 
+
             width: 100%; padding: 12px; margin-bottom: 10px; 
+
             background: rgba(0,0,0,0.3); border: 1px solid var(--border); 
+
             color: white; border-radius: 12px; font-size: 13px;
+
         }
+
         
+
         #liste { margin-top: 15px; background: rgba(0,0,0,0.1); border-radius: 15px; padding: 5px; }
+
         .personel-row { 
+
             display: flex; justify-content: space-between; align-items: center; 
+
             padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);
+
             font-size: 13px; font-weight: 600;
+
         }
+
         .personel-row:last-child { border: none; }
+
         .btn-sil { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: none; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; }
 
+
+
     </style>
+
 </head>
+
 <body>
+
+
 
 <div class="appbar">PREMIUM KASA YÖNETİM</div>
 
+
+
 <div id="login">
+
     <div class="loginCard">
+
         <div id="anaGrup">MOLA BEKLENİYOR</div>
+
         <div id="anaSayac">00:00</div>
+
         <button onclick="location.href='hali.html'" style="background:#10b981; color:white; border:none; padding:8px 15px; border-radius:50px; font-weight:800; font-size:10px; margin-bottom:15px; cursor:pointer;">⚽ HALISAHA</button>
+
         
+
         <h3>Sistem Girişi</h3>
+
         <input type="text" id="kullanici" placeholder="Kullanıcı" class="panel-input" style="margin-bottom:8px;">
+
         <input type="password" id="sifre" placeholder="Şifre" class="panel-input" style="margin-bottom:15px;">
+
         <button id="girisBtn" class="btn-primary" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">BAŞLAT</button>
+
     </div>
+
 </div>
+
+
 
 <div id="app">
-    <!-- Mola Durumu Butonu: Sadece Adminlere Gösterilecek -->
-    <button id="molaDurumBtn" class="btn-primary" style="display:none; background: linear-gradient(135deg, #6366f1, #4f46e5); margin-bottom:15px; height:40px;" onclick="location.href='mola.html'">☕ MOLA DURUMU</button>
+
+    <button class="btn-primary" style="background: linear-gradient(135deg, #6366f1, #4f46e5); margin-bottom:15px; height:40px;" onclick="location.href='mola.html'">☕ MOLA DURUMU</button>
+
     
+
     <div id="alan"></div>
 
+
+
     <div id="panel" class="panel">
+
         <div class="panel-header">🎨 GÖRÜNÜM AYARLARI</div>
+
         <input id="bgUrl" class="panel-input" placeholder="Arka Plan Resim URL">
+
         
+
         <div class="panel-header" style="color:var(--green); margin-top:10px;">👤 PERSONEL EKLE</div>
+
         <input id="yeniK" class="panel-input" placeholder="Kullanıcı Adı">
+
         <input id="yeniS" type="password" class="panel-input" placeholder="Şifre">
+
         <button class="btn-primary" onclick="ekle()" style="background: var(--green); height:40px; font-size:12px;">SİSTEME KAYDET</button>
+
         
+
         <div class="panel-header" style="color: #94a3b8; font-size: 12px; margin-top:20px;">📋 KAYITLI LİSTE</div>
+
         <div id="liste"></div>
+
     </div>
+
+
 
     <div class="admin-tools">
+
         <button id="msjBtn" style="background: #ec4899;" onclick="location.href='mesaj.html'">📩</button>
+
         <button id="kaydetBtn" style="background: #10b981;">💾</button>
+
         <button id="kaydirBtn" style="background: #3b82f6;">⬇️</button>
+
         <button id="degistirBtn" style="background: #8b5cf6;">↔️</button>
+
         <button id="panelBtn" style="background: #475569;">👥</button>
+
     </div>
+
 </div>
+
+
 
 <div class="tabbar">
+
     <button onclick="location.reload()" style="background:none; border:none; font-size:22px; color:white;">🏠</button>
-    <button onclick="location.href='kasadeğişim.html'" style="background:none; border:none; font-size:22px; color:white;">🧭</button>
-    <!-- Tabbar Mola Simgesi: Sadece Adminlere Gösterilecek -->
-    <button id="tabMolaBtn" onclick="location.href='mola.html'" style="display:none; background:none; border:none; font-size:22px; color:white;">☕</button>
+
+        <button onclick="location.href='kasadeğişim.html'" style="background:none; border:none; font-size:22px; color:white;">🧭</button>
+
+    <button onclick="location.href='mola.html'" style="background:none; border:none; font-size:22px; color:white;">☕</button>
+
 </div>
 
+
+
 <script type="module">
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+
 import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+
+
 const firebaseConfig = { apiKey: "AIzaSy...", authDomain: "ukasa1.firebaseapp.com", projectId: "ukasa1" };
+
 const app = initializeApp(firebaseConfig);
+
 const db = getFirestore(app);
 
+
+
 let admin = { k: "admin", s: "1234" };
+
 let personeller = [];
+
 let adminMi = false;
+
 let molaData = {};
+
 let refs = { isimler: [], barkodlar: [], basliklar: [] };
 
+
+
 onSnapshot(doc(db, "kasa", "ayarlar"), snap => {
+
     if (snap.exists() && snap.data().arkaPlan) {
+
         document.body.style.backgroundImage = `url('${snap.data().arkaPlan}')`;
+
         document.getElementById("bgUrl").value = snap.data().arkaPlan;
+
     }
+
 });
 
+
+
 document.getElementById("girisBtn").onclick = () => {
+
     const k = document.getElementById("kullanici").value.trim();
+
     const s = document.getElementById("sifre").value.trim();
-    
+
     if (k === admin.k && s === admin.s) {
+
         adminMi = true;
-        // Admin yetkilerini aç
+
         document.querySelectorAll(".admin-tools button").forEach(el => el.style.display = "flex");
-        document.getElementById("molaDurumBtn").style.display = "block";
-        document.getElementById("tabMolaBtn").style.display = "block";
+
     } else {
+
         const p = personeller.find(x => x.k === k && x.s === s);
+
         if (!p) { alert("Hatalı Giriş!"); return; }
+
         adminMi = false;
-        // Normal kullanıcı için mola butonlarını gizle
-        document.getElementById("molaDurumBtn").style.display = "none";
-        document.getElementById("tabMolaBtn").style.display = "none";
+
     }
-    
+
     document.body.classList.add("girisYapildi");
+
     document.getElementById("login").style.display = "none";
+
     olustur();
+
 };
+
+
 
 document.getElementById("panelBtn").onclick = () => document.getElementById("panel").classList.toggle("acik");
 
-// SAYAÇ VE MOLA MANTIĞI
+
+
+// SAYAÇ VE MOLA MANTIĞI (Aynen Korundu)
+
 setInterval(() => {
+
     if (!molaData) return;
+
     const simdi = new Date();
+
     let aktifMola = null;
+
     let enYakinMola = null;
+
     let minFark = Infinity;
 
+
+
     const gruplar = ["cay1", "cay2", "cay3", "cay4", "yemek1", "yemek2", "yemek3", "yemek4", "son1", "son2", "son3", "son4"];
+
     
+
     gruplar.forEach(g => {
+
         const m = molaData[g];
+
         if (m?.saat) {
+
             const [h, min] = m.saat.split(":");
+
             const hedef = new Date(); hedef.setHours(h, min, 0);
+
             const fark = (hedef - simdi) / 1000;
+
             const sure = (molaData[g.replace(/[0-9]/g, "") + "Sure"]?.sure || 15) * 60;
 
+
+
             if (fark <= 0 && fark > -sure) aktifMola = { fark: Math.abs(fark + sure), ad: g };
+
             if (fark > 0 && fark < minFark) { minFark = fark; enYakinMola = { fark, ad: g }; }
+
         }
+
     });
+
+
 
     const display = document.getElementById("anaSayac");
+
     const label = document.getElementById("anaGrup");
 
+
+
     if (aktifMola) {
+
         const s = Math.floor(aktifMola.fark);
+
         display.innerHTML = `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+
         label.innerHTML = aktifMola.ad.toUpperCase() + " DEVAM EDİYOR";
+
         display.style.color = "#10b981";
+
     } else if (enYakinMola) {
+
         const s = Math.floor(enYakinMola.fark);
+
         display.innerHTML = `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+
         label.innerHTML = enYakinMola.ad.toUpperCase() + " BAŞLAYACAK";
+
         display.style.color = "#f59e0b";
+
     }
+
 }, 1000);
 
+
+
 function moladaMi(isim) {
+
     if (!isim || !molaData) return false;
+
     const gruplar = ["cay", "yemek", "son"];
+
     const simdi = new Date();
+
     for (let g of gruplar) {
+
         for (let i = 1; i <= 4; i++) {
+
             let m = molaData[g + i];
+
             if (!m?.saat || !m.kisiler) continue;
+
             let [h, min] = m.saat.split(":");
+
             let hedef = new Date(); hedef.setHours(parseInt(h), parseInt(min), 0);
+
             let farkSaniye = (hedef - simdi) / 1000;
+
             let sureSaniye = (molaData[g + "Sure"]?.sure || 15) * 60;
+
             
+
             if (farkSaniye <= 0 && farkSaniye > -sureSaniye) {
+
                 if (m.kisiler.map(x => x.toLowerCase().trim()).includes(isim.toLowerCase().trim())) return true;
+
             }
+
         }
+
     }
+
     return false;
+
 }
+
+
 
 function olustur() {
+
     onSnapshot(doc(db, "kasa", "liste"), snap => {
+
         const data = snap.exists() ? snap.data().data : {};
+
         const alan = document.getElementById("alan");
+
         alan.innerHTML = "";
+
         refs = { isimler: [], barkodlar: [], basliklar: [] };
 
+
+
         for (let i = 1; i <= 12; i++) {
+
             const v = data["kasa" + i] || { isim: "", barkod: "", baslik: "KASA " + i };
+
             const birim = document.createElement("div");
+
             
+
             const isMola = moladaMi(v.isim);
+
             let molaGrubu = "";
+
             
+
             if (v.isim) {
+
                 const isim = v.isim.toLowerCase().trim();
+
                 const g1 = molaData["cay1"]?.kisiler?.map(x => x.toLowerCase().trim()) || [];
+
                 const g2 = molaData["cay2"]?.kisiler?.map(x => x.toLowerCase().trim()) || [];
+
                 const g3 = molaData["cay3"]?.kisiler?.map(x => x.toLowerCase().trim()) || [];
+
                 const g4 = molaData["cay4"]?.kisiler?.map(x => x.toLowerCase().trim()) || [];
 
+
+
                 if (g1.includes(isim)) molaGrubu = "g-mavi";
+
                 else if (g2.includes(isim)) molaGrubu = "g-turuncu";
+
                 else if (g3.includes(isim) || g4.includes(isim)) molaGrubu = "g-mor";
+
             }
 
+
+
             birim.className = `kasa-birimi ${molaGrubu} ${isMola ? 'mola-aktif' : ''}`;
+
             birim.innerHTML = `
+
                 <div class="sabit-no">#${i}</div>
+
                 <input class="kasa-baslik-input" value="${v.baslik}" ${!adminMi ? 'disabled' : ''}>
+
                 <div class="barkod-konteynir">
+
                     <input class="barkod-input" value="${v.barkod || ''}" ${!adminMi ? 'disabled' : ''}>
+
                 </div>
+
                 <input class="personel-input" value="${v.isim || ''}" placeholder="..." ${!adminMi ? 'disabled' : ''}>
+
             `;
+
             
+
             alan.appendChild(birim);
+
             refs.basliklar.push(birim.querySelector('.kasa-baslik-input'));
+
             refs.barkodlar.push(birim.querySelector('.barkod-input'));
+
             refs.isimler.push(birim.querySelector('.personel-input'));
+
         }
+
     });
+
 }
+
+
 
 document.getElementById("kaydetBtn").onclick = async () => {
+
     if (!adminMi) return;
+
     let data = {};
+
     for (let i = 0; i < 12; i++) {
+
         data["kasa" + (i + 1)] = { isim: refs.isimler[i].value, barkod: refs.barkodlar[i].value, baslik: refs.basliklar[i].value };
+
     }
+
     await setDoc(doc(db, "kasa", "liste"), { data });
+
     const bg = document.getElementById("bgUrl").value;
+
     await setDoc(doc(db, "kasa", "ayarlar"), { arkaPlan: bg });
+
     alert("Ayarlar Kaydedildi!");
+
 };
+
+
 
 document.getElementById("kaydirBtn").onclick = async () => {
+
     let isimler = refs.isimler.map(r => r.value);
+
     let sonIki = isimler.splice(-2);
+
     isimler.unshift(...sonIki);
+
     let data = {};
+
     for (let i = 0; i < 12; i++) {
+
         data["kasa" + (i + 1)] = { isim: isimler[i], barkod: refs.barkodlar[i].value, baslik: refs.basliklar[i].value };
+
     }
+
     await setDoc(doc(db, "kasa", "liste"), { data });
+
 };
+
+
 
 document.getElementById("degistirBtn").onclick = async () => {
+
     let data = {};
+
     for (let i = 0; i < 12; i += 2) {
+
         data["kasa" + (i + 1)] = { isim: refs.isimler[i+1].value, barkod: refs.barkodlar[i].value, baslik: refs.basliklar[i].value };
+
         data["kasa" + (i + 2)] = { isim: refs.isimler[i].value, barkod: refs.barkodlar[i+1].value, baslik: refs.basliklar[i+1].value };
+
     }
+
     await setDoc(doc(db, "kasa", "liste"), { data });
+
 };
+
+
 
 onSnapshot(doc(db, "kasa", "personel"), snap => {
+
     if (snap.exists()) personeller = snap.data().liste || [];
+
     listeGoster();
+
 });
+
+
 
 onSnapshot(doc(db, "kasa", "mola"), snap => {
+
     molaData = snap.exists() ? snap.data().data : {};
+
     if(document.body.classList.contains("girisYapildi")) olustur();
+
 });
 
+
+
 window.ekle = async () => {
+
     const k = document.getElementById("yeniK").value.trim();
+
     const s = document.getElementById("yeniS").value.trim();
+
     if(k && s) {
+
         personeller.push({ k, s });
+
         await setDoc(doc(db, "kasa", "personel"), { liste: personeller });
+
         document.getElementById("yeniK").value = ""; 
+
         document.getElementById("yeniS").value = "";
+
         alert("Personel Eklendi!");
+
     } else {
+
         alert("Lütfen tüm alanları doldurun.");
+
     }
+
 };
+
+
 
 function listeGoster() {
+
     const l = document.getElementById("liste"); l.innerHTML = "";
+
     personeller.forEach((p, i) => {
+
         const row = document.createElement("div");
+
         row.className = "personel-row";
+
         row.innerHTML = `<span>👤 ${p.k}</span> <button class="btn-sil" onclick="sil(${i})">SİL</button>`;
+
         l.appendChild(row);
+
     });
+
 }
 
+
+
 window.sil = async (i) => {
+
     if(confirm("Bu personeli silmek istediğinize emin misiniz?")) {
+
         personeller.splice(i, 1);
+
         await setDoc(doc(db, "kasa", "personel"), { liste: personeller });
+
     }
+
 };
+
 </script>
+
 </body>
+
 </html>
