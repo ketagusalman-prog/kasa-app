@@ -115,16 +115,6 @@
             background: rgba(0,0,0,0.3); border: 1px solid var(--border); 
             color: white; border-radius: 12px; font-size: 13px;
         }
-        
-        #liste { margin-top: 15px; background: rgba(0,0,0,0.1); border-radius: 15px; padding: 5px; }
-        .personel-row { 
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);
-            font-size: 13px; font-weight: 600;
-        }
-        .personel-row:last-child { border: none; }
-        .btn-sil { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: none; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; }
-
     </style>
 </head>
 <body>
@@ -138,7 +128,7 @@
         <button onclick="location.href='assistan.html'" style="background:#10b981; color:white; border:none; padding:8px 15px; border-radius:50px; font-weight:800; font-size:10px; margin-bottom:15px; cursor:pointer;">🤖 KASA YAPAYZEKA</button>
      
         <h3>Sistem Girişi</h3>
-        <input type="text" id="kullanici" placeholder="Kullanıcı" class="panel-input" style="margin-bottom:8px;">
+        <input type="text" id="kullanici" placeholder="Sicil No" class="panel-input" style="margin-bottom:8px;" inputmode="numeric">
         <input type="password" id="sifre" placeholder="Şifre" class="panel-input" style="margin-bottom:15px;">
         <button id="girisBtn" class="btn-primary" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">BAŞLAT</button>
     </div>
@@ -152,14 +142,7 @@
     <div id="panel" class="panel">
         <div class="panel-header">🎨 GÖRÜNÜM AYARLARI</div>
         <input id="bgUrl" class="panel-input" placeholder="Arka Plan Resim URL">
-        
-        <div class="panel-header" style="color:var(--green); margin-top:10px;">👤 PERSONEL EKLE</div>
-        <input id="yeniK" class="panel-input" placeholder="Kullanıcı Adı">
-        <input id="yeniS" type="password" class="panel-input" placeholder="Şifre">
-        <button class="btn-primary" onclick="ekle()" style="background: var(--green); height:40px; font-size:12px;">SİSTEME KAYDET</button>
-        
-        <div class="panel-header" style="color: #94a3b8; font-size: 12px; margin-top:20px;">📋 KAYITLI LİSTE</div>
-        <div id="liste"></div>
+        <button class="btn-primary" id="arkaplanKaydet" style="background: var(--accent); height:40px;">RESMİ UYGULA</button>
     </div>
 
     <div class="admin-tools">
@@ -167,7 +150,7 @@
         <button id="kaydetBtn" style="background: #10b981;">💾</button>
         <button id="kaydirBtn" style="background: #3b82f6;">⬇️</button>
         <button id="degistirBtn" style="background: #8b5cf6;">↔️</button>
-        <button id="panelBtn" style="background: #475569;">👥</button>
+        <button id="panelBtn" style="background: #475569;">⚙️</button>
     </div>
 </div>
 
@@ -185,14 +168,12 @@ const firebaseConfig = { apiKey: "AIzaSy...", authDomain: "ukasa1.firebaseapp.co
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let admin = { k: "admin", s: "1234" };
-let personeller = [];
+// SİZİN GOOGLE SCRIPT URL'NİZ
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwKO7XOTFhu3Aeq3wjiYVWmLVfv50POa6etJcJNlVOJoOJZHj5-5TE8dODWdHCtpW2v8g/exec";
+
 let adminMi = false;
 let molaData = {};
 let refs = { isimler: [], barkodlar: [], basliklar: [] };
-
-// Önceki girişi temizle (Opsiyonel)
-// localStorage.removeItem("kullanici");
 
 onSnapshot(doc(db, "kasa", "ayarlar"), snap => {
     if (snap.exists() && snap.data().arkaPlan) {
@@ -201,34 +182,53 @@ onSnapshot(doc(db, "kasa", "ayarlar"), snap => {
     }
 });
 
-document.getElementById("girisBtn").onclick = () => {
-    const k = document.getElementById("kullanici").value.trim().toLowerCase();
+// GÜNCELLENMİŞ GİRİŞ FONKSİYONU (GOOGLE SCRIPT BAĞLANTILI)
+document.getElementById("girisBtn").onclick = async () => {
+    const k = document.getElementById("kullanici").value.trim();
     const s = document.getElementById("sifre").value.trim();
-    
-    if (k === "" || s === "") { alert("Boş alan bırakmayın!"); return; }
+    const btn = document.getElementById("girisBtn");
 
-    // Admin kontrolü
-    if (k === admin.k && s === admin.s) {
-        adminMi = true;
-        localStorage.setItem("kullanici", "admin");
-        document.querySelectorAll(".admin-tools button").forEach(el => el.style.display = "flex");
-    } else {
-        // Personel kontrolü
-        const p = personeller.find(x => x.k.toLowerCase() === k && x.s === s);
-        if (!p) { alert("Hatalı Giriş!"); return; }
+    if (!k || !s) { alert("Boş alan bırakmayın!"); return; }
+
+    btn.innerText = "Sorgulanıyor...";
+    btn.disabled = true;
+
+    try {
+        const response = await fetch(SCRIPT_URL);
+        const json = await response.json();
         
-        adminMi = false;
-        localStorage.setItem("kullanici", k); // Personel adını kaydet
-        document.querySelectorAll(".admin-tools button").forEach(el => el.style.display = "none");
-    }
+        // Tablodaki sicil ve şifreyle eşleştirme (Data yapısına göre)
+        const user = json.data.find(x => String(x.sicil).trim() === k && String(x.sifre).trim() === s);
 
-    document.body.classList.add("girisYapildi");
-    document.getElementById("login").style.display = "none";
-    olustur();
+        if (user) {
+            // Rol "Yönetici" ise admin yetkisi ver
+            if (user.rol === "Yönetici") {
+                adminMi = true;
+                document.querySelectorAll(".admin-tools button").forEach(el => el.style.display = "flex");
+            } else {
+                adminMi = false;
+                document.querySelectorAll(".admin-tools button").forEach(el => el.style.display = "none");
+            }
+
+            localStorage.setItem("kullanici", user.isim || k);
+            document.body.classList.add("girisYapildi");
+            document.getElementById("login").style.display = "none";
+            olustur();
+        } else {
+            alert("Hatalı Sicil veya Şifre!");
+            btn.innerText = "BAŞLAT";
+            btn.disabled = false;
+        }
+    } catch (err) {
+        alert("Sistemle bağlantı kurulamadı!");
+        btn.innerText = "BAŞLAT";
+        btn.disabled = false;
+    }
 };
 
 document.getElementById("panelBtn").onclick = () => document.getElementById("panel").classList.toggle("acik");
 
+// Mola Sayaç Sistemi (Firebase Verisiyle Çalışır)
 setInterval(() => {
     if (!molaData) return;
     const simdi = new Date();
@@ -339,9 +339,13 @@ document.getElementById("kaydetBtn").onclick = async () => {
         data["kasa" + (i + 1)] = { isim: refs.isimler[i].value, barkod: refs.barkodlar[i].value, baslik: refs.basliklar[i].value };
     }
     await setDoc(doc(db, "kasa", "liste"), { data });
+    alert("Ayarlar Kaydedildi!");
+};
+
+document.getElementById("arkaplanKaydet").onclick = async () => {
     const bg = document.getElementById("bgUrl").value;
     await setDoc(doc(db, "kasa", "ayarlar"), { arkaPlan: bg });
-    alert("Ayarlar Kaydedildi!");
+    alert("Arkaplan Güncellendi!");
 };
 
 document.getElementById("kaydirBtn").onclick = async () => {
@@ -366,46 +370,10 @@ document.getElementById("degistirBtn").onclick = async () => {
     await setDoc(doc(db, "kasa", "liste"), { data });
 };
 
-onSnapshot(doc(db, "kasa", "personel"), snap => {
-    if (snap.exists()) personeller = snap.data().liste || [];
-    listeGoster();
-});
-
 onSnapshot(doc(db, "kasa", "mola"), snap => {
     molaData = snap.exists() ? snap.data().data : {};
     if(document.body.classList.contains("girisYapildi")) olustur();
 });
-
-window.ekle = async () => {
-    const k = document.getElementById("yeniK").value.trim();
-    const s = document.getElementById("yeniS").value.trim();
-    if(k && s) {
-        personeller.push({ k, s });
-        await setDoc(doc(db, "kasa", "personel"), { liste: personeller });
-        document.getElementById("yeniK").value = ""; 
-        document.getElementById("yeniS").value = "";
-        alert("Personel Eklendi!");
-    } else {
-        alert("Lütfen tüm alanları doldurun.");
-    }
-};
-
-function listeGoster() {
-    const l = document.getElementById("liste"); l.innerHTML = "";
-    personeller.forEach((p, i) => {
-        const row = document.createElement("div");
-        row.className = "personel-row";
-        row.innerHTML = `<span>👤 ${p.k}</span> <button class="btn-sil" onclick="sil(${i})">SİL</button>`;
-        l.appendChild(row);
-    });
-}
-
-window.sil = async (i) => {
-    if(confirm("Bu personeli silmek istediğinize emin misiniz?")) {
-        personeller.splice(i, 1);
-        await setDoc(doc(db, "kasa", "personel"), { liste: personeller });
-    }
-};
 </script>
 </body>
 </html>
