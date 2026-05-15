@@ -80,8 +80,8 @@ const firebaseConfig = { apiKey: "AIzaSy...", authDomain: "ukasa1.firebaseapp.co
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let Rol = (localStorage.getItem("Rol") || "").toLowerCase().trim();
-let YöneticiMi = (Rol === "Yönetici");
+let Kullanici = (localStorage.getItem("Kullanici") || "").toLowerCase().trim();
+let adminMi = (Kullanici === "admin");
 
 if(YöneticiMi) {
     document.getElementById("akilliKaydetBtn").style.display = "block";
