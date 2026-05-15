@@ -25,10 +25,10 @@
 
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
         .stat-box { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); }
+        .stat-box-full { grid-column: span 2; background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); }
         .stat-label { font-size: 9px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; display: block; }
         .stat-value { font-size: 16px; font-weight: 700; color: #fff; }
 
-        .note-box { background: rgba(245, 158, 11, 0.1); border-left: 4px solid #f59e0b; padding: 15px; border-radius: 12px; font-size: 13px; color: #fbbf24; margin-top: 20px; }
         .analysis-box { margin-top: 15px; padding: 15px; border-radius: 18px; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); line-height: 1.6; }
         .analysis-box b { color: #60a5fa; font-weight: 800; display: block; margin-bottom: 5px; text-transform: uppercase; font-size: 10px; }
         .analysis-text { font-size: 12.5px; color: #cbd5e1; }
@@ -65,6 +65,7 @@
             <div class="stat-box"><span class="stat-label">Vardiya</span><span id="pVardiya" class="stat-value">---</span></div>
             <div class="stat-box"><span class="stat-label">TL Satış</span><span id="pTl" class="stat-value">0 ₺</span></div>
             <div class="stat-box"><span class="stat-label">Euro Satış</span><span id="pEuro" class="stat-value">0 €</span></div>
+            <div class="stat-box stat-box-full"><span class="stat-label">Toplam Satış (Ciro)</span><span id="pToplamSatis" class="stat-value" style="color: #60a5fa;">0 ₺</span></div>
         </div>
 
         <div class="analysis-box">
@@ -72,7 +73,7 @@
             <span id="pAnalizMetni" class="analysis-text">Analiz motoru çalışıyor...</span>
         </div>
 
-        <div id="notKutusu" class="note-box" style="display:none;">
+        <div id="notKutusu" class="note-box" style="display:none; background: rgba(245, 158, 11, 0.1); border-left: 4px solid #f59e0b; padding: 15px; border-radius: 12px; font-size: 13px; color: #fbbf24; margin-top: 20px;">
             <strong>Yönetici Geri Bildirimi:</strong> <span id="pNot"></span>
         </div>
 
@@ -87,7 +88,10 @@
 
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxUQpYykoL2RroLwL0KVcMez8rw4Q26Mpqv9uvx5Jvuun31yPqON2V8_UuZ2Pdbdvd_9A/exec";
+        const KUR_URL = "https://script.google.com/macros/s/AKfycbwVZ7VcV3Nob8Z2eEVrTSECZAlVbPH0eOikAJ585JEPdebcXMhvXw8DwF_T8UoM-TufsQ/exec";
+        
         let aktifSicil = "";
+        let guncelKur = 36.50; // Varsayılan, linkten çekilince güncellenecek
 
         async function sistemeGiris() {
             const sicil = document.getElementById("sicilInput").value.trim();
@@ -96,10 +100,17 @@
 
             if (!sicil || !sifre) { alert("Sicil ve şifre giriniz!"); return; }
 
-            loginBtn.innerText = "Sorgulanıyor...";
+            loginBtn.innerText = "Veriler Alınıyor...";
             loginBtn.disabled = true;
 
             try {
+                // 1. Önce Güncel Kuru Çek
+                const kurResponse = await fetch(KUR_URL);
+                const kurData = await kurResponse.json();
+                // r1 hücresinden gelen veriyi sayıya çevir
+                if(kurData && kurData.kur) { guncelKur = parseFloat(String(kurData.kur).replace(",", ".")); }
+
+                // 2. Personel Verilerini Çek
                 const response = await fetch(SCRIPT_URL);
                 const dataGlobal = await response.json();
                 const user = dataGlobal.find(x => String(x.sicil) === sicil && String(x.sifre) === sifre);
@@ -108,37 +119,37 @@
                     aktifSicil = sicil;
                     document.getElementById("login-screen").classList.add("hidden");
                     document.getElementById("personel-screen").style.display = "block";
-                    hesaplaVeAnalizEt(user, dataGlobal);
+                    hesaplaVeAnalizEt(user, dataGlobal, guncelKur);
                 } else {
                     alert("Giriş bilgileri hatalı!");
                     resetLoginBtn();
                 }
-            } catch (err) { alert("Veri hatası!"); resetLoginBtn(); }
+            } catch (err) { alert("Bağlantı hatası!"); resetLoginBtn(); }
         }
 
-        function hesaplaVeAnalizEt(p, dataGlobal) {
-            const EUR_RATE = 36.50; 
+        function hesaplaVeAnalizEt(p, dataGlobal, kur) {
             const n = (v) => parseFloat(String(v).replace(/\s/g, "").replace(",", ".")) || 0;
 
             const fis = n(p.fis);
             const tl = n(p.tl);
             const euro = n(p.euro);
-            const ciro = tl + (euro * EUR_RATE);
+            
+            // Toplam Satış (Ciro) Hesaplama (Dinamik Kur ile)
+            const ciro = tl + (euro * kur); 
             const isNight = (p.vardiya || "").toLowerCase().includes("gece");
 
             // --- PERFORMANS SKORU ---
             let baseScore = ((fis * 1.5) * 0.60) + ((ciro / 1500) * 0.40);
             const finalScore = isNight ? baseScore * 1.6 : baseScore;
 
-            // --- MİKRO GRUP FİLTRELEME (Mağaza + Grup + Vardiya + Ödeme Danışmanı) ---
+            // --- MİKRO GRUP ANALİZİ ---
             const mikroGrup = dataGlobal.filter(x => 
                 String(x.magaza) === String(p.magaza) && 
                 String(x.grup) === String(p.grup) && 
                 String(x.vardiya) === String(p.vardiya) &&
-                String(x.pozisyon || "").toLowerCase().includes("ödeme") // Sadece Ödeme Danışmanlarını baz alır
+                String(x.pozisyon || "").toLowerCase().includes("ödeme")
             );
 
-            // Eğer filtre sonucu kimse yoksa (Örn: pozisyon boşsa), pozisyon filtresiz genel mikro grubu al
             const finalReferansGrup = mikroGrup.length > 0 ? mikroGrup : dataGlobal.filter(x => 
                 String(x.magaza) === String(p.magaza) && 
                 String(x.grup) === String(p.grup) && 
@@ -149,7 +160,7 @@
             const meanFis = allFis.reduce((a, b) => a + b, 0) / (allFis.length || 1);
             const stdDevFis = Math.sqrt(allFis.map(x => Math.pow(x - meanFis, 2)).reduce((a, b) => a + b, 0) / (allFis.length || 1));
 
-            const totalCiro = finalReferansGrup.reduce((acc, x) => acc + n(x.tl) + (n(x.euro) * EUR_RATE), 0);
+            const totalCiro = finalReferansGrup.reduce((acc, x) => acc + n(x.tl) + (n(x.euro) * kur), 0);
             const totalFisCount = allFis.reduce((a, b) => a + b, 0) || 1;
             const grupFisBasiCiro = totalCiro / totalFisCount;
             const personelFisBasiCiro = ciro / (fis || 1);
@@ -177,6 +188,9 @@
             document.getElementById("pVardiya").innerText = p.vardiya || "---";
             document.getElementById("pTl").innerText = tl.toLocaleString('tr-TR') + " ₺";
             document.getElementById("pEuro").innerText = euro.toLocaleString('tr-TR') + " €";
+            
+            // Toplam Satış (Ciro) kısmını tam sayı olarak yazdır
+            document.getElementById("pToplamSatis").innerText = Math.round(ciro).toLocaleString('tr-TR') + " ₺";
 
             const badgeRow = document.getElementById("badgeRow");
             badgeRow.innerHTML = "";
@@ -185,18 +199,9 @@
                 badgeRow.innerHTML += `<span class="status-badge ${upsellStatus === 'alert' ? 'tag-warning' : 'tag-success'}">${upsellNeed}</span>`;
             }
 
-            // --- AKILLI ANALİZ METNİ (Mikro Odaklı) ---
-            let analizMetni = `Şu an <b>${p.magaza} - ${p.grup}</b> ekibi ve <b>${p.vardiya}</b> vardiyasındaki diğer ödeme danışmanlarına göre analiz ediliyorsunuz. `;
-            analizMetni += `<br><br>Bu gruptaki ortalama <b>${meanFis.toFixed(1)} fiş</b> iken, performansınız <b>${Math.round(fis)} fiş</b> seviyesindedir. `;
-            
-            if (devStatus === "BAŞARILI") {
-                analizMetni += "Kendi ekibiniz içerisinde temponuz oldukça iyi.";
-            } else {
-                analizMetni += "Aynı vardiyadaki arkadaşlarınızın ortalamasına ulaşmak için hızlanmanız önerilir.";
-            }
-
-            analizMetni += `<br><br>Grup fiş başı ciro hedefi <b>₺${Math.round(grupFisBasiCiro)}</b> iken sizin verimliliğiniz <b>₺${Math.round(personelFisBasiCiro)}</b>.`;
-            
+            let analizMetni = `Şu an <b>${p.magaza} - ${p.grup}</b> ekibi ve <b>${p.vardiya}</b> vardiyasındaki ödeme danışmanlarına göre analiz ediliyorsunuz. <br><br>`;
+            analizMetni += `Grup ortalaması <b>${meanFis.toFixed(1)} fiş</b> iken performansınız <b>${Math.round(fis)} fiş</b>. <br><br>`;
+            analizMetni += `Grup fiş başı ciro hedefi <b>₺${Math.round(grupFisBasiCiro)}</b> iken sizin verimliliğiniz <b>₺${Math.round(personelFisBasiCiro)}</b>.`;
             document.getElementById("pAnalizMetni").innerHTML = analizMetni;
 
             if (p.not && p.not.length > 2) {
