@@ -210,7 +210,13 @@ document.getElementById("girisBtn").onclick = async () => {
                 document.querySelectorAll(".admin-tools button").forEach(el => el.style.display = "none");
             }
 
-            localStorage.setItem("kullanici", user.isim || k);
+            // Eğer giriş yapan kişinin rolü "Yönetici" ise kullanıcı adını "admin" yap, 
+// değilse tablodaki ismini veya sicil numarasını kullan.
+if (user.rol === "Yönetici") {
+    localStorage.setItem("kullanici", "admin");
+} else {
+    localStorage.setItem("kullanici", user.isim || k);
+}
             document.body.classList.add("girisYapildi");
             document.getElementById("login").style.display = "none";
             olustur();
