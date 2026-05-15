@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <title>Mola Takip - Akıllı Kayıt</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --bg: #0b0f1a; --card: rgba(22, 30, 49, 0.85); --accent: #3b82f6; 
+            --text: #ffffff; --border: rgba(255, 255, 255, 0.1); --monitor-inner: #0f172a;
+            --danger: #ef4444; --success: #10b981; --warning: #f59e0b; --purple: #8b5cf6; --pink: #ec4899;
+        }
+        
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg) no-repeat center center fixed; background-size: cover; color: var(--text); min-height: 100vh; overflow-x: hidden; }
+        body::before { content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: -1; }
+
+        .appbar { position: fixed; top: 0; width: 100%; height: 50px; background: rgba(11, 15, 26, 0.9); backdrop-filter: blur(20px); display: flex; justify-content: center; align-items: center; font-weight: 800; z-index: 1000; border-bottom: 1px solid var(--border); color: var(--accent); font-size: 14px; }
+        .container { width: 100%; max-width: 600px; margin: 0 auto; padding: 100px 8px 220px 8px; }
+
+        .baslik { display: flex; justify-content: space-between; align-items: center; margin: 20px 0 8px 0; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 10px; font-weight: 800; color: #FFD700; border: 1px solid var(--border); font-size: 12px; }
+        .grid { display: flex; gap: 6px; width: 100%; justify-content: space-between; }
+
+        .blok { width: calc(25% - 5px); background: var(--card); border-radius: 12px; padding: 8px 4px; border: 1px solid var(--border); backdrop-filter: blur(10px); display: flex; flex-direction: column; gap: 4px; }
+        h4 { font-size: 8px; color: var(--accent); text-transform: uppercase; text-align: center; opacity: 0.8; }
+
+        .aktif { border-color: var(--danger) !important; background: rgba(239, 68, 68, 0.2) !important; animation: mola-flash 1.5s infinite; }
+        @keyframes mola-flash { 0%, 100% { box-shadow: 0 0 5px rgba(239, 68, 68, 0.3); } 50% { box-shadow: 0 0 15px rgba(239, 68, 68, 0.6); } }
+
+        input { width: 100%; background: var(--monitor-inner); border: 1px solid var(--border); border-radius: 4px; color: white; padding: 4px 2px; font-size: 9px; font-family: inherit; text-align: center; }
+        input[type="time"] { font-weight: 800; color: var(--accent); font-size: 10px; }
+        .sureInput { width: 40px; background: var(--accent); color: white; border: none; font-weight: 800; font-size: 11px; }
+        .sayac-text { font-size: 8px; font-weight: 800; text-align: center; height: 12px; color: #94a3b8; }
+
+        .buyukSayac { position: fixed; top: 60px; left: 50%; transform: translateX(-50%); width: 75%; max-width: 280px; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 15px; text-align: center; font-size: 22px; font-weight: 800; color: var(--success); border: 1px solid var(--border); z-index: 1001; backdrop-filter: blur(15px); }
+
+        .alt-islem { position: fixed; bottom: 80px; left: 0; width: 100%; display: flex; flex-direction: column; gap: 6px; padding: 0 15px; z-index: 999; }
+        .row-btns { display: flex; gap: 6px; }
+        .btn-main { flex: 1; padding: 12px; border-radius: 12px; border: none; font-weight: 800; color: white; font-size: 10px; cursor: pointer; text-transform: uppercase; }
+
+        .tabbar { position: fixed; bottom: 0; width: 100%; height: 70px; background: rgba(22, 30, 49, 0.95); backdrop-filter: blur(20px); display: flex; justify-content: space-around; align-items: center; border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; }
+        .tab-btn { background: none; border: none; color: white; font-size: 22px; cursor: pointer; }
+    </style>
+</head>
+
+<body>
+
+<div class="appbar">MOLA YÖNETİM MERKEZİ</div>
+<div id="buyukSayac" class="buyukSayac" style="display:none;">--:--</div>
+
+<div class="container">
+    <div id="alan"></div>
+
+    <div class="alt-islem">
+        <button id="yemekDagitBtn" class="btn-main" onclick="yemekDagit()" style="display:none; background: var(--purple);">🍴 YEMEK DAĞIT & SON MOLA AYARLA</button>
+        
+        <div class="row-btns">
+            <button id="yemekTakasBtn" class="btn-main" onclick="yemekTakas()" style="display:none; background: var(--pink);">🔄 YEMEK 1-2 & SON1-ÇAY4 TAKAS</button>
+            <button id="kaydirBtn" class="btn-main" onclick="kaydir()" style="display:none; background: var(--accent);">🔄 1-2-3 KAYDIR</button>
+        </div>
+
+        <div class="row-btns">
+            <button id="akilliKaydetBtn" class="btn-main" onclick="akilliKaydet()" style="display:none; background: var(--success);">✅ TÜMÜNE KOPYALA</button>
+            <button id="ozelKaydetBtn" class="btn-main" onclick="ozelKaydet()" style="display:none; background: var(--warning);">📝 MANUEL KAYDET</button>
+        </div>
+    </div>
+</div>
+
+<div class="tabbar">
+    <button class="tab-btn" onclick="location.href='index.html'" title="Kasalar">🏠</button>
+    <button class="tab-btn" onclick="location.href='kisiselpp.html'" title="Profil ve Ayarlar">👤</button>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// Sizin mevcut API Key ve Proje Bilgileriniz
+const firebaseConfig = { 
+    apiKey: "AIzaSyB-Mevcut-Keyiniz", 
+    authDomain: "ukasa1.firebaseapp.com", 
+    projectId: "ukasa1",
+    storageBucket: "ukasa1.appspot.com",
+    messagingSenderId: "348483253245",
+    appId: "1:348483253245:web:..."
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Rol kontrolü: LocalStorage'dan ismi al, admin ise yetki ver
+let kullaniciIsmi = (localStorage.getItem("kullanici") || "").toLowerCase().trim();
+// Not: Sisteminizdeki yönetici belirleme mantığına göre burayı güncelleyebilirsiniz.
+// Eğer 'admin' yazıyorsa yetki verir.
+let adminMi = (kullaniciIsmi === "admin" || kullaniciIsmi === "umut salman");
+
+if(adminMi) {
+    document.getElementById("akilliKaydetBtn").style.display = "block";
+    document.getElementById("ozelKaydetBtn").style.display = "block";
+    document.getElementById("kaydirBtn").style.display = "block";
+    document.getElementById("yemekDagitBtn").style.display = "block";
+    document.getElementById("yemekTakasBtn").style.display = "block";
+}
+
+let alan = document.getElementById("alan");
+let state = {};
+
+// Veri dinleme
+onSnapshot(doc(db, "kasa", "mola"), (snap) => {
+    state = snap.exists() ? snap.data().data : {};
+    alan.innerHTML = "";
+    olusturGrup("cay", "☕ Çay Molası", "caySure");
+    olusturGrup("yemek", "🍽️ Yemek Molası", "yemekSure");
+    olusturGrup("son", "🕓 Son Mola", "sonSure");
+});
+
+function olusturGrup(prefix, title, sureKey) {
+    let d = document.createElement("div");
+    d.className = "baslik";
+    d.innerHTML = `<span>${title}</span>`;
+    let inp = document.createElement("input");
+    inp.type="number"; inp.className="sureInput";
+    inp.value = state[sureKey]?.sure || "";
+    inp.disabled = !adminMi;
+    inp.oninput = () => { if(adminMi) state[sureKey] = { sure: inp.value }; }
+    d.appendChild(inp);
+    alan.appendChild(d);
+
+    let g = document.createElement("div");
+    g.className="grid";
+    for(let i=1; i<=4; i++){ g.appendChild(blok(prefix+i, sureKey)); }
+    alan.appendChild(g);
+}
+
+function blok(key, sureKey){
+    let b = document.createElement("div");
+    b.className="blok";
+    b.innerHTML = `<h4>${key.toUpperCase()}</h4>`;
+    let saat = document.createElement("input");
+    saat.type="time"; saat.value = state[key]?.saat || "";
+    saat.disabled = !adminMi;
+    saat.oninput = () => { if(adminMi) { state[key] = state[key] || {}; state[key].saat = saat.value; } }
+    b.appendChild(saat);
+
+    for(let i=0; i<6; i++){
+        let inp = document.createElement("input");
+        inp.placeholder = "...";
+        inp.value = state[key]?.kisiler?.[i] || "";
+        inp.disabled = !adminMi;
+        inp.oninput = () => {
+            if(!adminMi) return;
+            state[key] = state[key] || {};
+            state[key].kisiler = state[key].kisiler || [];
+            state[key].kisiler[i] = inp.value;
+        }
+        b.appendChild(inp);
+    }
+
+    let sayac = document.createElement("div");
+    sayac.className = "sayac-text";
+    b.appendChild(sayac);
+
+    setInterval(()=>{
+        if(!saat.value) return;
+        let dk = parseInt(state[sureKey]?.sure || 15);
+        let sure = dk*60;
+        let now = new Date();
+        let [h,m]=saat.value.split(":");
+        let hedef=new Date(); hedef.setHours(h,m,0);
+        let fark=Math.floor((hedef-now)/1000);
+        if(fark > 43200){ hedef.setDate(hedef.getDate()-1); fark = Math.floor((hedef-now)/1000); }
+
+        if(fark<=0 && fark>-sure){
+            b.classList.add("aktif");
+            let kalan=sure+fark;
+            sayac.innerText=`${Math.floor(kalan/60)}m ${kalan%60}s`;
+        } else if(fark<=-sure){
+            b.classList.remove("aktif");
+            sayac.innerText="BİTTİ";
+        } else {
+            b.classList.remove("aktif"); sayac.innerText="";
+        }
+    },1000);
+    return b;
+}
+
+window.kaydir = function(){
+    if(!adminMi) return;
+    ["cay","yemek","son"].forEach(grup=>{
+        let p1 = state[grup+"1"]?.kisiler || [];
+        let p2 = state[grup+"2"]?.kisiler || [];
+        let p3 = state[grup+"3"]?.kisiler || [];
+        state[grup+"1"] = state[grup+"1"] || {}; state[grup+"1"].kisiler = p3;
+        state[grup+"2"] = state[grup+"2"] || {}; state[grup+"2"].kisiler = p1;
+        state[grup+"3"] = state[grup+"3"] || {}; state[grup+"3"].kisiler = p2;
+    });
+    alert("Kaydırıldı! Manuel Kaydet butonuna basmayı unutmayın.");
+}
+
+window.yemekDagit = async function() {
+    if(!adminMi) return;
+    try {
+        let cay1 = (state["cay1"]?.kisiler || []).filter(x => x && x.trim() !== "");
+        let yarisi = Math.ceil(cay1.length / 2);
+        
+        state["yemek1"] = state["yemek1"] || {};
+        state["yemek1"].kisiler = cay1.slice(0, yarisi);
+        
+        state["yemek2"] = state["yemek2"] || {};
+        state["yemek2"].kisiler = cay1.slice(yarisi);
+
+        state["yemek3"] = state["yemek3"] || {};
+        state["yemek3"].kisiler = [...(state["cay2"]?.kisiler || [])];
+
+        state["yemek4"] = state["yemek4"] || {};
+        state["yemek4"].kisiler = [...(state["cay3"]?.kisiler || [])];
+
+        state["son1"] = state["son1"] || {};
+        state["son1"].kisiler = [...(state["cay4"]?.kisiler || [])];
+
+        state["son2"] = state["son2"] || {};
+        state["son2"].kisiler = [...(state["cay1"]?.kisiler || [])];
+
+        state["son3"] = state["son3"] || {};
+        state["son3"].kisiler = [...(state["cay2"]?.kisiler || [])];
+
+        state["son4"] = state["son4"] || {};
+        state["son4"].kisiler = [...(state["cay3"]?.kisiler || [])];
+
+        await setDoc(doc(db,"kasa","mola"),{data:state});
+        alert("Yemek ve Son mola dağıtımı başarıyla yapıldı!");
+    } catch(e) { alert("Hata: " + e.message); }
+}
+
+window.yemekTakas = async function() {
+    if(!adminMi) return;
+    try {
+        let y1 = state["yemek1"]?.kisiler || [];
+        let y2 = state["yemek2"]?.kisiler || [];
+        state["yemek1"] = { ...state["yemek1"], kisiler: y2 };
+        state["yemek2"] = { ...state["yemek2"], kisiler: y1 };
+
+        let s1_temiz = (state["son1"]?.kisiler || []).filter(isim => isim && isim.trim() !== "");
+        let s1_ters = s1_temiz.reverse(); 
+        
+        state["cay4"] = { ...state["cay4"], kisiler: s1_ters };
+        state["son1"] = { ...state["son1"], kisiler: [...state["cay4"].kisiler] };
+
+        await setDoc(doc(db, "kasa", "mola"), { data: state });
+        alert("Yemek 1-2 takas edildi. Son 1 ters çevrilerek Çay 4'e aktarıldı!");
+    } catch(e) { alert("Hata: " + e.message); }
+}
+
+window.akilliKaydet = async function(){
+    if(!adminMi) return;
+    try {
+        for(let i=1; i<=4; i++){
+            let cayKisiler = state["cay"+i]?.kisiler || [];
+            state["yemek"+i] = state["yemek"+i] || {};
+            state["yemek"+i].kisiler = [...cayKisiler];
+            state["son"+i] = state["son"+i] || {};
+            state["son"+i].kisiler = [...cayKisiler];
+        }
+        await setDoc(doc(db,"kasa","mola"),{data:state});
+        alert("Çay verileri Yemek ve Son molaya kopyalandı!");
+    } catch(e) { alert("Hata: " + e.message); }
+}
+
+window.ozelKaydet = async function(){
+    if(!adminMi) return;
+    try {
+        await setDoc(doc(db,"kasa","mola"),{data:state});
+        alert("Tüm değişiklikler başarıyla kaydedildi!");
+    } catch(e) { alert("Hata: " + e.message); }
+}
+</script>
+</body>
+</html>
