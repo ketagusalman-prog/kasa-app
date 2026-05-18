@@ -15,11 +15,11 @@
             --danger: #ef4444; 
             
             /* Belirgin Yeni Grup Renkleri */
-            --g1-color: #2563eb; /* Belirgin Canlı Mavi */
-            --g2-color: #d97706; /* Belirgin Canlı Turuncu */
+            --g1-color: #2563eb; 
+            --g2-color: #d97706; 
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: var(--bg); color: var(--text); padding: 10px; }
+        body { background: var(--bg); color: var(--text); padding: 8px; width: 100%; min-height: 100vh; }
         .container { max-width: 1200px; margin: auto; width: 100%; }
         
         /* Üst Başlık Alanı */
@@ -27,42 +27,53 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             background: var(--card);
-            padding: 12px 15px;
+            padding: 10px 15px;
             border-radius: 12px;
             border: 1px solid var(--border);
         }
-        h2 { color: var(--accent); font-weight: 800; font-size: 16px; }
+        h2 { color: var(--accent); font-weight: 800; font-size: 15px; }
         
         /* Takvim Navigasyon ve Panel */
-        .panel { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid var(--border); }
-        .calendar-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .nav-btn { background: var(--bg); border: 1px solid var(--border); color: white; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-weight: 800; transition: 0.2s; font-size: 13px; }
+        .panel { background: var(--card); padding: 12px; border-radius: 12px; border: 1px solid var(--border); width: 100%; }
+        .calendar-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .nav-btn { background: var(--bg); border: 1px solid var(--border); color: white; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-weight: 800; transition: 0.2s; font-size: 12px; }
         .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
         
         /* Takvim Grid Yapısı */
-        .calendar-header { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 6px; text-align: center; font-weight: 800; font-size: 11px; color: var(--accent); }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .calendar-header { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 6px; text-align: center; font-weight: 800; font-size: 10px; color: var(--accent); }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; width: 100%; }
         
-        /* Mobil Öncelikli Gün Hücreleri (Dikey Ekran Ayarı) */
+        /* Mobil Öncelikli Tam Okunabilir Gün Hücreleri */
         .cal-day { 
             background: var(--bg); 
             border: 1px solid var(--border); 
-            min-height: 75px; 
+            min-height: 80px; 
+            height: auto; /* İçerik arttıkça aşağı doğru uzasın, kesilmesin */
             padding: 6px; 
             border-radius: 8px; 
             position: relative; 
             display: flex; 
             flex-direction: column; 
             justify-content: flex-start;
-            overflow: hidden;
         }
-        .cal-date { font-weight: 800; font-size: 12px; margin-bottom: 3px; opacity: 0.9; display: flex; justify-content: space-between; align-items: center; }
+        .cal-date { font-weight: 800; font-size: 11px; margin-bottom: 4px; opacity: 0.9; display: flex; justify-content: space-between; align-items: center; }
         .cal-content { font-size: 9px; display: flex; flex-direction: column; gap: 3px; width: 100%; }
         
-        /* Durum Rozetleri */
-        .need-staff { color: white; padding: 2px 4px; border-radius: 4px; display: block; font-weight: 800; text-align: center; font-size: 8px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        /* Durum Rozetleri - Yazıların Tam Okunması İçin Düzenlendi */
+        .need-staff { 
+            color: white; 
+            padding: 2px 3px; 
+            border-radius: 4px; 
+            display: block; 
+            font-weight: 800; 
+            text-align: center; 
+            font-size: 8px; 
+            line-height: 1.2; 
+            white-space: normal; /* Kelimeler alt satıra geçebilsin, gizlenmesin */
+            word-break: break-word; 
+        }
         
         /* Renk Kombinasyonları Arka Plan Yumuşatıldı, Üst Çizgi Kalınlaştırıldı */
         .g1-work-day { background: rgba(37, 99, 235, 0.08) !important; border-top: 3px solid var(--g1-color); }
@@ -72,9 +83,9 @@
         .loading { text-align: center; color: #94a3b8; font-weight: 600; padding: 40px; }
 
         /* ----------------------------------------------------------------- */
-        /* MOBİL YATAY (LANDSCAPE) VE BÜYÜK EKRANLAR İÇİN ESNEKLİK KURALLARI */
+        /* MOBİL YATAY (LANDSCAPE) VE GENİŞ EKRANLAR İÇİN ESNEKLİK KURALLARI */
         /* ----------------------------------------------------------------- */
-        @media (min-width: 600px) or (orientation: landscape) {
+        @media (min-width: 768px) or (orientation: landscape) {
             body { padding: 20px; }
             .header-area { padding: 15px 25px; margin-bottom: 20px; }
             h2 { font-size: 22px; }
@@ -220,7 +231,6 @@
             const iznCount = gunlukKayitlar.filter(x => x.tur === 'İzinli').length;
             const rapCount = gunlukKayitlar.filter(x => x.tur === 'Raporlu').length;
             
-            // Grup isminin rengini de dinamik olarak kendi grup rengine bağladım
             const grupRenkStr = calisanGrup === '1. Grup' ? 'var(--g1-color)' : 'var(--g2-color)';
 
             dayDiv.innerHTML = `
