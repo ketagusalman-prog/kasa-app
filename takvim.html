@@ -41,16 +41,32 @@
         .nav-btn { background: var(--bg); border: 1px solid var(--border); color: white; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-weight: 800; transition: 0.2s; font-size: 12px; }
         .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
         
-        /* Takvim Grid Yapısı */
-        .calendar-header { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 6px; text-align: center; font-weight: 800; font-size: 10px; color: var(--accent); }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; width: 100%; }
+        /* Takvim Grid Yapısı - Tam Denk Gelme Ayarı */
+        .calendar-header { 
+            display: grid; 
+            grid-template-columns: repeat(7, 1fr); 
+            gap: 6px; 
+            margin-bottom: 8px; 
+            text-align: center; 
+            font-weight: 800; 
+            font-size: 11px; 
+            color: var(--accent); 
+            width: 100%;
+        }
+        .calendar-grid { 
+            display: grid; 
+            grid-template-columns: repeat(7, 1fr); 
+            gap: 6px; 
+            width: 100%; 
+        }
         
-        /* Mobil Öncelikli Tam Okunabilir Gün Hücreleri */
+        /* Mobil Öncelikli Gün Hücreleri */
         .cal-day { 
             background: var(--bg); 
-            border: 1px solid var(--border); 
-            min-height: 80px; 
-            height: auto; /* İçerik arttıkça aşağı doğru uzasın, kesilmesin */
+            /* Grid kaymasını önlemek için standart border yerine inset shadow veya tüm kenarlara eşit border verdik */
+            border: 1px solid var(--border);
+            min-height: 85px; 
+            height: auto; 
             padding: 6px; 
             border-radius: 8px; 
             position: relative; 
@@ -61,7 +77,7 @@
         .cal-date { font-weight: 800; font-size: 11px; margin-bottom: 4px; opacity: 0.9; display: flex; justify-content: space-between; align-items: center; }
         .cal-content { font-size: 9px; display: flex; flex-direction: column; gap: 3px; width: 100%; }
         
-        /* Durum Rozetleri - Yazıların Tam Okunması İçin Düzenlendi */
+        /* Durum Rozetleri */
         .need-staff { 
             color: white; 
             padding: 2px 3px; 
@@ -71,14 +87,17 @@
             text-align: center; 
             font-size: 8px; 
             line-height: 1.2; 
-            white-space: normal; /* Kelimeler alt satıra geçebilsin, gizlenmesin */
+            white-space: normal; 
             word-break: break-word; 
         }
         
-        /* Renk Kombinasyonları Arka Plan Yumuşatıldı, Üst Çizgi Kalınlaştırıldı */
-        .g1-work-day { background: rgba(37, 99, 235, 0.08) !important; border-top: 3px solid var(--g1-color); }
-        .g2-work-day { background: rgba(217, 119, 6, 0.08) !important; border-top: 3px solid var(--g2-color); }
+        /* Grup Renk Çizgileri - Kaymayı Önleyecek Şekilde Düzenlendi */
+        .g1-work-day { background: rgba(37, 99, 235, 0.08) !important; border-top: 4px solid var(--g1-color) !important; }
+        .g2-work-day { background: rgba(217, 119, 6, 0.08) !important; border-top: 4px solid var(--g2-color) !important; }
         
+        /* Boş Günlerin Hizayı Bozmaması İçin Border Dengesi */
+        .cal-day-empty { opacity: 0.1; border: 1px solid transparent; }
+
         /* Yükleniyor Efekti */
         .loading { text-align: center; color: #94a3b8; font-weight: 600; padding: 40px; }
 
@@ -92,14 +111,14 @@
             .panel { padding: 25px; border-radius: 15px; }
             .calendar-nav { margin-bottom: 20px; }
             .nav-btn { padding: 8px 18px; font-size: 14px; }
-            .calendar-header { gap: 8px; margin-bottom: 8px; font-size: 13px; }
-            .calendar-grid { gap: 8px; }
-            .cal-day { min-height: 120px; padding: 12px; border-radius: 10px; justify-content: space-between; }
-            .cal-date { font-size: 14px; margin-bottom: 5px; }
+            .calendar-header { gap: 10px; margin-bottom: 10px; font-size: 13px; }
+            .calendar-grid { gap: 10px; }
+            .cal-day { min-height: 125px; padding: 12px; border-radius: 10px; }
+            .cal-date { font-size: 14px; margin-bottom: 6px; }
             .cal-content { font-size: 11px; gap: 4px; }
             .need-staff { font-size: 10px; padding: 3px 6px; }
-            .g1-work-day { border-top: 5px solid var(--g1-color); }
-            .g2-work-day { border-top: 5px solid var(--g2-color); }
+            .g1-work-day { border-top: 6px solid var(--g1-color) !important; }
+            .g2-work-day { border-top: 6px solid var(--g2-color) !important; }
         }
     </style>
 </head>
@@ -202,8 +221,8 @@
         
         document.getElementById('currentMonthTitle').innerText = new Intl.DateTimeFormat('tr-TR', { month: 'long', year: 'numeric' }).format(currentViewDate);
         
-        // Boş gün dolguları
-        for (let x = 0; x < startOffset; x++) container.innerHTML += `<div class="cal-day" style="opacity:0.1"></div>`;
+        // Boş gün dolguları - Hizayı korumak için yeni sınıf eklendi
+        for (let x = 0; x < startOffset; x++) container.innerHTML += `<div class="cal-day cal-day-empty"></div>`;
         
         // Günlerin oluşturulması
         for (let day = 1; day <= daysInMonth; day++) {
