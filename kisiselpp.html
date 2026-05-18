@@ -95,6 +95,8 @@
 
         .btn-main { width: 100%; padding: 16px; border-radius: 16px; border: none; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; font-weight: 800; cursor: pointer; margin-top: 15px; transition: 0.3s; }
         .btn-sifre { background: none; border: 1px solid rgba(255,255,255,0.12); color: #64748b; font-size: 11px; padding: 10px; border-radius: 12px; cursor: pointer; margin-top: 15px; width: 100%; font-weight: 700; }
+        .btn-nav { width: 100%; background: rgba(59, 130, 246, 0.05); border: 1px dashed rgba(59, 130, 246, 0.3); color: #60a5fa; padding: 14px; border-radius: 16px; font-size: 11px; font-weight: 800; cursor: pointer; text-transform: uppercase; margin-top: 15px; transition: 0.2s; letter-spacing: 0.5px; }
+        .btn-nav:hover { background: rgba(59, 130, 246, 0.12); color: #fff; border-style: solid; }
         #sifre-paneli { margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); display: none; }
         .hidden { display: none !important; }
         
@@ -191,8 +193,11 @@
         <button class="btn-sifre" id="sifreAcBtn" onclick="sifrePaneliniAc()">Şifremi Değiştir</button>
         <div id="sifre-paneli">
             <input type="password" id="yeniSifre" placeholder="Yeni Şifre">
-            <button class="btn-main" style="background: var(--success);" id="sifreKaydetBtn" onclick="sifreGuncelle()">KAYDET</button>
+            <button class="btn-main" style="background: var(--success);" id="sifreKaydetBtn" onclick="sifreGuncelle()">KAYRET</button>
         </div>
+
+        <!-- TAKVİM SAYFASINA GEÇİŞ BUTONU -->
+        <button class="btn-nav" onclick="window.location.href='./takvim.html'">📅 ÇALIŞMA TAKVİMİNİ GÖR</button>
 
         <button onclick="location.reload()" style="background:none; border:none; color:#475569; width:100%; margin-top:20px; cursor:pointer; font-weight:700; font-size:11px; text-transform:uppercase;">Güvenli Çıkış</button>
     </div>
