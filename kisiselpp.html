@@ -4,43 +4,111 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>M4 Personel Sistemi | Akıllı Analiz Pro</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
-    <style>
-        :root { --bg: #0b0f1a; --card: #161e31; --accent: #3b82f6; --text: #f1f5f9; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+    
+    <!-- ÇAKIŞMASIZ GÜNCEL PWA BAĞLANTILARI -->
+    <link rel="manifest" href="./m4-manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/7915/7915521.png">
 
-        #login-screen, #personel-screen { width: 100%; max-width: 420px; background: var(--card); border-radius: 32px; padding: 30px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
-        #personel-screen { display: none; animation: fadeIn 0.5s ease; }
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --bg: #0b0f1a; 
+            --card: #161e31; 
+            --accent: #3b82f6; 
+            --text: #f1f5f9; 
+            --success: #10b981; 
+            --warning: #f59e0b; 
+            --danger: #ef4444; 
+            --streak-bg: rgba(249, 115, 22, 0.1);
+            --streak-color: #f97316;
+        }
+        
+        .theme-night { --bg: #070a13; --card: #111827; --accent: #8b5cf6; }
+        .theme-day { --bg: #0f172a; --card: #1e293b; --accent: #0ea5e9; }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; transition: background 0.5s ease; }
+
+        #login-screen, #personel-screen { width: 100%; max-width: 420px; background: var(--card); border-radius: 32px; padding: 30px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); transition: background 0.5s ease; }
+        #personel-screen { display: none; animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
         
         h2 { color: var(--accent); font-weight: 800; margin-bottom: 20px; text-align: center; letter-spacing: -1px; }
         input { width: 100%; padding: 14px; margin: 10px 0; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; outline: none; transition: 0.3s; }
         
-        .score-val { font-size: 72px; font-weight: 800; text-align: center; background: linear-gradient(135deg, #60a5fa, #2563eb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; margin: 15px 0; }
+        .champion-badge { display: none; margin: 10px auto; background: linear-gradient(135deg, #f59e0b, #ef4444); color: white; padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: 800; width: max-content; letter-spacing: 0.5px; animation: pulse 2s infinite; }
+        .streak-badge { display: flex; align-items: center; justify-content: center; gap: 6px; margin: -5px auto 15px auto; background: var(--streak-bg); color: var(--streak-color); padding: 6px 14px; border-radius: 12px; font-size: 11.5px; font-weight: 700; width: max-content; border: 1px solid rgba(249, 115, 22, 0.2); }
+        .rank-badge { margin: 5px auto; background: rgba(255,255,255,0.05); color: #94a3b8; border: 1px solid rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; width: max-content; text-transform: uppercase; }
+
+        .score-val { font-size: 72px; font-weight: 800; text-align: center; background: linear-gradient(135deg, #60a5fa, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; margin: 10px 0; }
         .badge-row { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
         .status-badge { padding: 6px 12px; border-radius: 10px; font-size: 10px; font-weight: 800; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.1); }
-        .tag-success { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.3); }
-        .tag-danger { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border-color: rgba(239, 68, 68, 0.3); }
-        .tag-warning { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3); }
+        .tag-success { background: rgba(16, 185, 129, 0.12); color: #34d399; border-color: rgba(16, 185, 129, 0.25); }
+        .tag-danger { background: rgba(239, 68, 68, 0.12); color: #f87171; border-color: rgba(239, 68, 68, 0.25); }
+        .tag-warning { background: rgba(245, 158, 11, 0.12); color: #fbbf24; border-color: rgba(245, 158, 11, 0.25); }
 
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
-        .stat-box { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); }
-        .stat-box-full { grid-column: span 2; background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); }
-        .stat-label { font-size: 9px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; display: block; }
-        .stat-value { font-size: 16px; font-weight: 700; color: #fff; }
+        .stat-box { background: rgba(255,255,255,0.02); padding: 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.04); position: relative; overflow: hidden; }
+        .stat-box-full { grid-column: span 2; background: rgba(59, 130, 246, 0.04); border: 1px solid rgba(59, 130, 246, 0.15); }
+        .stat-label { font-size: 9px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; display: block; letter-spacing: 0.5px; }
+        .stat-value { font-size: 16px; font-weight: 700; color: #fff; z-index: 2; position: relative; }
 
-        .analysis-box { margin-top: 15px; padding: 15px; border-radius: 18px; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); line-height: 1.6; }
-        .analysis-box b { color: #60a5fa; font-weight: 800; display: block; margin-bottom: 5px; text-transform: uppercase; font-size: 10px; }
-        .analysis-text { font-size: 12.5px; color: #cbd5e1; }
+        .box-sparkbar { position: absolute; bottom: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--success)); width: 0%; transition: width 1.5s ease-in-out; opacity: 0.7; }
+
+        .analysis-box { margin-top: 20px; padding: 20px; border-radius: 24px; background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.06); }
+        .analysis-box b { color: #60a5fa; font-weight: 800; display: block; margin-bottom: 12px; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; }
+        
+        .analysis-table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 13px; }
+        .analysis-table tr { border-bottom: 1px solid rgba(255, 255, 255, 0.04); }
+        .analysis-table tr:last-child { border-bottom: none; }
+        .analysis-table td { padding: 11px 0; color: #cbd5e1; }
+        .analysis-table td.val { text-align: right; font-weight: 700; color: #fff; }
+        .analysis-table td.label-sub { font-size: 11px; color: #64748b; }
+
+        .trend-up { color: #34d399; font-weight: bold; margin-left: 4px; }
+        .trend-down { color: #f87171; font-weight: bold; margin-left: 4px; }
+
+        .progress-container { margin-top: 8px; background: rgba(255,255,255,0.05); border-radius: 6px; height: 6px; overflow: hidden; position: relative; }
+        .progress-bar { background: linear-gradient(90deg, #3b82f6, #10b981); height: 100%; border-radius: 6px; width: 0%; transition: width 1.2s ease-in-out; }
+
+        .target-milestone-box { margin-top: 12px; padding: 12px; border-radius: 14px; background: rgba(251, 191, 36, 0.05); border: 1px solid rgba(251, 191, 36, 0.15); font-size: 11.5px; color: #fde047; text-align: center; font-weight: 600; }
+        .podium-box { margin-top: 12px; padding: 12px; border-radius: 14px; background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.15); font-size: 11.5px; color: #d8b4fe; text-align: center; font-weight: 600; }
+
+        .tip-box { margin-top: 15px; padding: 16px; border-radius: 18px; background: rgba(99, 102, 241, 0.06); border: 1px solid rgba(99, 102, 241, 0.25); line-height: 1.5; }
+        .tip-box-header { display: flex; align-items: center; gap: 6px; color: #a5b4fc; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+        .tip-box-content { color: #e0e7ff; font-size: 12.5px; font-weight: 600; }
+
+        .prediction-box { margin-top: 12px; padding: 12px 16px; border-radius: 14px; background: rgba(16, 185, 129, 0.04); border: 1px solid rgba(16, 185, 129, 0.15); font-size: 11.5px; color: #a7f3d0; display: flex; justify-content: space-between; align-items: center; }
+
+        #toast-alert { display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); width: calc(100% - 40px); max-width: 380px; background: #1e1b4b; border: 1px solid #4338ca; border-radius: 16px; padding: 14px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.7); z-index: 9999; animation: slideDown 0.4s ease; }
+        
+        .accordion-section { margin-top: 15px; }
+        .accordion-btn { width: 100%; background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.1); color: #94a3b8; padding: 12px; border-radius: 14px; font-size: 11px; font-weight: 700; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
+        .accordion-btn:hover { background: rgba(255,255,255,0.06); color: #fff; }
+        .accordion-content { display: none; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 14px; margin-top: 8px; font-size: 12px; line-height: 1.6; color: #94a3b8; border: 1px solid rgba(255,255,255,0.02); }
+
+        .note-box { margin-top: 20px; padding: 18px; border-radius: 20px; background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.2); line-height: 1.5; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); }
+        .note-box strong { color: #f59e0b; display: block; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+        .note-box span { color: #ffedd5; font-size: 13px; font-weight: 600; display: block; }
 
         .btn-main { width: 100%; padding: 16px; border-radius: 16px; border: none; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; font-weight: 800; cursor: pointer; margin-top: 15px; transition: 0.3s; }
-        .btn-sifre { background: none; border: 1px solid rgba(255,255,255,0.15); color: #64748b; font-size: 11px; padding: 10px; border-radius: 12px; cursor: pointer; margin-top: 15px; width: 100%; font-weight: 700; }
+        .btn-sifre { background: none; border: 1px solid rgba(255,255,255,0.12); color: #64748b; font-size: 11px; padding: 10px; border-radius: 12px; cursor: pointer; margin-top: 15px; width: 100%; font-weight: 700; }
         #sifre-paneli { margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); display: none; }
         .hidden { display: none !important; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideDown { from { opacity: 0; transform: translate(-50%, -20px); } to { opacity: 1; transform: translate(-50%, 0); } }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 0.9; } 50% { transform: scale(1.03); opacity: 1; } 100% { transform: scale(1); opacity: 0.9; } }
     </style>
 </head>
 <body>
+
+    <div id="toast-alert">
+        <div style="font-size: 11px; font-weight: 800; color: #818cf8; letter-spacing: 0.5px; margin-bottom: 2px;">⚡ ANLIK DURUM BİLGİSİ</div>
+        <div id="toast-text" style="font-size: 12px; font-weight: 600; color: #e0e7ff;">Sistem başarıyla yüklendi.</div>
+    </div>
 
     <div id="login-screen">
         <h2>M4 PORTAL</h2>
@@ -51,8 +119,12 @@
 
     <div id="personel-screen">
         <div style="text-align: center;">
+            <div id="champBadge" class="champion-badge">🏆 VARDİYA ŞAMPİYONU</div>
+            <div id="streakBadge" class="streak-badge">⚡ Analiz Modu Aktif</div>
+            
             <h1 id="pIsim" style="font-size: 22px; font-weight: 800; color: #fff;">---</h1>
-            <p id="pAltBilgi" style="font-size: 11px; color: #64748b; margin-top: 4px;">---</p>
+            <div id="pRank" class="rank-badge">Yükleniyor...</div>
+            <p id="pAltBilgi" style="font-size: 11px; color: #64748b; margin-top: 6px;">---</p>
         </div>
 
         <div class="score-val" id="pSkor">0.0</div>
@@ -61,20 +133,59 @@
         <div class="badge-row" id="badgeRow"></div>
 
         <div class="stats-grid">
-            <div class="stat-box"><span class="stat-label">Toplam Fiş</span><span id="pFiş" class="stat-value">0</span></div>
-            <div class="stat-box"><span class="stat-label">Vardiya</span><span id="pVardiya" class="stat-value">---</span></div>
-            <div class="stat-box"><span class="stat-label">TL Satış</span><span id="pTl" class="stat-value">0 ₺</span></div>
-            <div class="stat-box"><span class="stat-label">Euro Satış</span><span id="pEuro" class="stat-value">0 €</span></div>
-            <div class="stat-box stat-box-full"><span class="stat-label">Toplam Satış (Ciro)</span><span id="pToplamSatis" class="stat-value" style="color: #60a5fa;">0 ₺</span></div>
+            <div class="stat-box">
+                <span class="stat-label">Toplam Fiş</span>
+                <span id="pFiş" class="stat-value">0</span>
+                <div id="barFis" class="box-sparkbar"></div>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Vardiya</span>
+                <span id="pVardiya" class="stat-value">---</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">TL Satış</span>
+                <span id="pTl" class="stat-value">0 ₺</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Euro Satış</span>
+                <span id="pEuro" class="stat-value">0 €</span>
+            </div>
+            <div class="stat-box stat-box-full">
+                <span class="stat-label">Toplam Satış (Ciro)</span>
+                <span id="pToplamSatis" class="stat-value" style="color: #60a5fa;">0 ₺</span>
+                <div id="barCiro" class="box-sparkbar" style="background: linear-gradient(90deg, #60a5fa, #a855f7);"></div>
+            </div>
         </div>
+
+        <div id="pMilestoneKutusu" class="target-milestone-box" style="display: none;"></div>
+        <div id="pPodiumKutusu" class="podium-box" style="display: none;"></div>
 
         <div class="analysis-box">
-            <b>📊 Mikro Grup Analizi</b>
-            <span id="pAnalizMetni" class="analysis-text">Analiz motoru çalışıyor...</span>
+            <b>📊 Ekip & Performans Kıyaslaması</b>
+            <table class="analysis-table" id="pAnalizTablo"></table>
+            
+            <div class="tip-box">
+                <div class="tip-box-header">🤖 M4 Akıllı Performans Asistanı</div>
+                <div id="pAkilliIpucu" class="tip-box-content">Analiz tamamlanıyor...</div>
+            </div>
+
+            <div class="prediction-box">
+                <span>🔮 Haftalık Tahmini Kapanış Skorunuz:</span>
+                <strong id="pTahminSkor" style="color: #34d399;">--</strong>
+            </div>
         </div>
 
-        <div id="notKutusu" class="note-box" style="display:none; background: rgba(245, 158, 11, 0.1); border-left: 4px solid #f59e0b; padding: 15px; border-radius: 12px; font-size: 13px; color: #fbbf24; margin-top: 20px;">
-            <strong>Yönetici Geri Bildirimi:</strong> <span id="pNot"></span>
+        <div class="accordion-section">
+            <button class="accordion-btn" onclick="toggleAccordion()">💡 Satış Artırma İpuçlarını Gör</button>
+            <div id="guideContent" class="accordion-content">
+                <p style="margin-bottom: 6px;"><strong style="color: #60a5fa;">• İkili Teklif Metodu:</strong> Müşteriye tek ürün yerine yan yana uyumlu iki kampanya ürününü eş zamanlı sunun.</p>
+                <p><strong style="color: #34d399;">• Hızlı Servis:</strong> Yoğun anlarda barkod okuma ritmini koruyarak kuyruk oluşumunu engelleyin.</p>
+            </div>
+        </div>
+
+        <div id="notKutusu" class="note-box" style="display:none;">
+            <strong>💬 Yönetici Geri Feedback'i</strong>
+            <span id="pNot"></span>
         </div>
 
         <button class="btn-sifre" id="sifreAcBtn" onclick="sifrePaneliniAc()">Şifremi Değiştir</button>
@@ -91,7 +202,22 @@
         const KUR_URL = "https://script.google.com/macros/s/AKfycbwVZ7VcV3Nob8Z2eEVrTSECZAlVbPH0eOikAJ585JEPdebcXMhvXw8DwF_T8UoM-TufsQ/exec";
         
         let aktifSicil = "";
-        let guncelKur = 36.50; // Varsayılan, linkten çekilince güncellenecek
+        let guncelKur = 36.50; 
+
+        function playBeep(type) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain); gain.connect(ctx.destination);
+                if(type === 'success') {
+                    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+                    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start(); osc.stop(ctx.currentTime + 0.25);
+                }
+            } catch(e) {}
+        }
 
         async function sistemeGiris() {
             const sicil = document.getElementById("sicilInput").value.trim();
@@ -99,62 +225,92 @@
             const loginBtn = document.getElementById("loginBtn");
 
             if (!sicil || !sifre) { alert("Sicil ve şifre giriniz!"); return; }
-
-            loginBtn.innerText = "Veriler Alınıyor...";
-            loginBtn.disabled = true;
+            loginBtn.innerText = "Veriler Alınıyor..."; loginBtn.disabled = true;
 
             try {
-                // 1. Önce Güncel Kuru Çek
                 const kurResponse = await fetch(KUR_URL);
                 const kurData = await kurResponse.json();
-                // r1 hücresinden gelen veriyi sayıya çevir
-                if(kurData && kurData.kur) { guncelKur = parseFloat(String(kurData.kur).replace(",", ".")); }
+                if(kurData && kurData.kur) { guncelKur = parseFloat(String(kurData.kur).replace(/\s/g, "").replace(",", ".")); }
 
-                // 2. Personel Verilerini Çek
                 const response = await fetch(SCRIPT_URL);
                 const dataGlobal = await response.json();
-                const user = dataGlobal.find(x => String(x.sicil) === sicil && String(x.sifre) === sifre);
+                const user = dataGlobal.find(x => String(x.sicil).trim() === sicil && String(x.sifre).trim() === sifre);
 
                 if (user) {
                     aktifSicil = sicil;
                     document.getElementById("login-screen").classList.add("hidden");
                     document.getElementById("personel-screen").style.display = "block";
                     hesaplaVeAnalizEt(user, dataGlobal, guncelKur);
-                } else {
-                    alert("Giriş bilgileri hatalı!");
-                    resetLoginBtn();
-                }
+                } else { alert("Giriş bilgileri hatalı!"); resetLoginBtn(); }
             } catch (err) { alert("Bağlantı hatası!"); resetLoginBtn(); }
         }
 
         function hesaplaVeAnalizEt(p, dataGlobal, kur) {
-            const n = (v) => parseFloat(String(v).replace(/\s/g, "").replace(",", ".")) || 0;
+            const n = (v) => {
+                if (v === undefined || v === null) return 0;
+                let clean = String(v).replace(/\s/g, "").replace(",", ".");
+                return parseFloat(clean) || 0;
+            };
 
-            const fis = n(p.fis);
-            const tl = n(p.tl);
-            const euro = n(p.euro);
-            
-            // Toplam Satış (Ciro) Hesaplama (Dinamik Kur ile)
+            const fis = n(p.fis); const tl = n(p.tl); const euro = n(p.euro);
             const ciro = tl + (euro * kur); 
-            const isNight = (p.vardiya || "").toLowerCase().includes("gece");
+            const vardiyaMetni = (p.vardiya || "").toLowerCase();
+            
+            const currentHour = new Date().getHours();
+            const isNightAtmos = currentHour >= 19 || currentHour < 7 || vardiyaMetni.includes("gece");
+            
+            if(isNightAtmos) { 
+                document.body.classList.add("theme-night"); 
+                document.body.classList.remove("theme-day");
+            } else { 
+                document.body.classList.add("theme-day"); 
+                document.body.classList.remove("theme-night");
+            }
 
-            // --- PERFORMANS SKORU ---
             let baseScore = ((fis * 1.5) * 0.60) + ((ciro / 1500) * 0.40);
-            const finalScore = isNight ? baseScore * 1.6 : baseScore;
+            const finalScore = vardiyaMetni.includes("gece") ? baseScore * 1.6 : baseScore;
 
-            // --- MİKRO GRUP ANALİZİ ---
-            const mikroGrup = dataGlobal.filter(x => 
-                String(x.magaza) === String(p.magaza) && 
-                String(x.grup) === String(p.grup) && 
-                String(x.vardiya) === String(p.vardiya) &&
-                String(x.pozisyon || "").toLowerCase().includes("ödeme")
-            );
+            const rankElement = document.getElementById("pRank");
+            if(finalScore >= 90) { rankElement.innerText = "🌌 Galaksi Kasa Gurusu"; rankElement.style.color = "#fbbf24"; }
+            else if(finalScore >= 70) { rankElement.innerText = "⚡ Hız Savaşçısı"; rankElement.style.color = "#60a5fa"; }
+            else { rankElement.innerText = "🌱 Yükselen Yıldız"; rankElement.style.color = "#34d399"; }
 
-            const finalReferansGrup = mikroGrup.length > 0 ? mikroGrup : dataGlobal.filter(x => 
-                String(x.magaza) === String(p.magaza) && 
-                String(x.grup) === String(p.grup) && 
-                String(x.vardiya) === String(p.vardiya)
-            );
+            document.getElementById("pTahminSkor").innerText = (finalScore * 1.08).toFixed(2) + " Puan";
+
+            const genelGrup = dataGlobal.filter(x => String(x.magaza).trim() === String(p.magaza).trim() && String(x.grup).trim() === String(p.grup).trim());
+            const vardiyaGrubu = genelGrup.filter(x => String(x.vardiya).toLowerCase().trim() === vardiyaMetni.trim());
+            const mikroGrupOdeme = vardiyaGrubu.filter(x => String(x.pozisyon || "").toLowerCase().includes("ödeme"));
+            const finalReferansGrup = mikroGrupOdeme.length > 0 ? mikroGrupOdeme : vardiyaGrubu;
+
+            const magazaSkorlari = genelGrup.map(x => {
+                const xFis = n(x.fis); const xCiro = n(x.tl) + (n(x.euro) * kur);
+                let xBase = ((xFis * 1.5) * 0.60) + ((xCiro / 1500) * 0.40);
+                return (x.vardiya || "").toLowerCase().includes("gece") ? xBase * 1.6 : xBase;
+            }).sort((a,b) => b - a);
+            
+            const magazaZirveSkor = magazaSkorlari[0] || 0;
+
+            const getAyrintiliSiralama = (grupListesi) => {
+                const fisListesi = grupListesi.map(x => ({ sicil: String(x.sicil).trim(), deger: n(x.fis) })).sort((a, b) => b.deger - a.deger);
+                const kasaOnuListesi = grupListesi.map(x => {
+                    const xFis = n(x.fis) || 1; const xCiro = n(x.tl) + (n(x.euro) * kur);
+                    return { sicil: String(x.sicil).trim(), deger: xCiro / xFis };
+                }).sort((a, b) => b.deger - a.deger);
+
+                return {
+                    fisSira: fisListesi.findIndex(x => x.sicil === String(p.sicil).trim()) + 1,
+                    kasaOnuSira: kasaOnuListesi.findIndex(x => x.sicil === String(p.sicil).trim()) + 1,
+                    toplamKisi: grupListesi.length
+                };
+            };
+
+            const genelSiralamaSonuclari = getAyrintiliSiralama(genelGrup);
+            const vardiyaSiralamaSonuclari = getAyrintiliSiralama(vardiyaGrubu);
+
+            if (vardiyaSiralamaSonuclari.fisSira === 1 && vardiyaSiralamaSonuclari.kasaOnuSira === 1) {
+                document.getElementById("champBadge").style.display = "block";
+                playBeep('success');
+            }
 
             const allFis = finalReferansGrup.map(x => n(x.fis));
             const meanFis = allFis.reduce((a, b) => a + b, 0) / (allFis.length || 1);
@@ -163,24 +319,68 @@
             const totalCiro = finalReferansGrup.reduce((acc, x) => acc + n(x.tl) + (n(x.euro) * kur), 0);
             const totalFisCount = allFis.reduce((a, b) => a + b, 0) || 1;
             const grupFisBasiCiro = totalCiro / totalFisCount;
-            const personelFisBasiCiro = ciro / (fis || 1);
+            const personelFisBasiCiro = fis > 0 ? (ciro / fis) : 0;
 
-            // --- DURUM TESPİTLERİ ---
             const devStatus = fis < (meanFis - stdDevFis) ? "KRİTİK" : (fis < meanFis ? "GELİŞMELİ" : "BAŞARILI");
             const tolerans = fis > (meanFis * 1.2) ? 0.7 : 0.85;
             const esikDeger = grupFisBasiCiro * tolerans;
 
+            const fisTrend = fis >= meanFis ? '<span class="trend-up">▲</span>' : '<span class="trend-down">▼</span>';
+            const verimlilikTrend = personelFisBasiCiro >= grupFisBasiCiro ? '<span class="trend-up">▲</span>' : '<span class="trend-down">▼</span>';
+
+            const grupMaxFis = Math.max(...allFis, 1);
+            const grupMaxCiro = Math.max(...finalReferansGrup.map(x => n(x.tl) + (n(x.euro) * kur)), 1);
+            document.getElementById("barFis").style.width = Math.min((fis / grupMaxFis) * 100, 100) + "%";
+            document.getElementById("barCiro").style.width = Math.min((ciro / grupMaxCiro) * 100, 100) + "%";
+
             let upsellNeed = "DENGELİ";
-            let upsellStatus = "ok";
-            if (personelFisBasiCiro < esikDeger && fis > 0) {
-                upsellNeed = "⚠️ KASA ÖNÜ ARTIRILMALI";
-                upsellStatus = "alert";
-            } else if (personelFisBasiCiro > (grupFisBasiCiro * 1.2)) {
-                upsellNeed = "💎 YÜKSEK VERİMLİLİK";
-                upsellStatus = "ok";
+            let akilliIpucuMetni = "Tebrikler, dengeli bir operasyon yürütüyorsunuz. Bu ritmi koruyun!";
+            
+            let selamlama = currentHour >= 18 ? "İyi Akşamlar" : (currentHour >= 12 ? "İyi Günler" : "İyi Mesailer");
+            let toastMetni = `Başarıyla giriş yapıldı. ${selamlama}, ${p.isim}!`;
+
+            const milestoneKutusu = document.getElementById("pMilestoneKutusu");
+            if (fis < meanFis) {
+                const gerekenFis = Math.ceil(meanFis - fis);
+                milestoneKutusu.innerText = `🎯 Grup ortalamasına ulaşmanız için sadece ${gerekenFis} fiş kaldı!`;
+                milestoneKutusu.style.display = "block";
+            } else { milestoneKutusu.style.display = "none"; }
+
+            const podiumKutusu = document.getElementById("pPodiumKutusu");
+            if(finalScore < magazaZirveSkor) {
+                const fark = (magazaZirveSkor - finalScore).toFixed(2);
+                podiumKutusu.innerText = `🏆 Mağaza liderliği ile aranızda sadece ${fark} puan var! Zirveye yürüyün!`;
+                podiumKutusu.style.display = "block";
+            } else {
+                podiumKutusu.innerText = `👑 Şu an mağazanızın en yüksek performans puanına sahipsiniz!`;
+                podiumKutusu.style.display = "block";
             }
 
-            // --- UI GÜNCELLEME ---
+            const streakElement = document.getElementById("streakBadge");
+            if(devStatus === "BAŞARILI" && personelFisBasiCiro >= grupFisBasiCiro) {
+                streakElement.innerText = "🔥 Kusursuz Performans Serisi!";
+                streakElement.style.setProperty("--streak-bg", "rgba(249, 115, 22, 0.1)");
+                streakElement.style.setProperty("--streak-color", "#f97316");
+            } else if (devStatus === "KRİTİK") {
+                streakElement.innerText = "⏳ Riskli Bölge: İvme Gerekli";
+                streakElement.style.setProperty("--streak-bg", "rgba(239, 68, 68, 0.1)");
+                streakElement.style.setProperty("--streak-color", "#ef4444");
+            } else {
+                streakElement.innerText = "⚡ Standart Performans Zinciri";
+            }
+
+            if (personelFisBasiCiro < esikDeger && fis > 0) {
+                upsellNeed = "⚠️ KASA ÖNÜ ARTIRILMALI";
+                const eksikMiktar = Math.round(grupFisBasiCiro - personelFisBasiCiro);
+                akilliIpucuMetni = `Kasa önü satış verimliliğiniz hedef eşiğinin ₺${eksikMiktar} altında kalıyor. Çapraz satışı artırın.`;
+            } else if (personelFisBasiCiro > (grupFisBasiCiro * 1.2) && devStatus !== "BAŞARILI") {
+                upsellNeed = "💎 YÜKSEK VERİMLİLİK";
+                akilliIpucuMetni = "Kasa önü sepet ortalamanız mükemmel düzeyde! Şimdi sepet başarısını daha fazla müşteriye ulaştırma zamanı.";
+            } else if (devStatus === "KRİTİK") {
+                akilliIpucuMetni = `Fiş sayınız grup ortalamasının (${meanFis.toFixed(1)}) gerisinde seyrediyor. Servis hızınızı artırın!`;
+            }
+
+            document.getElementById("pAkilliIpucu").innerText = akilliIpucuMetni;
             document.getElementById("pIsim").innerText = p.isim;
             document.getElementById("pAltBilgi").innerText = `SICIL: ${p.sicil} | ${p.magaza} | ${p.grup}`;
             document.getElementById("pSkor").innerText = finalScore.toFixed(2);
@@ -188,42 +388,56 @@
             document.getElementById("pVardiya").innerText = p.vardiya || "---";
             document.getElementById("pTl").innerText = tl.toLocaleString('tr-TR') + " ₺";
             document.getElementById("pEuro").innerText = euro.toLocaleString('tr-TR') + " €";
-            
-            // Toplam Satış (Ciro) kısmını tam sayı olarak yazdır
             document.getElementById("pToplamSatis").innerText = Math.round(ciro).toLocaleString('tr-TR') + " ₺";
 
-            const badgeRow = document.getElementById("badgeRow");
-            badgeRow.innerHTML = "";
+            const badgeRow = document.getElementById("badgeRow"); badgeRow.innerHTML = "";
             badgeRow.innerHTML += `<span class="status-badge ${devStatus === 'BAŞARILI' ? 'tag-success' : 'tag-danger'}">${devStatus} FİŞ</span>`;
-            if(upsellNeed !== "DENGELİ") {
-                badgeRow.innerHTML += `<span class="status-badge ${upsellStatus === 'alert' ? 'tag-warning' : 'tag-success'}">${upsellNeed}</span>`;
-            }
+            if(upsellNeed !== "DENGELİ") { badgeRow.innerHTML += `<span class="status-badge ${personelFisBasiCiro < esikDeger ? 'tag-warning' : 'tag-success'}">${upsellNeed}</span>`; }
 
-            let analizMetni = `Şu an <b>${p.magaza} - ${p.grup}</b> ekibi ve <b>${p.vardiya}</b> vardiyasındaki ödeme danışmanlarına göre analiz ediliyorsunuz. <br><br>`;
-            analizMetni += `Grup ortalaması <b>${meanFis.toFixed(1)} fiş</b> iken performansınız <b>${Math.round(fis)} fiş</b>. <br><br>`;
-            analizMetni += `Grup fiş başı ciro hedefi <b>₺${Math.round(grupFisBasiCiro)}</b> iken sizin verimliliğiniz <b>₺${Math.round(personelFisBasiCiro)}</b>.`;
-            document.getElementById("pAnalizMetni").innerHTML = analizMetni;
+            const progressPercent = Math.min(Math.round((fis / (meanFis || 1)) * 100), 100);
+
+            let tabloHtml = `
+                <tr><td>Grup Geneli Fiş Sıralaması</td><td class="val">${genelSiralamaSonuclari.fisSira} / ${genelSiralamaSonuclari.toplamKisi}</td></tr>
+                <tr><td>Vardiya İçi Fiş Sıralaması</td><td class="val" style="color: #93c5fd;">${vardiyaSiralamaSonuclari.fisSira} / ${vardiyaSiralamaSonuclari.toplamKisi}</td></tr>
+                <tr style="background: rgba(59, 130, 246, 0.02);"><td>Grup Geneli Kasa Önü Verimlilik</td><td class="val" style="color: #fbbf24;">${genelSiralamaSonuclari.kasaOnuSira} / ${genelSiralamaSonuclari.toplamKisi}</td></tr>
+                <tr style="background: rgba(59, 130, 246, 0.02);"><td>Vardiya İçi Kasa Önü Verimlilik</td><td class="val" style="color: #c084fc;">${vardiyaSiralamaSonuclari.kasaOnuSira} / ${vardiyaSiralamaSonuclari.toplamKisi}</td></tr>
+                <tr><td>Fiş Adetiniz / Ortalaması<div class="progress-container"><div class="progress-bar" style="width: ${progressPercent}%"></div></div></td><td class="val" style="vertical-align: top; padding-top:10px;">${Math.round(fis)} ${fisTrend} <span class="label-sub">/ ${meanFis.toFixed(1)}</span></td></tr>
+                <tr><td>Fiş Başı Cironuz</td><td class="val" style="color: #34d399;">₺${Math.round(personelFisBasiCiro)} ${verimlilikTrend}</td></tr>
+                <tr><td>Grup Hedef Eşiği</td><td class="val">₺${Math.round(grupFisBasiCiro)}</td></tr>
+            `;
+            document.getElementById("pAnalizTablo").innerHTML = tabloHtml;
 
             if (p.not && p.not.length > 2) {
-                document.getElementById("notKutusu").style.display = "block";
-                document.getElementById("pNot").innerText = p.not;
-            }
+                document.getElementById("notKutusu").style.display = "block"; document.getElementById("pNot").innerText = p.not;
+            } else { document.getElementById("notKutusu").style.display = "none"; }
+
+            const toast = document.getElementById("toast-alert");
+            document.getElementById("toast-text").innerText = toastMetni;
+            toast.style.display = "block"; setTimeout(() => { toast.style.display = "none"; }, 4000);
         }
 
+        function toggleAccordion() { const content = document.getElementById("guideContent"); content.style.display = content.style.display === "block" ? "none" : "block"; }
         function sifrePaneliniAc() { document.getElementById('sifre-paneli').style.display = 'block'; document.getElementById('sifreAcBtn').style.display = 'none'; }
         
         async function sifreGuncelle() {
             const yeniSifre = document.getElementById("yeniSifre").value.trim();
-            const btn = document.getElementById("sifreKaydetBtn");
-            if (yeniSifre.length < 4) { alert("Min. 4 hane!"); return; }
+            const btn = document.getElementById("sifreKaydetBtn"); if (yeniSifre.length < 4) { alert("Min. 4 hane!"); return; }
             btn.innerText = "Kaydediliyor...";
             try {
                 const response = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ islem: "sifreDegistir", sicil: aktifSicil, yeniSifre: yeniSifre }) });
                 if (await response.text() === "Tamam") { alert("Şifre Değişti!"); location.reload(); }
             } catch (e) { alert("Hata!"); }
         }
-
         function resetLoginBtn() { const btn = document.getElementById("loginBtn"); btn.innerText = "VERİLERİ ANALİZ ET"; btn.disabled = false; }
+
+        // M4 PORTAL ÖZEL PWA TETİKLEYİCİSİ
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                .then(reg => console.log('M4 PWA Aktif!', reg))
+                .catch(err => console.log('PWA Hatası:', err));
+            });
+        }
     </script>
 </body>
 </html>
