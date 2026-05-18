@@ -41,7 +41,7 @@
         .nav-btn { background: var(--bg); border: 1px solid var(--border); color: white; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-weight: 800; transition: 0.2s; font-size: 12px; }
         .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
         
-        /* Takvim Grid Yapısı - Tam Denk Gelme Ayarı */
+        /* Takvim Grid Yapısı */
         .calendar-header { 
             display: grid; 
             grid-template-columns: repeat(7, 1fr); 
@@ -60,10 +60,9 @@
             width: 100%; 
         }
         
-        /* Mobil Öncelikli Gün Hücreleri */
+        /* Gün Hücreleri Temel Yapısı */
         .cal-day { 
             background: var(--bg); 
-            /* Grid kaymasını önlemek için standart border yerine inset shadow veya tüm kenarlara eşit border verdik */
             border: 1px solid var(--border);
             min-height: 85px; 
             height: auto; 
@@ -73,7 +72,16 @@
             display: flex; 
             flex-direction: column; 
             justify-content: flex-start;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
+        
+        /* Animasyon Efekti (Yeni) */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-cells { animation: fadeInUp 0.35s ease forwards; }
+
         .cal-date { font-weight: 800; font-size: 11px; margin-bottom: 4px; opacity: 0.9; display: flex; justify-content: space-between; align-items: center; }
         .cal-content { font-size: 9px; display: flex; flex-direction: column; gap: 3px; width: 100%; }
         
@@ -91,14 +99,26 @@
             word-break: break-word; 
         }
         
-        /* Grup Renk Çizgileri - Kaymayı Önleyecek Şekilde Düzenlendi */
-        .g1-work-day { background: rgba(37, 99, 235, 0.08) !important; border-top: 4px solid var(--g1-color) !important; }
-        .g2-work-day { background: rgba(217, 119, 6, 0.08) !important; border-top: 4px solid var(--g2-color) !important; }
+        /* İzin & Rapor Özel Rozetleri (Yeni) */
+        .badge-izin { background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 1px 4px; border-radius: 4px; font-weight: 800; }
+        .badge-rapor { background: rgba(239, 68, 68, 0.15); color: #ef4444; padding: 1px 4px; border-radius: 4px; font-weight: 800; }
+
+        /* Grup Renk Çizgileri */
+        .g1-work-day { background: rgba(37, 99, 235, 0.05) !important; border-top: 4px solid var(--g1-color) !important; }
+        .g2-work-day { background: rgba(217, 119, 6, 0.05) !important; border-top: 4px solid var(--g2-color) !important; }
         
+        /* Hafta Sonu Hafif Karartma Kontrastı (Yeni) */
+        .weekend-day { background-color: rgba(0, 0, 0, 0.2) !important; }
+
+        /* Bugünün Hücresi Vurgusu (Yeni) */
+        .today-cell { 
+            border: 2px solid var(--accent) !important; 
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
+            background: rgba(16, 185, 129, 0.03) !important;
+        }
+
         /* Boş Günlerin Hizayı Bozmaması İçin Border Dengesi */
         .cal-day-empty { opacity: 0.1; border: 1px solid transparent; }
-
-        /* Yükleniyor Efekti */
         .loading { text-align: center; color: #94a3b8; font-weight: 600; padding: 40px; }
 
         /* ----------------------------------------------------------------- */
@@ -114,6 +134,7 @@
             .calendar-header { gap: 10px; margin-bottom: 10px; font-size: 13px; }
             .calendar-grid { gap: 10px; }
             .cal-day { min-height: 125px; padding: 12px; border-radius: 10px; }
+            .cal-day:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
             .cal-date { font-size: 14px; margin-bottom: 6px; }
             .cal-content { font-size: 11px; gap: 4px; }
             .need-staff { font-size: 10px; padding: 3px 6px; }
@@ -219,9 +240,13 @@
         const startOffset = firstDay === 0 ? 6 : firstDay - 1;
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         
+        // Bugün kontrolü için tarih nesnesi
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
         document.getElementById('currentMonthTitle').innerText = new Intl.DateTimeFormat('tr-TR', { month: 'long', year: 'numeric' }).format(currentViewDate);
         
-        // Boş gün dolguları - Hizayı korumak için yeni sınıf eklendi
+        // Boş gün dolguları
         for (let x = 0; x < startOffset; x++) container.innerHTML += `<div class="cal-day cal-day-empty"></div>`;
         
         // Günlerin oluşturulması
@@ -230,6 +255,9 @@
             const calisanGrup = getVardiyaDurumu(dStr);
             const gunlukKayitlar = izinler.filter(i => dStr >= i.baslangic && dStr <= i.bitis && i.grup === calisanGrup);
             
+            // Haftanın günü endeksi (0: Pazar, 1: Pazartesi... 6: Cumartesi)
+            const dayOfWeek = new Date(year, month, day).getDay();
+
             let gunduzCount = 0, geceCount = 0, birbirCount = 0;
             gunlukKayitlar.forEach(i => {
                 let lazim = (i.takviye === 'Hepsi') || (i.takviye === 'Secili' && i.seciliTarihler && i.seciliTarihler.includes(dStr));
@@ -241,7 +269,13 @@
             });
 
             const dayDiv = document.createElement('div');
-            dayDiv.className = `cal-day ${calisanGrup === '1. Grup' ? 'g1-work-day' : 'g2-work-day'}`;
+            
+            // Sınıfları dinamik oluştur (Grup, Bugün ve Haftasonu kontrolü dahil)
+            let cellClasses = `cal-day animate-cells ${calisanGrup === '1. Grup' ? 'g1-work-day' : 'g2-work-day'}`;
+            if (dStr === todayStr) cellClasses += ' today-cell';
+            if (dayOfWeek === 0 || dayOfWeek === 6) cellClasses += ' weekend-day';
+            
+            dayDiv.className = cellClasses;
             
             let tHtml = gunduzCount > 0 ? `<span class="need-staff" style="background:#fbbf24; color:#000;">☀️ Gndz: ${gunduzCount}</span>` : '';
             tHtml += geceCount > 0 ? `<span class="need-staff" style="background:#475569;">🌙 Gece: ${geceCount}</span>` : '';
@@ -252,13 +286,22 @@
             
             const grupRenkStr = calisanGrup === '1. Grup' ? 'var(--g1-color)' : 'var(--g2-color)';
 
+            // İzin ve rapor metinlerini şık etiketlere çevirdik
+            let durumHtml = '';
+            if (iznCount > 0 || rapCount > 0) {
+                durumHtml = `<div style="font-size:10px; margin-bottom:2px; display:flex; gap:4px; flex-wrap:wrap;">`;
+                if (iznCount > 0) durumHtml += `<span class="badge-izin">🏖️ ${iznCount} İzin</span>`;
+                if (rapCount > 0) durumHtml += `<span class="badge-rapor">🏥 ${rapCount} Rpr</span>`;
+                durumHtml += `</div>`;
+            }
+
             dayDiv.innerHTML = `
                 <div class="cal-date">
                     <span>${day}</span>
                     <span style="font-size:8px; color:${grupRenkStr}; font-weight:800;">${calisanGrup.split(' ')[0]}.GRP</span>
                 </div>
                 <div class="cal-content">
-                     ${(iznCount+rapCount) > 0 ? `<div style="font-size:10px; margin-bottom:1px; display:flex; gap:2px;">${iznCount>0?'🏖️'+iznCount:''} ${rapCount>0?'🏥'+rapCount:''}</div>` : ''}
+                    ${durumHtml}
                     ${tHtml}
                 </div>`;
             container.appendChild(dayDiv);
