@@ -20,7 +20,7 @@
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
         body { background: var(--bg); color: var(--text); padding: 8px; width: 100%; min-height: 100vh; }
-        .container { max-width: 1200px; margin: auto; width: 100%; }
+        .container { max-width: 1200px; margin: auto; width: 100%; display: flex; flex-direction: column; }
         
         /* Üst Başlık Alanı */
         .header-area {
@@ -32,19 +32,20 @@
             padding: 10px 15px;
             border-radius: 12px;
             border: 1px solid var(--border);
+            width: 100%;
         }
         h2 { color: var(--accent); font-weight: 800; font-size: 15px; }
         
         /* Takvim Navigasyon ve Panel */
-        .panel { background: var(--card); padding: 12px; border-radius: 12px; border: 1px solid var(--border); width: 100%; }
-        .calendar-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .panel { background: var(--card); padding: 12px; border-radius: 12px; border: 1px solid var(--border); width: 100%; display: flex; flex-direction: column; }
+        .calendar-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; width: 100%; }
         .nav-btn { background: var(--bg); border: 1px solid var(--border); color: white; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-weight: 800; transition: 0.2s; font-size: 12px; }
         .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
         
-        /* Takvim Grid Yapısı */
+        /* Takvim Grid Yapısı - Sağa Doğru Tam Genişleme Ayarı */
         .calendar-header { 
             display: grid; 
-            grid-template-columns: repeat(7, 1fr); 
+            grid-template-columns: repeat(7, minmax(0, 1fr)); 
             gap: 6px; 
             margin-bottom: 8px; 
             text-align: center; 
@@ -52,12 +53,14 @@
             font-size: 11px; 
             color: var(--accent); 
             width: 100%;
+            justify-items: stretch;
         }
         .calendar-grid { 
             display: grid; 
-            grid-template-columns: repeat(7, 1fr); 
+            grid-template-columns: repeat(7, minmax(0, 1fr)); 
             gap: 6px; 
             width: 100%; 
+            justify-items: stretch;
         }
         
         /* Gün Hücreleri Temel Yapısı */
@@ -73,9 +76,10 @@
             flex-direction: column; 
             justify-content: flex-start;
             transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%; /* Sağa doğru tam yayılması için sabitlendi */
         }
         
-        /* Animasyon Efekti (Yeni) */
+        /* Animasyon Efekti */
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(6px); }
             to { opacity: 1; transform: translateY(0); }
@@ -99,7 +103,7 @@
             word-break: break-word; 
         }
         
-        /* İzin & Rapor Özel Rozetleri (Yeni) */
+        /* İzin & Rapor Özel Rozetleri */
         .badge-izin { background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 1px 4px; border-radius: 4px; font-weight: 800; }
         .badge-rapor { background: rgba(239, 68, 68, 0.15); color: #ef4444; padding: 1px 4px; border-radius: 4px; font-weight: 800; }
 
@@ -107,10 +111,10 @@
         .g1-work-day { background: rgba(37, 99, 235, 0.05) !important; border-top: 4px solid var(--g1-color) !important; }
         .g2-work-day { background: rgba(217, 119, 6, 0.05) !important; border-top: 4px solid var(--g2-color) !important; }
         
-        /* Hafta Sonu Hafif Karartma Kontrastı (Yeni) */
+        /* Hafta Sonu Hafif Karartma Kontrastı */
         .weekend-day { background-color: rgba(0, 0, 0, 0.2) !important; }
 
-        /* Bugünün Hücresi Vurgusu (Yeni) */
+        /* Bugünün Hücresi Vurgusu */
         .today-cell { 
             border: 2px solid var(--accent) !important; 
             box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
@@ -118,7 +122,7 @@
         }
 
         /* Boş Günlerin Hizayı Bozmaması İçin Border Dengesi */
-        .cal-day-empty { opacity: 0.1; border: 1px solid transparent; }
+        .cal-day-empty { opacity: 0.1; border: 1px solid transparent; width: 100%; }
         .loading { text-align: center; color: #94a3b8; font-weight: 600; padding: 40px; }
 
         /* ----------------------------------------------------------------- */
@@ -240,7 +244,6 @@
         const startOffset = firstDay === 0 ? 6 : firstDay - 1;
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         
-        // Bugün kontrolü için tarih nesnesi
         const today = new Date();
         const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
 
@@ -255,7 +258,6 @@
             const calisanGrup = getVardiyaDurumu(dStr);
             const gunlukKayitlar = izinler.filter(i => dStr >= i.baslangic && dStr <= i.bitis && i.grup === calisanGrup);
             
-            // Haftanın günü endeksi (0: Pazar, 1: Pazartesi... 6: Cumartesi)
             const dayOfWeek = new Date(year, month, day).getDay();
 
             let gunduzCount = 0, geceCount = 0, birbirCount = 0;
@@ -270,7 +272,6 @@
 
             const dayDiv = document.createElement('div');
             
-            // Sınıfları dinamik oluştur (Grup, Bugün ve Haftasonu kontrolü dahil)
             let cellClasses = `cal-day animate-cells ${calisanGrup === '1. Grup' ? 'g1-work-day' : 'g2-work-day'}`;
             if (dStr === todayStr) cellClasses += ' today-cell';
             if (dayOfWeek === 0 || dayOfWeek === 6) cellClasses += ' weekend-day';
@@ -286,7 +287,6 @@
             
             const grupRenkStr = calisanGrup === '1. Grup' ? 'var(--g1-color)' : 'var(--g2-color)';
 
-            // İzin ve rapor metinlerini şık etiketlere çevirdik
             let durumHtml = '';
             if (iznCount > 0 || rapCount > 0) {
                 durumHtml = `<div style="font-size:10px; margin-bottom:2px; display:flex; gap:4px; flex-wrap:wrap;">`;
