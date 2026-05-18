@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M4 Operasyonel Takvim Ekranı</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --bg: #0f172a; 
+            --card: #1e293b; 
+            --accent: #10b981; 
+            --text: #f8fafc; 
+            --border: rgba(255, 255, 255, 0.08); 
+            --danger: #ef4444; 
+            
+            /* Belirgin Yeni Grup Renkleri */
+            --g1-color: #2563eb; /* Belirgin Canlı Mavi */
+            --g2-color: #d97706; /* Belirgin Canlı Turuncu */
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg); color: var(--text); padding: 20px; }
+        .container { max-width: 1200px; margin: auto; }
+        
+        /* Üst Başlık Alanı */
+        .header-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background: var(--card);
+            padding: 15px 25px;
+            border-radius: 15px;
+            border: 1px solid var(--border);
+        }
+        h2 { color: var(--accent); font-weight: 800; font-size: 22px; }
+        
+        /* Takvim Navigasyon ve Panel */
+        .panel { background: var(--card); padding: 25px; border-radius: 15px; border: 1px solid var(--border); }
+        .calendar-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .nav-btn { background: var(--bg); border: 1px solid var(--border); color: white; padding: 8px 18px; border-radius: 8px; cursor: pointer; font-weight: 800; transition: 0.2s; }
+        .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+        
+        /* Takvim Grid Yapısı */
+        .calendar-header { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 8px; text-align: center; font-weight: 800; font-size: 13px; color: var(--accent); }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+        .cal-day { background: var(--bg); border: 1px solid var(--border); min-height: 120px; padding: 12px; border-radius: 10px; position: relative; display: flex; flex-direction: column; justify-content: space-between; }
+        .cal-date { font-weight: 800; font-size: 14px; margin-bottom: 5px; opacity: 0.9; display: flex; justify-content: space-between; }
+        .cal-content { font-size: 11px; display: flex; flex-direction: column; gap: 4px; }
+        
+        /* Durum Rozetleri */
+        .need-staff { color: white; padding: 3px 6px; border-radius: 5px; display: block; font-weight: 800; text-align: center; font-size: 10px; line-height: 1.2; }
+        
+        /* Renk Kombinasyonları Arka Plan Yumuşatıldı, Üst Çizgi Kalınlaştırıldı */
+        .g1-work-day { background: rgba(37, 99, 235, 0.08) !important; border-top: 5px solid var(--g1-color); }
+        .g2-work-day { background: rgba(217, 119, 6, 0.08) !important; border-top: 5px solid var(--g2-color); }
+        
+        /* Yükleniyor Efekti */
+        .loading { text-align: center; color: #94a3b8; font-weight: 600; padding: 40px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Üst Bar -->
+    <div class="header-area">
+        <h2>📅 M4 Operasyonel Takvim Kontrol Ekranı</h2>
+        <div id="loadingStatus" style="font-size: 12px; color: #94a3b8;">🔄 Veriler Güncelleniyor...</div>
+    </div>
+
+    <!-- Takvim Ana Panel -->
+    <div class="panel">
+        <div class="calendar-nav">
+            <button class="nav-btn" onclick="changeMonth(-1)">◀ Geri</button>
+            <h3 id="currentMonthTitle" style="color:var(--accent); margin:0; font-weight: 800; font-size: 20px;">Aylık Durum</h3>
+            <button class="nav-btn" onclick="changeMonth(1)">İleri ▶</button>
+        </div>
+        <div class="calendar-header">
+            <div>PZT</div><div>SAL</div><div>ÇAR</div><div>PER</div><div>CUM</div><div>CMT</div><div>PAZ</div>
+        </div>
+        <div class="calendar-grid" id="calendarContainer">
+            <div class="loading" style="grid-column: 1 / -1;">Bulut verileri yükleniyor, lütfen bekleyiniz...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwe7EKKz0_xDwP1g-Fi_X4uFvDEsR8azkXVhsKPyNBErkzUx3aCibTa5q2J8CLwRdZE/exec";
+    
+    let izinler = [];
+    let currentViewDate = new Date();
+    const BAZ_YIL = 2026, BAZ_AY = 4, BAZ_GUN = 6; 
+
+    window.onload = async function() {
+        await verileriBuluttanCek();
+    };
+
+    function formatDate(dateVal) {
+        if (!dateVal) return "";
+        let d = new Date(dateVal);
+        if (isNaN(d.getTime())) {
+            return dateVal.toString().includes('T') ? dateVal.split('T')[0] : dateVal;
+        }
+        let year = d.getFullYear();
+        let month = String(d.getMonth() + 1).padStart(2, '0');
+        let day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    async function verileriBuluttanCek() {
+        try {
+            document.getElementById('loadingStatus').innerText = "🔄 Veriler Güncelleniyor...";
+            const response = await fetch(SCRIPT_URL + "?t=" + new Date().getTime());
+            const data = await response.json();
+            izinler = data.map((row, idx) => ({
+                sicil: row[0], isim: row[1], grup: row[2], dilim: row[3],
+                baslangic: formatDate(row[4]),
+                bitis: formatDate(row[5]),
+                onayVeren: row[6],
+                takviye: row[7], tur: row[8],
+                seciliTarihler: JSON.parse(row[9] || "[]").map(t => formatDate(t)),
+                realRowIndex: idx 
+            }));
+            document.getElementById('loadingStatus').innerText = "✅ Güncel";
+            renderCalendar();
+        } catch (e) {
+            console.error("Veri çekilemedi:", e);
+            document.getElementById('loadingStatus').innerText = "❌ Bağlantı Hatası";
+            document.getElementById('calendarContainer').innerHTML = `<div class="loading" style="grid-column:1/-1; color:var(--danger)">Veriler veri tabanından alınamadı!</div>`;
+        }
+    }
+
+    function getVardiyaDurumu(tarihStr) {
+        const parts = tarihStr.split('-');
+        const hedon = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        const baz = new Date(BAZ_YIL, BAZ_AY, BAZ_GUN);
+        hedon.setHours(0,0,0,0); baz.setHours(0,0,0,0);
+        const farkMs = hedon.getTime() - baz.getTime();
+        const farkGun = Math.round(farkMs / (1000 * 60 * 60 * 24));
+        let mod = farkGun % 4;
+        if (mod < 0) mod += 4;
+        return (mod === 0 || mod === 1) ? "1. Grup" : "2. Grup";
+    }
+
+    function changeMonth(offset) {
+        currentViewDate.setMonth(currentViewDate.getMonth() + offset);
+        renderCalendar();
+    }
+
+    function renderCalendar() {
+        const container = document.getElementById('calendarContainer');
+        container.innerHTML = '';
+        const year = currentViewDate.getFullYear();
+        const month = currentViewDate.getMonth();
+        const firstDay = new Date(year, month, 1).getDay();
+        const startOffset = firstDay === 0 ? 6 : firstDay - 1;
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        
+        document.getElementById('currentMonthTitle').innerText = new Intl.DateTimeFormat('tr-TR', { month: 'long', year: 'numeric' }).format(currentViewDate);
+        
+        // Boş gün dolguları
+        for (let x = 0; x < startOffset; x++) container.innerHTML += `<div class="cal-day" style="opacity:0.1"></div>`;
+        
+        // Günlerin oluşturulması
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+            const calisanGrup = getVardiyaDurumu(dStr);
+            const gunlukKayitlar = izinler.filter(i => dStr >= i.baslangic && dStr <= i.bitis && i.grup === calisanGrup);
+            
+            let gunduzCount = 0, geceCount = 0, birbirCount = 0;
+            gunlukKayitlar.forEach(i => {
+                let lazim = (i.takviye === 'Hepsi') || (i.takviye === 'Secili' && i.seciliTarihler && i.seciliTarihler.includes(dStr));
+                if (lazim) { 
+                    if (i.dilim === 'Gündüz') gunduzCount++; 
+                    else if (i.dilim === 'Gece') geceCount++;
+                    else if (i.dilim === 'Bir-Bir') birbirCount++;
+                }
+            });
+
+            const dayDiv = document.createElement('div');
+            dayDiv.className = `cal-day ${calisanGrup === '1. Grup' ? 'g1-work-day' : 'g2-work-day'}`;
+            
+            let tHtml = gunduzCount > 0 ? `<span class="need-staff" style="background:#fbbf24; color:#000;">☀️ Gündüz: ${gunduzCount}</span>` : '';
+            tHtml += geceCount > 0 ? `<span class="need-staff" style="background:#475569;">🌙 Gece: ${geceCount}</span>` : '';
+            tHtml += birbirCount > 0 ? `<span class="need-staff" style="background:#8b5cf6;">⚖️ Bir-Bir: ${birbirCount}</span>` : '';
+
+            const iznCount = gunlukKayitlar.filter(x => x.tur === 'İzinli').length;
+            const rapCount = gunlukKayitlar.filter(x => x.tur === 'Raporlu').length;
+            
+            // Grup isminin rengini de dinamik olarak kendi grup rengine bağladım
+            const grupRenkStr = calisanGrup === '1. Grup' ? 'var(--g1-color)' : 'var(--g2-color)';
+
+            dayDiv.innerHTML = `
+                <div class="cal-date">
+                    <span>${day}</span>
+                    <span style="font-size:9px; color:${grupRenkStr}; font-weight:800;">${calisanGrup.split(' ')[0]}.GRUP</span>
+                </div>
+                <div class="cal-content">
+                    ${(iznCount+rapCount) > 0 ? `<div style="font-size:12px; margin-bottom:2px;">${iznCount>0?'🏖️ '+iznCount:''} ${rapCount>0?'🏥 '+rapCount:''}</div>` : ''}
+                    ${tHtml}
+                </div>`;
+            container.appendChild(dayDiv);
+        }
+    }
+</script>
+</body>
+</html>
