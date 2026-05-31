@@ -58,48 +58,40 @@
             
             <div class="row">
                 <div class="col-md-4 mb-3">
-                    <label for="filterMagaza" class="form-label text-secondary"><b>Mağaza Bölgesi:</b></label>
+                    <label class="form-label text-secondary"><b>Mağaza Bölgesi:</b></label>
                     <select id="filterMagaza" class="form-select" onchange="filtreleVeGuncelle()">
-                        <option value="">Tümü</option>
-                        <option value="M4">M4 Mağaza</option>
-                        <option value="M3">M3 Mağaza</option>
+                        <option value="">Tümü (Yükleniyor...)</option>
                     </select>
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label for="filterGrup" class="form-label text-secondary"><b>Çalışma Grubu:</b></label>
+                    <label class="form-label text-secondary"><b>Çalışma Grubu:</b></label>
                     <select id="filterGrup" class="form-select" onchange="filtreleVeGuncelle()">
-                        <option value="">Tümü</option>
-                        <option value="A">A Grubu</option>
-                        <option value="B">B Grubu</option>
-                        <option value="C">C Grubu</option>
+                        <option value="">Tümü (Yükleniyor...)</option>
                     </select>
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label for="filterVardiya" class="form-label text-secondary"><b>Vardiya Tipi:</b></label>
+                    <label class="form-label text-secondary"><b>Vardiya Tipi:</b></label>
                     <select id="filterVardiya" class="form-select" onchange="filtreleVeGuncelle()">
-                        <option value="">Tümü</option>
-                        <option value="Sabah">Sabah</option>
-                        <option value="Akşam">Akşam</option>
-                        <option value="Gece">Gece</option>
+                        <option value="">Tümü (Yükleniyor...)</option>
                     </select>
                 </div>
             </div>
 
             <div class="row mt-2">
                 <div class="col-12">
-                    <label class="form-label text-secondary"><b>Kendi Verilerinizden Görmek İstediklerinizi Açın (Diğer Personeller Hep Flu Kalır):</b></label>
+                    <label class="form-label text-secondary"><b>Kendi Verilerinizden Herkesin Görmesini İstediklerinizi Açın (Kapatırsanız Diğerlerine Flu Gözükür):</b></label>
                     <div class="checkbox-group">
                         <div class="form-check form-switch ms-2">
-                            <input class="form-check-input" type="checkbox" id="chkFis" checked onchange="kisiselSutunKontrol()">
-                            <label class="form-check-label fw-bold text-light" for="chkFis">🎟️ Fiş Bilgim</label>
+                            <input class="form-check-input" type="checkbox" id="chkFis" onchange="kisiselAyarlariKaydet()">
+                            <label class="form-check-label fw-bold text-light" for="chkFis">🎟️ Fiş Bilgim Herkese Açık</label>
                         </div>
                         <div class="form-check form-switch ms-4">
-                            <input class="form-check-input" type="checkbox" id="chkKasaOnu" onchange="kisiselSutunKontrol()">
-                            <label class="form-check-label fw-bold text-light" for="chkKasaOnu">💰 Kasa Önü Satışım</label>
+                            <input class="form-check-input" type="checkbox" id="chkKasaOnu" onchange="kisiselAyarlariKaydet()">
+                            <label class="form-check-label fw-bold text-light" for="chkKasaOnu">💰 Kasa Önü Satışım Herkese Açık</label>
                         </div>
                         <div class="form-check form-switch ms-4">
-                            <input class="form-check-input" type="checkbox" id="chkPerformans" onchange="kisiselSutunKontrol()">
-                            <label class="form-check-label fw-bold text-light" for="chkPerformans">⚡ Performans Skorum</label>
+                            <input class="form-check-input" type="checkbox" id="chkPerformans" onchange="kisiselAyarlariKaydet()">
+                            <label class="form-check-label fw-bold text-light" for="chkPerformans">⚡ Performans Skorum Herkese Açık</label>
                         </div>
                     </div>
                 </div>
@@ -129,7 +121,7 @@
         </div>
 
         <div class="d-flex gap-2">
-            <button onclick="window.location.href='./index.html'" class="btn btn-outline-info btn-sm mt-3 fw-bold">⬅️ Özet Profilime Dön</button>
+            <button onclick="ozetProfiliDon()" class="btn btn-outline-info btn-sm mt-3 fw-bold">⬅️ Özet Profilime Dön</button>
             <button onclick="guvenliCikis()" class="btn btn-outline-danger btn-sm mt-3 fw-bold">🔒 Güvenli Çıkış</button>
         </div>
 
@@ -137,19 +129,16 @@
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxUQpYykoL2RroLwL0KVcMez8rw4Q26Mpqv9uvx5Jvuun31yPqON2V8_UuZ2Pdbdvd_9A/exec";
-const KUR_URL = "https://script.google.com/macros/s/AKfycbwVZ7VcV3Nob8Z2eEVrTSECZAlVbPH0eOikAJ585JEPdebcXMhvXw8DwF_T8UoM-TufsQ/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxHcRJq3_P4xFG6nxJLC2DSOZlKYTvN7chT8vzJW2max4ocH4a3hch1waYS5CoRpfB_MA/exec";
 
 let tumVeriler = []; 
 let guncelKur = 36.50; 
 
-// GÜVENLİK KONTROLÜ (Giriş Yapmış Kullanıcıyı index.html'deki session'dan oku)
-const aktifKullanici = sessionStorage.getItem("aktifKullaniciIsim"); // index.html'de kaydettiğimiz isim
+const aktifKullanici = sessionStorage.getItem("aktifKullaniciIsim"); 
 
 document.addEventListener("DOMContentLoaded", async () => {
     const welcomeDiv = document.getElementById("welcomeMessage");
     
-    // Eğer session boşsa giriş ekranına postala
     if (!aktifKullanici) {
         alert("Bu rapora erişmek için önce M4 Portal girişi yapmalısınız!");
         window.location.href = "./index.html";
@@ -165,15 +154,22 @@ async function canlıVerileriYukle() {
     loadingArea.style.display = "block";
 
     try {
-        const kurResponse = await fetch(KUR_URL);
-        const kurData = await kurResponse.json();
-        if(kurData && kurData.kur) { 
-            guncelKur = parseFloat(String(kurData.kur).replace(/\s/g, "").replace(",", ".")); 
+        const response = await fetch(SCRIPT_URL);
+        const jsonResponse = await response.json();
+        
+        if (jsonResponse && jsonResponse.kur) {
+            guncelKur = parseFloat(String(jsonResponse.kur).replace(/\s/g, "").replace(",", "."));
+        }
+        tumVeriler = jsonResponse.data || [];
+
+        const kendim = tumVeriler.find(x => String(x.isim || x.ad || "").trim().toLowerCase() === aktifKullanici.trim().toLowerCase());
+        if(kendim) {
+            document.getElementById('chkFis').checked = String(kendim.goster_fis).toLowerCase() === "true" || kendim.goster_fis === true;
+            document.getElementById('chkKasaOnu').checked = String(kendim.goster_kasaonu).toLowerCase() === "true" || kendim.goster_kasaonu === true;
+            document.getElementById('chkPerformans').checked = String(kendim.goster_perf).toLowerCase() === "true" || kendim.goster_perf === true;
         }
 
-        const response = await fetch(SCRIPT_URL);
-        tumVeriler = await response.json();
-
+        filtreleriDoldur(tumVeriler);
         tabloyuDoldur(tumVeriler);
     } catch (err) {
         console.error("Hata:", err);
@@ -181,6 +177,26 @@ async function canlıVerileriYukle() {
     } finally {
         loadingArea.style.display = "none";
     }
+}
+
+function filtreleriDoldur(veriler) {
+    if (!veriler || veriler.length === 0) return;
+
+    const magazalar = [...new Set(veriler.map(x => String(x.magaza || "").trim()).filter(Boolean))];
+    const gruplar = [...new Set(veriler.map(x => String(x.grup || "").trim()).filter(Boolean))];
+    const vardiyalar = [...new Set(veriler.map(x => String(x.vardiya || "").trim()).filter(Boolean))];
+
+    const mSelect = document.getElementById("filterMagaza");
+    const gSelect = document.getElementById("filterGrup");
+    const vSelect = document.getElementById("filterVardiya");
+
+    mSelect.innerHTML = '<option value="">Tümü</option>';
+    gSelect.innerHTML = '<option value="">Tümü</option>';
+    vSelect.innerHTML = '<option value="">Tümü</option>';
+
+    magazalar.forEach(m => mSelect.innerHTML += `<option value="${m}">${m}</option>`);
+    gruplar.forEach(g => gSelect.innerHTML += `<option value="${g}">${g} Grubu</option>`);
+    vardiyalar.forEach(v => vSelect.innerHTML += `<option value="${v}">${v}</option>`);
 }
 
 function tabloyuDoldur(veriler) {
@@ -197,16 +213,7 @@ function tabloyuDoldur(veriler) {
         return parseFloat(String(v).replace(/\s/g, "").replace(",", ".")) || 0;
     };
 
-    veriler.forEach(item => {
-        let pIsim = item.isim || item.ad || "---";
-        // Session'daki isim ile tablodaki ismi boşluksuz ve küçük harfle güvenli karşılaştırıyoruz
-        let isOwnRow = (pIsim.trim().toLowerCase() === aktifKullanici.trim().toLowerCase());
-        let rowClass = isOwnRow ? "kendi-satirim fw-bold" : "";
-        
-        let cellFisClass = isOwnRow ? "benim-cell-fis" : "diger-personel-cell";
-        let cellKasaOnuClass = isOwnRow ? "benim-cell-kasaonu" : "diger-personel-cell";
-        let cellPerfClass = isOwnRow ? "benim-cell-perf" : "diger-personel-cell";
-
+    let skorluVeriler = veriler.map(item => {
         let fisSayisi = n(item.fis);
         let tlSatis = n(item.tl);
         let euroSatis = n(item.euro);
@@ -216,48 +223,74 @@ function tabloyuDoldur(veriler) {
         let baseScore = ((fisSayisi * 1.5) * 0.60) + ((toplamCiro / 1500) * 0.40);
         let finalScore = vardiyaMetni.includes("gece") ? baseScore * 1.25 : baseScore;
 
+        return {
+            ...item,
+            hesaplanmisFis: fisSayisi,
+            hesaplanmisCiro: toplamCiro,
+            performansSkoru: finalScore
+        };
+    });
+
+    skorluVeriler.sort((a, b) => b.performansSkoru - a.performansSkoru);
+
+    skorluVeriler.forEach(item => {
+        let pIsim = item.isim || item.ad || "---";
+        let isOwnRow = (pIsim.trim().toLowerCase() === aktifKullanici.trim().toLowerCase());
+        let rowClass = isOwnRow ? "kendi-satirim fw-bold" : "";
+        
+        let gosterFis = String(item.goster_fis).toLowerCase() === "true" || item.goster_fis === true;
+        let gosterKasaOnu = String(item.goster_kasaonu).toLowerCase() === "true" || item.goster_kasaonu === true;
+        let gosterPerf = String(item.goster_perf).toLowerCase() === "true" || item.goster_perf === true;
+
+        let fisFluClass = (isOwnRow ? document.getElementById('chkFis').checked : gosterFis) ? "" : "flu-hucre";
+        let kasaOnuFluClass = (isOwnRow ? document.getElementById('chkKasaOnu').checked : gosterKasaOnu) ? "" : "flu-hucre";
+        let perfFluClass = (isOwnRow ? document.getElementById('chkPerformans').checked : gosterPerf) ? "" : "flu-hucre";
+
         let row = `<tr class="${rowClass}">
             <td>👤 ${pIsim} ${isOwnRow ? ' <span class="badge bg-primary">Siz</span>' : ''}</td>
             <td><span class="badge bg-secondary">${item.magaza || "---"}</span></td>
             <td>${item.grup || "-"} Grubu</td>
             <td>${item.vardiya || "---"}</td>
-            <td class="${cellFisClass}">${Math.round(fisSayisi)}</td>
-            <td class="${cellKasaOnuClass}">${Math.round(toplamCiro).toLocaleString('tr-TR')} ₺</td>
-            <td class="${cellPerfClass} text-success fw-bold">${finalScore.toFixed(2)}</td>
+            <td class="${fisFluClass}">${Math.round(item.hesaplanmisFis)}</td>
+            <td class="${kasaOnuFluClass}">${Math.round(item.hesaplanmisCiro).toLocaleString('tr-TR')} ₺</td>
+            <td class="${perfFluClass} text-success fw-bold">${item.performansSkoru.toFixed(2)}</td>
         </tr>`;
         tbody.innerHTML += row;
     });
-
-    const digerHücreler = document.getElementsByClassName("diger-personel-cell");
-    for (let cell of digerHücreler) {
-        cell.classList.add("flu-hucre");
-    }
-
-    kisiselSutunKontrol();
 }
 
-function kisiselSutunKontrol() {
+async function kisiselAyarlariKaydet() {
     const fisAcikmi = document.getElementById('chkFis').checked;
     const kasaOnuAcikmi = document.getElementById('chkKasaOnu').checked;
     const perfAcikmi = document.getElementById('chkPerformans').checked;
 
-    const benimFisHücreleri = document.getElementsByClassName("benim-cell-fis");
-    const benimKasaOnuHücreleri = document.getElementsByClassName("benim-cell-kasaonu");
-    const benimPerfHücreleri = document.getElementsByClassName("benim-cell-perf");
-
-    for (let el of benimFisHücreleri) {
-        if (fisAcikmi) el.classList.remove("flu-hucre");
-        else el.classList.add("flu-hucre");
+    let kendim = tumVeriler.find(x => String(x.isim || x.ad || "").trim().toLowerCase() === aktifKullanici.trim().toLowerCase());
+    if(kendim) {
+        kendim.goster_fis = fisAcikmi;
+        kendim.goster_kasaonu = kasaOnuAcikmi;
+        kendim.goster_perf = perfAcikmi;
     }
 
-    for (let el of benimKasaOnuHücreleri) {
-        if (kasaOnuAcikmi) el.classList.remove("flu-hucre");
-        else el.classList.add("flu-hucre");
+    const hucreler = document.querySelectorAll('#tabloGövde tr.kendi-satirim td');
+    if(hucreler.length > 0) {
+        if(fisAcikmi) hucreler[4].classList.remove('flu-hucre'); else hucreler[4].classList.add('flu-hucre');
+        if(kasaOnuAcikmi) hucreler[5].classList.remove('flu-hucre'); else hucreler[5].classList.add('flu-hucre');
+        if(perfAcikmi) hucreler[6].classList.remove('flu-hucre'); else hucreler[6].classList.add('flu-hucre');
     }
 
-    for (let el of benimPerfHücreleri) {
-        if (perfAcikmi) el.classList.remove("flu-hucre");
-        else el.classList.add("flu-hucre");
+    try {
+        await fetch(SCRIPT_URL, {
+            method: "POST",
+            body: JSON.stringify({
+                islem: "gorunurlukGuncelle",
+                kullaniciIsim: aktifKullanici,
+                gosterFis: fisAcikmi,
+                gosterKasaOnu: kasaOnuAcikmi,
+                gosterPerf: perfAcikmi
+            })
+        });
+    } catch (e) {
+        console.error("Görünürlük ayarı senkronize edilemedi:", e);
     }
 }
 
@@ -271,9 +304,9 @@ function filtreleVeGuncelle() {
         let mGrup = (item.grup || "").toLowerCase();
         let mVardiya = (item.vardiya || "").toLowerCase();
 
-        let magazaUyum = secilenMagaza === "" || mMagaza.includes(secilenMagaza);
-        let grupUyum = secilenGrup === "" || mGrup === secilenGrup;
-        let vardiyaUyum = secilenVardiya === "" || mVardiya.includes(secilenVardiya);
+        let magazaUyum = secilenMagaza === "" || mMagaza.trim() === secilenMagaza.trim();
+        let grupUyum = secilenGrup === "" || mGrup.trim() === secilenGrup.trim();
+        let vardiyaUyum = secilenVardiya === "" || mVardiya.trim() === secilenVardiya.trim();
         
         return magazaUyum && grupUyum && vardiyaUyum;
     });
@@ -281,9 +314,15 @@ function filtreleVeGuncelle() {
     tabloyuDoldur(filtrelenmisVeri);
 }
 
+// ARTIK GÜVENLE GERİ DÖNEBİLİRİZ
+function ozetProfiliDon() {
+    // Tarayıcı geçmişinde bir adım geriye (yani butonun basıldığı sayfaya) atar
+    history.back();
+}
+
 function guvenliCikis() {
     sessionStorage.clear();
-    window.location.href = "./index.html";
+    window.location.href = "./kisiselp.html";
 }
 </script>
 
