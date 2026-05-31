@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M4 Operasyonel Raporlama Paneli</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #0f172a; color: #f1f5f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .main-container { max-width: 1300px; margin: 30px auto; padding: 25px; background: #1e293b; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); }
+        .filter-panel { background: #161e31; padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 25px; }
+        .checkbox-group { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 10px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); }
+        
+        /* GİZLİLİK VE FLU (BLUR) ETKİSİ */
+        .flu-hucre {
+            filter: blur(5.5px) !important;
+            opacity: 0.18 !important;
+            pointer-events: none !important;
+            user-select: none !important;
+            transition: all 0.3s ease;
+        }
+        
+        /* Giriş yapan personelin satır tasarımı */
+        .kendi-satirim {
+            background-color: rgba(59, 130, 246, 0.15) !important;
+            border-left: 5px solid #3b82f6 !important;
+        }
+        .kendi-satirim td {
+            color: #fff !important;
+        }
+        
+        .user-welcome { background: rgba(59, 130, 246, 0.1); color: #60a5fa; padding: 10px 15px; border-radius: 8px; font-weight: 600; display: inline-block; margin-bottom: 15px; border: 1px solid rgba(59, 130, 246, 0.2); }
+        
+        .table { color: #cbd5e1; }
+        .table-dark { --bs-table-bg: #0f172a; }
+        .form-select, .form-control { background-color: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: #fff; }
+        .form-select:focus, .form-control:focus { background-color: rgba(0,0,0,0.3); color: #fff; border-color: #3b82f6; box-shadow: none; }
+        .form-check-input:checked { background-color: #3b82f6; border-color: #3b82f6; }
+        
+        .loading-overlay { display: none; text-align: center; padding: 20px; font-weight: 600; color: #60a5fa; }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="main-container">
+        
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <h2 class="fw-bold text-white">📊 Detaylı Operasyon Raporları (Kişiye Özel Görünüm)</h2>
+            <div id="welcomeMessage" class="user-welcome">
+                👤 Tanımlanıyor...
+            </div>
+        </div>
+        <hr style="background-color: rgba(255,255,255,0.15);">
+
+        <div class="filter-panel">
+            <h5 class="mb-3 fw-bold" style="color: #60a5fa;">🔍 Filtreleme ve Görünüm Seçenekleri</h5>
+            
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="filterMagaza" class="form-label text-secondary"><b>Mağaza Bölgesi:</b></label>
+                    <select id="filterMagaza" class="form-select" onchange="filtreleVeGuncelle()">
+                        <option value="">Tümü</option>
+                        <option value="M4">M4 Mağaza</option>
+                        <option value="M3">M3 Mağaza</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="filterGrup" class="form-label text-secondary"><b>Çalışma Grubu:</b></label>
+                    <select id="filterGrup" class="form-select" onchange="filtreleVeGuncelle()">
+                        <option value="">Tümü</option>
+                        <option value="A">A Grubu</option>
+                        <option value="B">B Grubu</option>
+                        <option value="C">C Grubu</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="filterVardiya" class="form-label text-secondary"><b>Vardiya Tipi:</b></label>
+                    <select id="filterVardiya" class="form-select" onchange="filtreleVeGuncelle()">
+                        <option value="">Tümü</option>
+                        <option value="Sabah">Sabah</option>
+                        <option value="Akşam">Akşam</option>
+                        <option value="Gece">Gece</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row mt-2">
+                <div class="col-12">
+                    <label class="form-label text-secondary"><b>Kendi Verilerinizden Görmek İstediklerinizi Açın (Diğer Personeller Hep Flu Kalır):</b></label>
+                    <div class="checkbox-group">
+                        <div class="form-check form-switch ms-2">
+                            <input class="form-check-input" type="checkbox" id="chkFis" checked onchange="kisiselSutunKontrol()">
+                            <label class="form-check-label fw-bold text-light" for="chkFis">🎟️ Fiş Bilgim</label>
+                        </div>
+                        <div class="form-check form-switch ms-4">
+                            <input class="form-check-input" type="checkbox" id="chkKasaOnu" onchange="kisiselSutunKontrol()">
+                            <label class="form-check-label fw-bold text-light" for="chkKasaOnu">💰 Kasa Önü Satışım</label>
+                        </div>
+                        <div class="form-check form-switch ms-4">
+                            <input class="form-check-input" type="checkbox" id="chkPerformans" onchange="kisiselSutunKontrol()">
+                            <label class="form-check-label fw-bold text-light" for="chkPerformans">⚡ Performans Skorum</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="loadingArea" class="loading-overlay">
+            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+            Canlı Veritabanından Operasyon Raporları Çekiliyor, Lütfen Bekleyin...
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-dark table-striped align-middle" id="raporTablosu" style="border-color: rgba(255,255,255,0.05);">
+                <thead>
+                    <tr>
+                        <th>Personel Adı</th>
+                        <th>Mağaza</th>
+                        <th>Grup</th>
+                        <th>Vardiya</th>
+                        <th>Fiş Sayısı</th>
+                        <th>Kasa Önü Satış (TL)</th>
+                        <th>Performans Skoru</th>
+                    </tr>
+                </thead>
+                <tbody id="tabloGövde"></tbody>
+            </table>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button onclick="window.location.href='./index.html'" class="btn btn-outline-info btn-sm mt-3 fw-bold">⬅️ Özet Profilime Dön</button>
+            <button onclick="guvenliCikis()" class="btn btn-outline-danger btn-sm mt-3 fw-bold">🔒 Güvenli Çıkış</button>
+        </div>
+
+    </div>
+</div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxUQpYykoL2RroLwL0KVcMez8rw4Q26Mpqv9uvx5Jvuun31yPqON2V8_UuZ2Pdbdvd_9A/exec";
+const KUR_URL = "https://script.google.com/macros/s/AKfycbwVZ7VcV3Nob8Z2eEVrTSECZAlVbPH0eOikAJ585JEPdebcXMhvXw8DwF_T8UoM-TufsQ/exec";
+
+let tumVeriler = []; 
+let guncelKur = 36.50; 
+
+// GÜVENLİK KONTROLÜ (Giriş Yapmış Kullanıcıyı index.html'deki session'dan oku)
+const aktifKullanici = sessionStorage.getItem("aktifKullaniciIsim"); // index.html'de kaydettiğimiz isim
+
+document.addEventListener("DOMContentLoaded", async () => {
+    const welcomeDiv = document.getElementById("welcomeMessage");
+    
+    // Eğer session boşsa giriş ekranına postala
+    if (!aktifKullanici) {
+        alert("Bu rapora erişmek için önce M4 Portal girişi yapmalısınız!");
+        window.location.href = "./index.html";
+        return;
+    }
+
+    welcomeDiv.innerHTML = `👤 Hoş geldiniz, <b>${aktifKullanici}</b>`;
+    await canlıVerileriYukle();
+});
+
+async function canlıVerileriYukle() {
+    const loadingArea = document.getElementById("loadingArea");
+    loadingArea.style.display = "block";
+
+    try {
+        const kurResponse = await fetch(KUR_URL);
+        const kurData = await kurResponse.json();
+        if(kurData && kurData.kur) { 
+            guncelKur = parseFloat(String(kurData.kur).replace(/\s/g, "").replace(",", ".")); 
+        }
+
+        const response = await fetch(SCRIPT_URL);
+        tumVeriler = await response.json();
+
+        tabloyuDoldur(tumVeriler);
+    } catch (err) {
+        console.error("Hata:", err);
+        document.getElementById("tabloGövde").innerHTML = `<tr><td colspan="7" class="text-center text-danger fw-bold">Veriler alınırken hata oluştu!</td></tr>`;
+    } finally {
+        loadingArea.style.display = "none";
+    }
+}
+
+function tabloyuDoldur(veriler) {
+    const tbody = document.getElementById("tabloGövde");
+    tbody.innerHTML = "";
+
+    if(!veriler || veriler.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">Kayıt bulunamadı.</td></tr>`;
+        return;
+    }
+
+    const n = (v) => {
+        if (v === undefined || v === null) return 0;
+        return parseFloat(String(v).replace(/\s/g, "").replace(",", ".")) || 0;
+    };
+
+    veriler.forEach(item => {
+        let pIsim = item.isim || item.ad || "---";
+        // Session'daki isim ile tablodaki ismi boşluksuz ve küçük harfle güvenli karşılaştırıyoruz
+        let isOwnRow = (pIsim.trim().toLowerCase() === aktifKullanici.trim().toLowerCase());
+        let rowClass = isOwnRow ? "kendi-satirim fw-bold" : "";
+        
+        let cellFisClass = isOwnRow ? "benim-cell-fis" : "diger-personel-cell";
+        let cellKasaOnuClass = isOwnRow ? "benim-cell-kasaonu" : "diger-personel-cell";
+        let cellPerfClass = isOwnRow ? "benim-cell-perf" : "diger-personel-cell";
+
+        let fisSayisi = n(item.fis);
+        let tlSatis = n(item.tl);
+        let euroSatis = n(item.euro);
+        let toplamCiro = tlSatis + (euroSatis * guncelKur);
+        let vardiyaMetni = (item.vardiya || "").toLowerCase();
+
+        let baseScore = ((fisSayisi * 1.5) * 0.60) + ((toplamCiro / 1500) * 0.40);
+        let finalScore = vardiyaMetni.includes("gece") ? baseScore * 1.25 : baseScore;
+
+        let row = `<tr class="${rowClass}">
+            <td>👤 ${pIsim} ${isOwnRow ? ' <span class="badge bg-primary">Siz</span>' : ''}</td>
+            <td><span class="badge bg-secondary">${item.magaza || "---"}</span></td>
+            <td>${item.grup || "-"} Grubu</td>
+            <td>${item.vardiya || "---"}</td>
+            <td class="${cellFisClass}">${Math.round(fisSayisi)}</td>
+            <td class="${cellKasaOnuClass}">${Math.round(toplamCiro).toLocaleString('tr-TR')} ₺</td>
+            <td class="${cellPerfClass} text-success fw-bold">${finalScore.toFixed(2)}</td>
+        </tr>`;
+        tbody.innerHTML += row;
+    });
+
+    const digerHücreler = document.getElementsByClassName("diger-personel-cell");
+    for (let cell of digerHücreler) {
+        cell.classList.add("flu-hucre");
+    }
+
+    kisiselSutunKontrol();
+}
+
+function kisiselSutunKontrol() {
+    const fisAcikmi = document.getElementById('chkFis').checked;
+    const kasaOnuAcikmi = document.getElementById('chkKasaOnu').checked;
+    const perfAcikmi = document.getElementById('chkPerformans').checked;
+
+    const benimFisHücreleri = document.getElementsByClassName("benim-cell-fis");
+    const benimKasaOnuHücreleri = document.getElementsByClassName("benim-cell-kasaonu");
+    const benimPerfHücreleri = document.getElementsByClassName("benim-cell-perf");
+
+    for (let el of benimFisHücreleri) {
+        if (fisAcikmi) el.classList.remove("flu-hucre");
+        else el.classList.add("flu-hucre");
+    }
+
+    for (let el of benimKasaOnuHücreleri) {
+        if (kasaOnuAcikmi) el.classList.remove("flu-hucre");
+        else el.classList.add("flu-hucre");
+    }
+
+    for (let el of benimPerfHücreleri) {
+        if (perfAcikmi) el.classList.remove("flu-hucre");
+        else el.classList.add("flu-hucre");
+    }
+}
+
+function filtreleVeGuncelle() {
+    const secilenMagaza = document.getElementById("filterMagaza").value.toLowerCase();
+    const secilenGrup = document.getElementById("filterGrup").value.toLowerCase();
+    const secilenVardiya = document.getElementById("filterVardiya").value.toLowerCase();
+
+    let filtrelenmisVeri = tumVeriler.filter(item => {
+        let mMagaza = (item.magaza || "").toLowerCase();
+        let mGrup = (item.grup || "").toLowerCase();
+        let mVardiya = (item.vardiya || "").toLowerCase();
+
+        let magazaUyum = secilenMagaza === "" || mMagaza.includes(secilenMagaza);
+        let grupUyum = secilenGrup === "" || mGrup === secilenGrup;
+        let vardiyaUyum = secilenVardiya === "" || mVardiya.includes(secilenVardiya);
+        
+        return magazaUyum && grupUyum && vardiyaUyum;
+    });
+
+    tabloyuDoldur(filtrelenmisVeri);
+}
+
+function guvenliCikis() {
+    sessionStorage.clear();
+    window.location.href = "./index.html";
+}
+</script>
+
+</body>
+</html>
