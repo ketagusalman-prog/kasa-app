@@ -67,12 +67,12 @@
         .analysis-table td.label-sub { font-size: 11px; color: #64748b; }
 
         .trend-up { color: #34d399; font-weight: bold; margin-left: 4px; }
-        .trend-down { color: #f59e0b; font-weight: bold; margin-left: 4px; } /* Kırmızı yerine uyarı tonu */
+        .trend-down { color: #f59e0b; font-weight: bold; margin-left: 4px; }
 
         .progress-container { margin-top: 8px; background: rgba(255,255,255,0.05); border-radius: 6px; height: 6px; overflow: hidden; position: relative; }
         .progress-bar { background: linear-gradient(90deg, #3b82f6, #10b981); height: 100%; border-radius: 6px; width: 0%; transition: width 1.2s ease-in-out; }
 
-        .target-milestone-box { margin-top: 12px; padding: 12px; border-radius: 14px; background: rgba(251, 191, 36, 0.05); border: 1px solid rgba(251, 191, 36, 0.15); font-size: 11.5px; color: #fde047; text-align: center; font-weight: 600; }
+        .target-milestone-box { margin-top: 8px; padding: 12px; border-radius: 14px; background: rgba(251, 191, 36, 0.05); border: 1px solid rgba(251, 191, 36, 0.15); font-size: 11.5px; color: #fde047; text-align: center; font-weight: 600; }
         .podium-box { margin-top: 12px; padding: 12px; border-radius: 14px; background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.15); font-size: 11.5px; color: #d8b4fe; text-align: center; font-weight: 600; }
 
         .tip-box { margin-top: 15px; padding: 16px; border-radius: 18px; background: rgba(99, 102, 241, 0.06); border: 1px solid rgba(99, 102, 241, 0.25); line-height: 1.5; }
@@ -96,6 +96,10 @@
         .btn-sifre { background: none; border: 1px solid rgba(255,255,255,0.12); color: #64748b; font-size: 11px; padding: 10px; border-radius: 12px; cursor: pointer; margin-top: 15px; width: 100%; font-weight: 700; }
         .btn-nav { width: 100%; background: rgba(59, 130, 246, 0.05); border: 1px dashed rgba(59, 130, 246, 0.3); color: #60a5fa; padding: 14px; border-radius: 16px; font-size: 11px; font-weight: 800; cursor: pointer; text-transform: uppercase; margin-top: 15px; transition: 0.2s; letter-spacing: 0.5px; }
         .btn-nav:hover { background: rgba(59, 130, 246, 0.12); color: #fff; border-style: solid; }
+        
+        .btn-rapor { width: 100%; background: linear-gradient(135deg, #10b981, #059669); border: none; color: white; padding: 14px; border-radius: 16px; font-size: 11px; font-weight: 800; cursor: pointer; text-transform: uppercase; margin-top: 12px; transition: 0.3s; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15); }
+        .btn-rapor:hover { background: linear-gradient(135deg, #059669, #047857); transform: translateY(-1px); box-shadow: 0 6px 15px rgba(16, 185, 129, 0.25); }
+        
         #sifre-paneli { margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); display: none; }
         .hidden { display: none !important; }
         
@@ -196,8 +200,10 @@
         </div>
 
         <button class="btn-nav" onclick="window.location.href='./takvim.html'">📅 ÇALIŞMA TAKVİMİNİ GÖR</button>
+        
+        <button class="btn-rapor" onclick="window.location.href='./rapor.html'">📊 OPERASYONEL RAPORLARI GÖR</button>
 
-        <button onclick="location.reload()" style="background:none; border:none; color:#475569; width:100%; margin-top:20px; cursor:pointer; font-weight:700; font-size:11px; text-transform:uppercase;">Güvenli Çıkış</button>
+        <button onclick="guvenliCikisManuel()" style="background:none; border:none; color:#475569; width:100%; margin-top:20px; cursor:pointer; font-weight:700; font-size:11px; text-transform:uppercase;">Güvenli Çıkış</button>
     </div>
 
     <script>
@@ -206,6 +212,44 @@
         
         let aktifSicil = "";
         let guncelKur = 36.50; 
+
+        // OTOMATİK GİRİŞ KONTROLÜ (DOM YÜKLENDİĞİNDE ADIM)
+        document.addEventListener("DOMContentLoaded", async () => {
+            const kayıtlıKullanici = sessionStorage.getItem("aktifKullaniciIsim");
+            const kayıtlıSicil = sessionStorage.getItem("aktifSicilNo"); // Hafızaya sicili de alıyoruz ki veri akışı kopmasın
+            
+            if (kayıtlıKullanici && kayıtlıSicil) {
+                const loginBtn = document.getElementById("loginBtn");
+                loginBtn.innerText = "Oturum Açılıyor..."; loginBtn.disabled = true;
+                
+                try {
+                    // Kurları ve Global Veriyi Çek
+                    const kurResponse = await fetch(KUR_URL);
+                    const kurData = await kurResponse.json();
+                    if(kurData && kurData.kur) { guncelKur = parseFloat(String(kurData.kur).replace(/\s/g, "").replace(",", ".")); }
+
+                    const response = await fetch(SCRIPT_URL);
+                    const dataGlobal = await response.json();
+                    
+                    // Şifre sormadan sadece sicil eşleşmesiyle doğrula
+                    const user = dataGlobal.find(x => String(x.sicil).trim() === kayıtlıSicil.trim());
+
+                    if (user) {
+                        aktifSicil = kayıtlıSicil;
+                        document.getElementById("login-screen").classList.add("hidden");
+                        document.getElementById("personel-screen").style.display = "block";
+                        hesaplaVeAnalizEt(user, dataGlobal, guncelKur);
+                    } else {
+                        // Eğer kullanıcı datada bulunamazsa temizle
+                        sessionStorage.clear();
+                        resetLoginBtn();
+                    }
+                } catch (e) {
+                    console.error("Otomatik giriş bağlantı hatası:", e);
+                    resetLoginBtn();
+                }
+            }
+        });
 
         function playBeep(type) {
             try {
@@ -241,6 +285,11 @@
 
                 if (user) {
                     aktifSicil = sicil;
+                    
+                    // Giriş bilgilerini hafızaya al
+                    sessionStorage.setItem("aktifKullaniciIsim", user.isim);
+                    sessionStorage.setItem("aktifSicilNo", sicil);
+
                     document.getElementById("login-screen").classList.add("hidden");
                     document.getElementById("personel-screen").style.display = "block";
                     hesaplaVeAnalizEt(user, dataGlobal, guncelKur);
@@ -270,7 +319,6 @@
                 document.body.classList.remove("theme-night");
             }
 
-            // Gece vardiyası etkisi 1.25 çarpanı olarak güncellendi
             let baseScore = ((fis * 1.5) * 0.60) + ((ciro / 1500) * 0.40);
             const finalScore = vardiyaMetni.includes("gece") ? baseScore * 1.25 : baseScore;
 
@@ -325,7 +373,6 @@
             const grupFisBasiCiro = totalCiro / totalFisCount;
             const personelFisBasiCiro = fis > 0 ? (ciro / fis) : 0;
 
-            // Motivasyonu bozacak kelimeler yapıcı hale getirildi (KRİTİK -> ORTALAMA ALTI, GELİŞMELİ -> GELİŞTİRİLEBİLİR)
             const devStatus = fis < (meanFis - stdDevFis) ? "ORTALAMA ALTI" : (fis < meanFis ? "GELİŞTİRİLEBİLİR" : "BAŞARILI");
             const tolerans = fis > (meanFis * 1.2) ? 0.7 : 0.85;
             const esikDeger = grupFisBasiCiro * tolerans;
@@ -435,7 +482,12 @@
         }
         function resetLoginBtn() { const btn = document.getElementById("loginBtn"); btn.innerText = "VERİLERİ ANALİZ ET"; btn.disabled = false; }
 
-        // M4 PORTAL ÖZEL PWA TETİKLEYİCİSİ
+        // GERÇEK GÜVENLİ ÇIKIŞ: Hafızayı temizler ve ekranı baştan yükler
+        function guvenliCikisManuel() {
+            sessionStorage.clear();
+            location.reload();
+        }
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./service-worker.js')
