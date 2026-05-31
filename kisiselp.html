@@ -3,70 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M4 Personel Sistemi | Akıllı Analiz</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
-    <style>
-        :root { --bg: #0b0f1a; --card: #161e31; --accent: #3b82f6; --text: #f1f5f9; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+    <title>M4 Personel Sistemi | Akıllı Analiz Pro</title>
+    
+    <link rel="manifest" href="./m4-manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/7915/7915521.png">
 
-        #login-screen { width: 100%; max-width: 360px; padding: 40px; background: var(--card); border-radius: 28px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
-        input { width: 100%; padding: 14px; margin: 10px 0; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; outline: none; }
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --bg: #0b0f1a; 
+            --card: #161e31; 
+            --accent: #3b82f6; 
+            --text: #f1f5f9; 
+            --success: #10b981; 
+            --warning: #f59e0b; 
+            --danger: #ef4444; 
+            --streak-bg: rgba(249, 115, 22, 0.1);
+            --streak-color: #f97316;
+        }
         
-        #personel-screen { display: none; width: 100%; max-width: 400px; background: var(--card); border-radius: 30px; padding: 25px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .theme-night { --bg: #070a13; --card: #111827; --accent: #8b5cf6; }
+        .theme-day { --bg: #0f172a; --card: #1e293b; --accent: #0ea5e9; }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; transition: background 0.5s ease; }
+
+        #login-screen, #personel-screen { width: 100%; max-width: 420px; background: var(--card); border-radius: 32px; padding: 30px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); transition: background 0.5s ease; }
+        #personel-screen { display: none; animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
         
-        .score-container { text-align: center; margin: 20px 0; position: relative; }
-        .score-val { font-size: 68px; font-weight: 800; background: linear-gradient(135deg, #60a5fa, #2563eb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; }
+        h2 { color: var(--accent); font-weight: 800; margin-bottom: 20px; text-align: center; letter-spacing: -1px; }
+        input { width: 100%; padding: 14px; margin: 10px 0; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; outline: none; transition: 0.3s; }
         
-        /* Akıllı Durum Etiketleri */
+        .champion-badge { display: none; margin: 10px auto; background: linear-gradient(135deg, #f59e0b, #ef4444); color: white; padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: 800; width: max-content; letter-spacing: 0.5px; animation: pulse 2s infinite; }
+        .streak-badge { display: flex; align-items: center; justify-content: center; gap: 6px; margin: -5px auto 15px auto; background: var(--streak-bg); color: var(--streak-color); padding: 6px 14px; border-radius: 12px; font-size: 11.5px; font-weight: 700; width: max-content; border: 1px solid rgba(249, 115, 22, 0.2); }
+        .rank-badge { margin: 5px auto; background: rgba(255,255,255,0.05); color: #94a3b8; border: 1px solid rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; width: max-content; text-transform: uppercase; }
+
+        .score-val { font-size: 72px; font-weight: 800; text-align: center; background: linear-gradient(135deg, #60a5fa, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; margin: 10px 0; }
         .badge-row { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
         .status-badge { padding: 6px 12px; border-radius: 10px; font-size: 10px; font-weight: 800; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.1); }
-        .tag-success { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.3); }
-        .tag-danger { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border-color: rgba(239, 68, 68, 0.3); }
-        .tag-warning { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3); }
+        .tag-success { background: rgba(16, 185, 129, 0.12); color: #34d399; border-color: rgba(16, 185, 129, 0.25); }
+        .tag-danger { background: rgba(239, 68, 68, 0.12); color: #f87171; border-color: rgba(239, 68, 68, 0.25); }
+        .tag-warning { background: rgba(245, 158, 11, 0.12); color: #fbbf24; border-color: rgba(245, 158, 11, 0.25); }
 
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .stat-box { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); }
-        .stat-label { font-size: 9px; color: #64748b; display: block; margin-bottom: 5px; font-weight: 800; text-transform: uppercase; }
-        .stat-value { font-size: 16px; font-weight: 700; color: #fff; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+        .stat-box { background: rgba(255,255,255,0.02); padding: 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.04); position: relative; overflow: hidden; }
+        .stat-box-full { grid-column: span 2; background: rgba(59, 130, 246, 0.04); border: 1px solid rgba(59, 130, 246, 0.15); }
+        .stat-label { font-size: 9px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; display: block; letter-spacing: 0.5px; }
+        .stat-value { font-size: 16px; font-weight: 700; color: #fff; z-index: 2; position: relative; }
 
-        .analysis-box { margin-top: 15px; padding: 15px; border-radius: 20px; background: rgba(59, 130, 246, 0.05); border: 1px dashed rgba(59, 130, 246, 0.3); }
-        .analysis-text { font-size: 12px; color: #94a3b8; line-height: 1.5; }
+        .box-sparkbar { position: absolute; bottom: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--success)); width: 0%; transition: width 1.5s ease-in-out; opacity: 0.7; }
 
-        .note-box { background: rgba(245, 158, 11, 0.1); border-left: 4px solid #f59e0b; padding: 15px; border-radius: 12px; font-size: 13px; color: #fbbf24; margin-top: 15px; }
+        .analysis-box { margin-top: 20px; padding: 20px; border-radius: 24px; background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.06); }
+        .analysis-box b { color: #60a5fa; font-weight: 800; display: block; margin-bottom: 12px; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; }
         
-        .btn-main { width: 100%; padding: 15px; border-radius: 14px; border: none; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; font-weight: 800; cursor: pointer; margin-top: 10px; }
+        .analysis-table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 13px; }
+        .analysis-table tr { border-bottom: 1px solid rgba(255, 255, 255, 0.04); }
+        .analysis-table tr:last-child { border-bottom: none; }
+        .analysis-table td { padding: 11px 0; color: #cbd5e1; }
+        .analysis-table td.val { text-align: right; font-weight: 700; color: #fff; }
+        .analysis-table td.label-sub { font-size: 11px; color: #64748b; }
+
+        .trend-up { color: #34d399; font-weight: bold; margin-left: 4px; }
+        .trend-down { color: #f59e0b; font-weight: bold; margin-left: 4px; } /* Kırmızı yerine uyarı tonu */
+
+        .progress-container { margin-top: 8px; background: rgba(255,255,255,0.05); border-radius: 6px; height: 6px; overflow: hidden; position: relative; }
+        .progress-bar { background: linear-gradient(90deg, #3b82f6, #10b981); height: 100%; border-radius: 6px; width: 0%; transition: width 1.2s ease-in-out; }
+
+        .target-milestone-box { margin-top: 12px; padding: 12px; border-radius: 14px; background: rgba(251, 191, 36, 0.05); border: 1px solid rgba(251, 191, 36, 0.15); font-size: 11.5px; color: #fde047; text-align: center; font-weight: 600; }
+        .podium-box { margin-top: 12px; padding: 12px; border-radius: 14px; background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.15); font-size: 11.5px; color: #d8b4fe; text-align: center; font-weight: 600; }
+
+        .tip-box { margin-top: 15px; padding: 16px; border-radius: 18px; background: rgba(99, 102, 241, 0.06); border: 1px solid rgba(99, 102, 241, 0.25); line-height: 1.5; }
+        .tip-box-header { display: flex; align-items: center; gap: 6px; color: #a5b4fc; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+        .tip-box-content { color: #e0e7ff; font-size: 12.5px; font-weight: 600; }
+
+        .prediction-box { margin-top: 12px; padding: 12px 16px; border-radius: 14px; background: rgba(16, 185, 129, 0.04); border: 1px solid rgba(16, 185, 129, 0.15); font-size: 11.5px; color: #a7f3d0; display: flex; justify-content: space-between; align-items: center; }
+
+        #toast-alert { display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); width: calc(100% - 40px); max-width: 380px; background: #1e1b4b; border: 1px solid #4338ca; border-radius: 16px; padding: 14px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.7); z-index: 9999; animation: slideDown 0.4s ease; }
+        
+        .accordion-section { margin-top: 15px; }
+        .accordion-btn { width: 100%; background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.1); color: #94a3b8; padding: 12px; border-radius: 14px; font-size: 11px; font-weight: 700; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
+        .accordion-btn:hover { background: rgba(255,255,255,0.06); color: #fff; }
+        .accordion-content { display: none; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 14px; margin-top: 8px; font-size: 12px; line-height: 1.6; color: #94a3b8; border: 1px solid rgba(255,255,255,0.02); }
+
+        .note-box { margin-top: 20px; padding: 18px; border-radius: 20px; background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.2); line-height: 1.5; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); }
+        .note-box strong { color: #f59e0b; display: block; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+        .note-box span { color: #ffedd5; font-size: 13px; font-weight: 600; display: block; }
+
+        .btn-main { width: 100%; padding: 16px; border-radius: 16px; border: none; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; font-weight: 800; cursor: pointer; margin-top: 15px; transition: 0.3s; }
+        .btn-sifre { background: none; border: 1px solid rgba(255,255,255,0.12); color: #64748b; font-size: 11px; padding: 10px; border-radius: 12px; cursor: pointer; margin-top: 15px; width: 100%; font-weight: 700; }
+        .btn-nav { width: 100%; background: rgba(59, 130, 246, 0.05); border: 1px dashed rgba(59, 130, 246, 0.3); color: #60a5fa; padding: 14px; border-radius: 16px; font-size: 11px; font-weight: 800; cursor: pointer; text-transform: uppercase; margin-top: 15px; transition: 0.2s; letter-spacing: 0.5px; }
+        .btn-nav:hover { background: rgba(59, 130, 246, 0.12); color: #fff; border-style: solid; }
+        #sifre-paneli { margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); display: none; }
         .hidden { display: none !important; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideDown { from { opacity: 0; transform: translate(-50%, -20px); } to { opacity: 1; transform: translate(-50%, 0); } }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 0.9; } 50% { transform: scale(1.03); opacity: 1; } 100% { transform: scale(1); opacity: 0.9; } }
     </style>
 </head>
 <body>
 
+    <div id="toast-alert">
+        <div style="font-size: 11px; font-weight: 800; color: #818cf8; letter-spacing: 0.5px; margin-bottom: 2px;">⚡ ANLIK DURUM BİLGİSİ</div>
+        <div id="toast-text" style="font-size: 12px; font-weight: 600; color: #e0e7ff;">Sistem başarıyla yüklendi.</div>
+    </div>
+
     <div id="login-screen">
-        <h2 style="color: var(--accent); font-weight: 800; margin-bottom: 10px;">M4 PORTAL</h2>
-        <input type="text" id="sicilInput" placeholder="Sicil No">
+        <h2>M4 PORTAL</h2>
+        <input type="text" id="sicilInput" placeholder="Sicil No" inputmode="numeric">
         <input type="password" id="sifreInput" placeholder="Şifre">
-        <button class="btn-main" onclick="sistemeGiris()">VERİLERİ ANALİZ ET</button>
+        <button class="btn-main" id="loginBtn" onclick="sistemeGiris()">VERİLERİ ANALİZ ET</button>
     </div>
 
     <div id="personel-screen">
         <div style="text-align: center;">
-            <h1 id="pIsim" style="font-size: 20px; font-weight: 800; color: #fff;">---</h1>
-            <p id="pAltBilgi" style="font-size: 11px; color: #64748b; margin-top: 4px;">---</p>
+            <div id="champBadge" class="champion-badge">🏆 VARDİYA ŞAMPİYONU</div>
+            <div id="streakBadge" class="streak-badge">⚡ Analiz Modu Aktif</div>
+            
+            <h1 id="pIsim" style="font-size: 22px; font-weight: 800; color: #fff;">---</h1>
+            <div id="pRank" class="rank-badge">Yükleniyor...</div>
+            <p id="pAltBilgi" style="font-size: 11px; color: #64748b; margin-top: 6px;">---</p>
         </div>
 
-        <div class="score-container">
-            <div id="pSkor" class="score-val">0.0</div>
-            <p style="font-size: 10px; font-weight: 800; color: #94a3b8; letter-spacing: 2px; margin-top: 5px;">BAŞARI SKORU</p>
-        </div>
+        <div class="score-val" id="pSkor">0.0</div>
+        <div style="text-align:center; font-size: 10px; font-weight: 800; color: #94a3b8; letter-spacing: 2px; margin-top: -10px; margin-bottom: 15px;">M4 AKILLI PERFORMANS ANALİZİ</div>
 
-        <div class="badge-row" id="badgeRow">
-            <!-- Rozetler Buraya Gelecek -->
-        </div>
+        <div class="badge-row" id="badgeRow"></div>
 
         <div class="stats-grid">
             <div class="stat-box">
                 <span class="stat-label">Toplam Fiş</span>
                 <span id="pFiş" class="stat-value">0</span>
+                <div id="barFis" class="box-sparkbar"></div>
             </div>
             <div class="stat-box">
                 <span class="stat-label">Vardiya</span>
@@ -80,112 +151,297 @@
                 <span class="stat-label">Euro Satış</span>
                 <span id="pEuro" class="stat-value">0 €</span>
             </div>
+            <div class="stat-box stat-box-full">
+                <span class="stat-label">Toplam Satış (Ciro)</span>
+                <span id="pToplamSatis" class="stat-value" style="color: #60a5fa;">0 ₺</span>
+                <div id="barCiro" class="box-sparkbar" style="background: linear-gradient(90deg, #60a5fa, #a855f7);"></div>
+            </div>
         </div>
 
+        <div id="pMilestoneKutusu" class="target-milestone-box" style="display: none;"></div>
+        <div id="pPodiumKutusu" class="podium-box" style="display: none;"></div>
+
         <div class="analysis-box">
-            <p class="analysis-text">
-                <strong>Akıllı Analiz:</strong> <span id="pAnalizMetni">Grup ortalamaları hesaplanıyor...</span>
-            </p>
+            <b>📊 Ekip & Performans Kıyaslaması</b>
+            <table class="analysis-table" id="pAnalizTablo"></table>
+            
+            <div class="tip-box">
+                <div class="tip-box-header">🤖 M4 Akıllı Performans Asistanı</div>
+                <div id="pAkilliIpucu" class="tip-box-content">Analiz tamamlanıyor...</div>
+            </div>
+
+            <div class="prediction-box">
+                <span>🔮 Haftalık Tahmini Kapanış Skorunuz:</span>
+                <strong id="pTahminSkor" style="color: #34d399;">--</strong>
+            </div>
+        </div>
+
+        <div class="accordion-section">
+            <button class="accordion-btn" onclick="toggleAccordion()">💡 Satış Artırma İpuçlarını Gör</button>
+            <div id="guideContent" class="accordion-content">
+                <p style="margin-bottom: 6px;"><strong style="color: #60a5fa;">• İkili Teklif Metodu:</strong> Müşteriye tek ürün yerine yan yana uyumlu iki kampanya ürününü eş zamanlı sunun.</p>
+                <p><strong style="color: #34d399;">• Hızlı Servis:</strong> Yoğun anlarda barkod okuma ritmini koruyarak kuyruk oluşumunu engelleyin.</p>
+            </div>
         </div>
 
         <div id="notKutusu" class="note-box" style="display:none;">
-            <strong>Yönetici Notu:</strong> <span id="pNot"></span>
+            <strong>💬 Yönetici Geri Feedback'i</strong>
+            <span id="pNot"></span>
         </div>
 
-        <button onclick="location.reload()" style="background:none; border:none; color:#475569; width:100%; margin-top:20px; cursor:pointer; font-weight:700; font-size:11px;">Oturumu Kapat</button>
+        <button class="btn-sifre" id="sifreAcBtn" onclick="sifrePaneliniAc()">Şifremi Değiştir</button>
+        <div id="sifre-paneli">
+            <input type="password" id="yeniSifre" placeholder="Yeni Şifre">
+            <button class="btn-main" style="background: var(--success);" id="sifreKaydetBtn" onclick="sifreGuncelle()">KAYDET</button>
+        </div>
+
+        <button class="btn-nav" onclick="window.location.href='./takvim.html'">📅 ÇALIŞMA TAKVİMİNİ GÖR</button>
+
+        <button onclick="location.reload()" style="background:none; border:none; color:#475569; width:100%; margin-top:20px; cursor:pointer; font-weight:700; font-size:11px; text-transform:uppercase;">Güvenli Çıkış</button>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxUQpYykoL2RroLwL0KVcMez8rw4Q26Mpqv9uvx5Jvuun31yPqON2V8_UuZ2Pdbdvd_9A/exec";
+        const KUR_URL = "https://script.google.com/macros/s/AKfycbwVZ7VcV3Nob8Z2eEVrTSECZAlVbPH0eOikAJ585JEPdebcXMhvXw8DwF_T8UoM-TufsQ/exec";
+        
+        let aktifSicil = "";
+        let guncelKur = 36.50; 
 
-        const firebaseConfig = { apiKey: "AIzaSy...", authDomain: "ukasa1.firebaseapp.com", projectId: "ukasa1" };
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxWYGZ7rWKB-IRjL2t1JW8QDqIPRFAZzcVbGVwKO13pYwNhAB86tklN5BqjLRv0dxYJEA/exec";
+        function playBeep(type) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain); gain.connect(ctx.destination);
+                if(type === 'success') {
+                    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+                    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start(); osc.stop(ctx.currentTime + 0.25);
+                }
+            } catch(e) {}
+        }
 
-        window.sistemeGiris = async () => {
+        async function sistemeGiris() {
             const sicil = document.getElementById("sicilInput").value.trim();
             const sifre = document.getElementById("sifreInput").value.trim();
-            if (!sicil || !sifre) return;
+            const loginBtn = document.getElementById("loginBtn");
 
-            const snap = await getDoc(doc(db, "kasa", "personel"));
-            const liste = snap.exists() ? snap.data().liste : [];
-            const user = liste.find(x => x.k === sicil && x.s === sifre);
+            if (!sicil || !sifre) { alert("Sicil ve şifre giriniz!"); return; }
+            loginBtn.innerText = "Veriler Alınıyor..."; loginBtn.disabled = true;
 
-            if (user) {
-                document.getElementById("login-screen").classList.add("hidden");
-                document.getElementById("personel-screen").style.display = "block";
-                hesaplaVeGoster(sicil);
-            } else { alert("Hatalı giriş!"); }
-        };
-
-        async function hesaplaVeGoster(sicilNo) {
             try {
-                const res = await fetch(SCRIPT_URL);
-                const dataGlobal = await res.json();
-                const EUR_RATE = 36.50;
+                const kurResponse = await fetch(KUR_URL);
+                const kurData = await kurResponse.json();
+                if(kurData && kurData.kur) { guncelKur = parseFloat(String(kurData.kur).replace(/\s/g, "").replace(",", ".")); }
 
-                const p = dataGlobal.find(x => String(x.sicil) === String(sicilNo));
-                if (!p) return;
+                const response = await fetch(SCRIPT_URL);
+                const dataGlobal = await response.json();
+                const user = dataGlobal.find(x => String(x.sicil).trim() === sicil && String(x.sifre).trim() === sifre);
 
-                const n = (v) => parseFloat(v) || 0;
-                
-                // 1. Grup Ortalamalarını Hesapla (Admin Kodundaki Mantık)
-                const fisList = dataGlobal.map(x => n(x.fis));
-                const meanFis = fisList.reduce((a, b) => a + b, 0) / (fisList.length || 1);
-                const totalCiroGenel = dataGlobal.reduce((acc, x) => acc + n(x.tl) + (n(x.euro) * EUR_RATE), 0);
-                const totalFisGenel = fisList.reduce((a, b) => a + b, 0) || 1;
-                const grupFisBasiCiro = totalCiroGenel / totalFisGenel;
+                if (user) {
+                    aktifSicil = sicil;
+                    document.getElementById("login-screen").classList.add("hidden");
+                    document.getElementById("personel-screen").style.display = "block";
+                    hesaplaVeAnalizEt(user, dataGlobal, guncelKur);
+                } else { alert("Giriş bilgileri hatalı!"); resetLoginBtn(); }
+            } catch (err) { alert("Bağlantı hatası!"); resetLoginBtn(); }
+        }
 
-                // 2. Personel Verileri
-                const fis = n(p.fis);
-                const ciro = n(p.tl) + (n(p.euro) * EUR_RATE);
-                const personelFisBasiCiro = ciro / (fis || 1);
-                const isNight = (p.vardiya || "").toLowerCase().includes("gece");
+        function hesaplaVeAnalizEt(p, dataGlobal, kur) {
+            const n = (v) => {
+                if (v === undefined || v === null) return 0;
+                let clean = String(v).replace(/\s/g, "").replace(",", ".");
+                return parseFloat(clean) || 0;
+            };
 
-                // 3. Başarı Skoru Formülü
-                let score = ((fis * 1.5) * 0.60) + ((ciro / 1500) * 0.40);
-                const finalScore = isNight ? score * 1.6 : score;
+            const fis = n(p.fis); const tl = n(p.tl); const euro = n(p.euro);
+            const ciro = tl + (euro * kur); 
+            const vardiyaMetni = (p.vardiya || "").toLowerCase();
+            
+            const currentHour = new Date().getHours();
+            const isNightAtmos = currentHour >= 19 || currentHour < 7 || vardiyaMetni.includes("gece");
+            
+            if(isNightAtmos) { 
+                document.body.classList.add("theme-night"); 
+                document.body.classList.remove("theme-day");
+            } else { 
+                document.body.classList.add("theme-day"); 
+                document.body.classList.remove("theme-night");
+            }
 
-                // 4. Arayüzü Güncelle
-                document.getElementById("pIsim").innerText = p.isim;
-                document.getElementById("pAltBilgi").innerText = `SICIL: ${p.sicil} | ${p.magaza || 'M4'}`;
-                document.getElementById("pSkor").innerText = finalScore.toFixed(1);
-                document.getElementById("pFiş").innerText = Math.round(fis);
-                document.getElementById("pVardiya").innerText = p.vardiya || "---";
-                document.getElementById("pTl").innerText = n(p.tl).toLocaleString('tr-TR') + " ₺";
-                document.getElementById("pEuro").innerText = n(p.euro).toLocaleString('tr-TR') + " €";
+            // Gece vardiyası etkisi 1.25 çarpanı olarak güncellendi
+            let baseScore = ((fis * 1.5) * 0.60) + ((ciro / 1500) * 0.40);
+            const finalScore = vardiyaMetni.includes("gece") ? baseScore * 1.25 : baseScore;
 
-                // 5. Akıllı Rozetler ve Verimlilik Analizi
-                const badgeRow = document.getElementById("badgeRow");
-                badgeRow.innerHTML = "";
+            const rankElement = document.getElementById("pRank");
+            if(finalScore >= 90) { rankElement.innerText = "🌌 Galaksi Kasa Gurusu"; rankElement.style.color = "#fbbf24"; }
+            else if(finalScore >= 70) { rankElement.innerText = "⚡ Hız Savaşçısı"; rankElement.style.color = "#60a5fa"; }
+            else { rankElement.innerText = "🌱 Yükselen Yıldız"; rankElement.style.color = "#34d399"; }
 
-                // Başarı Durumu (Kritik Fiş Analizi)
-                if (fis < (meanFis * 0.8)) {
-                    badgeRow.innerHTML += `<span class="status-badge tag-danger">KRİTİK FİŞ</span>`;
-                    document.getElementById("pAnalizMetni").innerText = "Fiş sayınız grup ortalamasının altında. Fiş hızınızı artırmalısınız.";
-                } else {
-                    badgeRow.innerHTML += `<span class="status-badge tag-success">BAŞARILI TEMPO</span>`;
-                    document.getElementById("pAnalizMetni").innerText = "Fiş sayınız stabil. Müşteri akışını iyi yönetiyorsunuz.";
-                }
+            document.getElementById("pTahminSkor").innerText = (finalScore * 1.08).toFixed(2) + " Puan";
 
-                // Verimlilik Analizi (Fis Başı Ciro - Upsell)
-                const esik = grupFisBasiCiro * 0.85;
-                if (personelFisBasiCiro < esik) {
-                    badgeRow.innerHTML += `<span class="status-badge tag-warning">DÜŞÜK VERİMLİLİK</span>`;
-                    document.getElementById("pAnalizMetni").innerText += " Kasa önü satışlarını (upsell) artırarak fiş başı cironuzu yükseltebilirsiniz.";
-                } else if (personelFisBasiCiro > (grupFisBasiCiro * 1.2)) {
-                    badgeRow.innerHTML += `<span class="status-badge tag-success">YÜKSEK VERİMLİLİK</span>`;
-                }
+            const genelGrup = dataGlobal.filter(x => String(x.magaza).trim() === String(p.magaza).trim() && String(x.grup).trim() === String(p.grup).trim());
+            const vardiyaGrubu = genelGrup.filter(x => String(x.vardiya).toLowerCase().trim() === vardiyaMetni.trim());
+            const mikroGrupOdeme = vardiyaGrubu.filter(x => String(x.pozisyon || "").toLowerCase().includes("ödeme"));
+            const finalReferansGrup = mikroGrupOdeme.length > 0 ? mikroGrupOdeme : vardiyaGrubu;
 
-                // 6. Yönetici Notu
-                if (p.not && p.not.length > 2) {
-                    document.getElementById("notKutusu").style.display = "block";
-                    document.getElementById("pNot").innerText = p.not;
-                }
+            const magazaSkorlari = genelGrup.map(x => {
+                const xFis = n(x.fis); const xCiro = n(x.tl) + (n(x.euro) * kur);
+                let xBase = ((xFis * 1.5) * 0.60) + ((xCiro / 1500) * 0.40);
+                return (x.vardiya || "").toLowerCase().includes("gece") ? xBase * 1.25 : xBase;
+            }).sort((a,b) => b - a);
+            
+            const magazaZirveSkor = magazaSkorlari[0] || 0;
 
-            } catch (e) { alert("Veri çekilemedi!"); }
+            const getAyrintiliSiralama = (grupListesi) => {
+                const fisListesi = grupListesi.map(x => ({ sicil: String(x.sicil).trim(), deger: n(x.fis) })).sort((a, b) => b.deger - a.deger);
+                const kasaOnuListesi = grupListesi.map(x => {
+                    const xFis = n(x.fis) || 1; const xCiro = n(x.tl) + (n(x.euro) * kur);
+                    return { sicil: String(x.sicil).trim(), deger: xCiro / xFis };
+                }).sort((a, b) => b.deger - a.deger);
+
+                return {
+                    fisSira: fisListesi.findIndex(x => x.sicil === String(p.sicil).trim()) + 1,
+                    kasaOnuSira: kasaOnuListesi.findIndex(x => x.sicil === String(p.sicil).trim()) + 1,
+                    toplamKisi: grupListesi.length
+                };
+            };
+
+            const genelSiralamaSonuclari = getAyrintiliSiralama(genelGrup);
+            const vardiyaSiralamaSonuclari = getAyrintiliSiralama(vardiyaGrubu);
+
+            if (vardiyaSiralamaSonuclari.fisSira === 1 && vardiyaSiralamaSonuclari.kasaOnuSira === 1) {
+                document.getElementById("champBadge").style.display = "block";
+                playBeep('success');
+            }
+
+            const allFis = finalReferansGrup.map(x => n(x.fis));
+            const meanFis = allFis.reduce((a, b) => a + b, 0) / (allFis.length || 1);
+            const stdDevFis = Math.sqrt(allFis.map(x => Math.pow(x - meanFis, 2)).reduce((a, b) => a + b, 0) / (allFis.length || 1));
+
+            const totalCiro = finalReferansGrup.reduce((acc, x) => acc + n(x.tl) + (n(x.euro) * kur), 0);
+            const totalFisCount = allFis.reduce((a, b) => a + b, 0) || 1;
+            const grupFisBasiCiro = totalCiro / totalFisCount;
+            const personelFisBasiCiro = fis > 0 ? (ciro / fis) : 0;
+
+            // Motivasyonu bozacak kelimeler yapıcı hale getirildi (KRİTİK -> ORTALAMA ALTI, GELİŞMELİ -> GELİŞTİRİLEBİLİR)
+            const devStatus = fis < (meanFis - stdDevFis) ? "ORTALAMA ALTI" : (fis < meanFis ? "GELİŞTİRİLEBİLİR" : "BAŞARILI");
+            const tolerans = fis > (meanFis * 1.2) ? 0.7 : 0.85;
+            const esikDeger = grupFisBasiCiro * tolerans;
+
+            const fisTrend = fis >= meanFis ? '<span class="trend-up">▲</span>' : '<span class="trend-down">▼</span>';
+            const verimlilikTrend = personelFisBasiCiro >= grupFisBasiCiro ? '<span class="trend-up">▲</span>' : '<span class="trend-down">▼</span>';
+
+            const grupMaxFis = Math.max(...allFis, 1);
+            const grupMaxCiro = Math.max(...finalReferansGrup.map(x => n(x.tl) + (n(x.euro) * kur)), 1);
+            document.getElementById("barFis").style.width = Math.min((fis / grupMaxFis) * 100, 100) + "%";
+            document.getElementById("barCiro").style.width = Math.min((ciro / grupMaxCiro) * 100, 100) + "%";
+
+            let upsellNeed = "DENGELİ";
+            let akilliIpucuMetni = "Tebrikler, dengeli bir operasyon yürütüyorsunuz. Bu harika ritmi koruyun!";
+            
+            let selamlama = currentHour >= 18 ? "İyi Akşamlar" : (currentHour >= 12 ? "İyi Günler" : "İyi Mesailer");
+            let toastMetni = `Başarıyla giriş yapıldı. ${selamlama}, ${p.isim}!`;
+
+            const milestoneKutusu = document.getElementById("pMilestoneKutusu");
+            if (fis < meanFis) {
+                const gerekenFis = Math.ceil(meanFis - fis);
+                milestoneKutusu.innerText = `🎯 Grup ortalamasını yakalamanıza sadece ${gerekenFis} fiş kaldı! Enerjiniz harika, başarabilirsiniz!`;
+                milestoneKutusu.style.display = "block";
+            } else { milestoneKutusu.style.display = "none"; }
+
+            const podiumKutusu = document.getElementById("pPodiumKutusu");
+            if(finalScore < magazaZirveSkor) {
+                const fark = (magazaZirveSkor - finalScore).toFixed(2);
+                podiumKutusu.innerText = `🏆 Mağaza liderliği ile aranızda sadece ${fark} puan var! Küçük bir ivmeyle zirve senin!`;
+                podiumKutusu.style.display = "block";
+            } else {
+                podiumKutusu.innerText = `👑 Şu an mağazanızın zirvesindesiniz! Harika performansı sürdürüyorsunuz!`;
+                podiumKutusu.style.display = "block";
+            }
+
+            const streakElement = document.getElementById("streakBadge");
+            if(devStatus === "BAŞARILI" && personelFisBasiCiro >= grupFisBasiCiro) {
+                streakElement.innerText = "🔥 Kusursuz Performans Serisi!";
+                streakElement.style.setProperty("--streak-bg", "rgba(249, 115, 22, 0.1)");
+                streakElement.style.setProperty("--streak-color", "#f97316");
+            } else if (devStatus === "ORTALAMA ALTI") {
+                streakElement.innerText = "⏳ Gelişim Modu: Potansiyelini Göster";
+                streakElement.style.setProperty("--streak-bg", "rgba(245, 158, 11, 0.1)");
+                streakElement.style.setProperty("--streak-color", "#f59e0b");
+            } else {
+                streakElement.innerText = "⚡ Standart Performans Zinciri";
+            }
+
+            if (personelFisBasiCiro < esikDeger && fis > 0) {
+                upsellNeed = "⚠️ KASA ÖNÜ DESTEKLENMELİ";
+                const eksikMiktar = Math.round(grupFisBasiCiro - personelFisBasiCiro);
+                akilliIpucuMetni = `Kasa önü satış sepetinizi grup hedefine ulaştırmak için ₺${eksikMiktar} daha katkı sağlayabilirsiniz. Çapraz teklifleri artırmayı deneyin!`;
+            } else if (personelFisBasiCiro > (grupFisBasiCiro * 1.2) && devStatus !== "BAŞARILI") {
+                upsellNeed = "💎 YÜKSEK VERİMLİLİK";
+                akilliIpucuMetni = "Kasa önü sepet ortalamanız mükemmel düzeyde! Şimdi bu başarıyı daha fazla müşteriye ulaştırarak fark yaratma zamanı.";
+            } else if (devStatus === "ORTALAMA ALTI") {
+                akilliIpucuMetni = `Fiş sayınız grup ortalamasının (${meanFis.toFixed(1)}) biraz gerisinde kalmış görünüyor. Küçük bir tempo artışıyla ortalamayı kolayca yakalayabilirsiniz!`;
+            }
+
+            document.getElementById("pAkilliIpucu").innerText = akilliIpucuMetni;
+            document.getElementById("pIsim").innerText = p.isim;
+            document.getElementById("pAltBilgi").innerText = `SICIL: ${p.sicil} | ${p.magaza} | ${p.grup}`;
+            document.getElementById("pSkor").innerText = finalScore.toFixed(2);
+            document.getElementById("pFiş").innerText = Math.round(fis);
+            document.getElementById("pVardiya").innerText = p.vardiya || "---";
+            document.getElementById("pTl").innerText = tl.toLocaleString('tr-TR') + " ₺";
+            document.getElementById("pEuro").innerText = euro.toLocaleString('tr-TR') + " €";
+            document.getElementById("pToplamSatis").innerText = Math.round(ciro).toLocaleString('tr-TR') + " ₺";
+
+            const badgeRow = document.getElementById("badgeRow"); badgeRow.innerHTML = "";
+            badgeRow.innerHTML += `<span class="status-badge ${devStatus === 'BAŞARILI' ? 'tag-success' : 'tag-warning'}">${devStatus} FİŞ</span>`;
+            if(upsellNeed !== "DENGELİ") { badgeRow.innerHTML += `<span class="status-badge ${personelFisBasiCiro < esikDeger ? 'tag-warning' : 'tag-success'}">${upsellNeed}</span>`; }
+
+            const progressPercent = Math.min(Math.round((fis / (meanFis || 1)) * 100), 100);
+
+            let tabloHtml = `
+                <tr><td>Grup Geneli Fiş Sıralaması</td><td class="val">${genelSiralamaSonuclari.fisSira} / ${genelSiralamaSonuclari.toplamKisi}</td></tr>
+                <tr><td>Vardiya İçi Fiş Sıralaması</td><td class="val" style="color: #93c5fd;">${vardiyaSiralamaSonuclari.fisSira} / ${vardiyaSiralamaSonuclari.toplamKisi}</td></tr>
+                <tr style="background: rgba(59, 130, 246, 0.02);"><td>Grup Geneli Kasa Önü Verimlilik</td><td class="val" style="color: #fbbf24;">${genelSiralamaSonuclari.kasaOnuSira} / ${genelSiralamaSonuclari.toplamKisi}</td></tr>
+                <tr style="background: rgba(59, 130, 246, 0.02);"><td>Vardiya İçi Kasa Önü Verimlilik</td><td class="val" style="color: #c084fc;">${vardiyaSiralamaSonuclari.kasaOnuSira} / ${vardiyaSiralamaSonuclari.toplamKisi}</td></tr>
+                <tr><td>Fiş Adetiniz / Ortalaması<div class="progress-container"><div class="progress-bar" style="width: ${progressPercent}%"></div></div></td><td class="val" style="vertical-align: top; padding-top:10px;">${Math.round(fis)} ${fisTrend} <span class="label-sub">/ ${meanFis.toFixed(1)}</span></td></tr>
+                <tr><td>Fiş Başı Cironuz</td><td class="val" style="color: #34d399;">₺${Math.round(personelFisBasiCiro)} ${verimlilikTrend}</td></tr>
+                <tr><td>Grup Hedef Eşiği</td><td class="val">₺${Math.round(grupFisBasiCiro)}</td></tr>
+            `;
+            document.getElementById("pAnalizTablo").innerHTML = tabloHtml;
+
+            if (p.not && p.not.length > 2) {
+                document.getElementById("notKutusu").style.display = "block"; document.getElementById("pNot").innerText = p.not;
+            } else { document.getElementById("notKutusu").style.display = "none"; }
+
+            const toast = document.getElementById("toast-alert");
+            document.getElementById("toast-text").innerText = toastMetni;
+            toast.style.display = "block"; setTimeout(() => { toast.style.display = "none"; }, 4000);
+        }
+
+        function toggleAccordion() { const content = document.getElementById("guideContent"); content.style.display = content.style.display === "block" ? "none" : "block"; }
+        function sifrePaneliniAc() { document.getElementById('sifre-paneli').style.display = 'block'; document.getElementById('sifreAcBtn').style.display = 'none'; }
+        
+        async function sifreGuncelle() {
+            const yeniSifre = document.getElementById("yeniSifre").value.trim();
+            const btn = document.getElementById("sifreKaydetBtn"); if (yeniSifre.length < 4) { alert("Min. 4 hane!"); return; }
+            btn.innerText = "Kaydediliyor...";
+            try {
+                const response = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ islem: "sifreDegistir", sicil: aktifSicil, yeniSifre: yeniSifre }) });
+                if (await response.text() === "Tamam") { alert("Şifre Değişti!"); location.reload(); }
+            } catch (e) { alert("Hata!"); }
+        }
+        function resetLoginBtn() { const btn = document.getElementById("loginBtn"); btn.innerText = "VERİLERİ ANALİZ ET"; btn.disabled = false; }
+
+        // M4 PORTAL ÖZEL PWA TETİKLEYİCİSİ
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                .then(reg => console.log('M4 PWA Aktif!', reg))
+                .catch(err => console.log('PWA Hatası:', err));
+            });
         }
     </script>
 </body>
