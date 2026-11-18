@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0b0f1a">
+    <title>Kasa Kontrol</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0b0f1a;
+            --card: rgba(22, 30, 49, 0.85);
+            --accent: #3b82f6;
+            --text: #ffffff;
+            --muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.1);
+            --green: #10b981;
+            --orange: #f59e0b;
+            --purple: #a855f7;
+            --danger: #ef4444;
+            --radius: 16px;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+            background: var(--bg) center / cover fixed no-repeat;
+            color: var(--text);
+            margin: 0;
+            min-height: 100vh;
+            min-height: 100dvh;
+            transition: background 0.5s ease;
+        }
+        body::before {
+            content: ""; position: fixed; inset: 0;
+            background: rgba(0, 0, 0, 0.4); z-index: -1;
+        }
+
+        button { font-family: inherit; cursor: pointer; }
+        button:disabled { opacity: .6; cursor: not-allowed; }
+
+        /* Üst / alt çubuk */
+        .appbar {
+            display: none; position: fixed; top: 0; left: 0; right: 0;
+            height: calc(50px + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top);
+            background: rgba(11, 15, 26, 0.8); backdrop-filter: blur(20px);
+            justify-content: space-between; align-items: center; padding-inline: 16px;
+            font-weight: 800; z-index: 1000; border-bottom: 1px solid var(--border);
+            color: var(--accent); letter-spacing: 1px; font-size: 13px;
+        }
+        .appbar .cikis { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 8px; padding: 5px 10px; font-size: 11px; font-weight: 600; }
+        .tabbar {
+            display: none; position: fixed; bottom: 0; left: 0; right: 0;
+            min-height: 60px; background: rgba(22, 30, 49, 0.9); backdrop-filter: blur(25px);
+            justify-content: space-around; align-items: center; z-index: 1000;
+            border-top: 1px solid var(--border); padding-bottom: env(safe-area-inset-bottom);
+            border-radius: 20px 20px 0 0;
+        }
+        .tabbar button { background: none; border: none; font-size: 22px; color: white; padding: 10px 24px; }
+        body.girisYapildi .appbar, body.girisYapildi .tabbar { display: flex; }
+
+        /* Sayaç */
+        .sayac-kutu { text-align: center; }
+        .ana-grup { font-size: 11px; color: var(--muted); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 1px; }
+        .ana-sayac { font-size: 32px; font-weight: 800; margin-bottom: 10px; color: var(--orange); text-shadow: 0 0 15px rgba(245, 158, 11, 0.4); font-variant-numeric: tabular-nums; }
+        .ana-sayac.devam { color: var(--green); text-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+        .ana-sayac.bos { color: var(--muted); text-shadow: none; }
+
+        /* Giriş */
+        #login { min-height: 100vh; min-height: 100dvh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .login-card { width: 100%; max-width: 350px; background: var(--card); padding: 30px; border-radius: 25px; text-align: center; border: 1px solid var(--border); backdrop-filter: blur(15px); }
+        .login-card h1 { font-size: 18px; margin: 10px 0 16px; }
+        .hata { color: var(--danger); font-size: 12px; min-height: 16px; margin: 0 0 10px; }
+        .ai-link { background: var(--green); color: white; border: none; padding: 8px 15px; border-radius: 50px; font-weight: 800; font-size: 10px; margin-bottom: 15px; }
+
+        /* Uygulama */
+        #app { display: none; padding: calc(62px + env(safe-area-inset-top)) 10px 100px; max-width: 600px; margin: 0 auto; }
+        body.girisYapildi #app { display: block; }
+        body.girisYapildi #login { display: none; }
+
+        .durum-kart { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 14px; margin-bottom: 12px; backdrop-filter: blur(15px); }
+        .durum-kart .ana-sayac { margin-bottom: 0; }
+
+        #alan { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        .kasa-birimi {
+            background: var(--card); border-radius: var(--radius); padding: 8px;
+            border: 1px solid var(--border); display: flex; flex-direction: column;
+            gap: 6px; min-height: 110px; backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-left: 4px solid transparent;
+        }
+        .kasa-birimi.mola-aktif { animation: mola-blink 1s infinite; border: 1.5px solid var(--danger); border-left: 6px solid var(--danger); }
+        @keyframes mola-blink { 0%, 100% { background: rgba(22, 30, 49, 0.85); } 50% { background: rgba(239, 68, 68, 0.2); } }
+        @media (prefers-reduced-motion: reduce) { .kasa-birimi.mola-aktif { animation: none; background: rgba(239, 68, 68, 0.2); } }
+
+        .g-mavi { border-left-color: var(--accent); }
+        .g-turuncu { border-left-color: var(--orange); }
+        .g-mor { border-left-color: var(--purple); }
+        .kasa-birimi.mola-aktif.g-mavi, .kasa-birimi.mola-aktif.g-turuncu, .kasa-birimi.mola-aktif.g-mor { border-left-color: var(--danger); }
+
+        .sabit-no { font-size: 9px; font-weight: 800; color: var(--muted); }
+        .kasa-baslik-input { background: transparent; border: none; color: var(--accent); font-weight: 800; font-size: 12px; width: 100%; padding: 2px 0; }
+        .barkod-konteynir { background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 8px; border: 1px solid var(--border); }
+        .barkod-input { background: transparent; border: none; color: #cbd5e1; font-size: 10px; width: 100%; }
+        .personel-input { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 10px; color: white; padding: 8px; font-size: 11px; font-weight: 600; text-align: center; width: 100%; }
+        input:disabled { color: inherit; opacity: 1; -webkit-text-fill-color: currentColor; }
+
+        .btn-primary { width: 100%; height: 45px; border-radius: 12px; border: none; font-weight: 800; color: white; font-size: 13px; }
+        .btn-nav { background: linear-gradient(135deg, #6366f1, #4f46e5); margin-bottom: 12px; height: 40px; }
+
+        .admin-tools { position: fixed; right: 15px; bottom: calc(80px + env(safe-area-inset-bottom)); display: none; flex-direction: column; gap: 8px; z-index: 2000; }
+        body.admin .admin-tools { display: flex; }
+        .admin-tools button { width: 45px; height: 45px; border-radius: 12px; border: none; color: white; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,.35); }
+
+        .panel { background: var(--card); border-radius: 24px; overflow: hidden; max-height: 0; transition: max-height .5s cubic-bezier(0.4,0,0.2,1), padding .5s; backdrop-filter: blur(25px); box-shadow: 0 10px 40px rgba(0,0,0,0.5); border: 0 solid var(--border); margin-top: 12px; }
+        .panel.acik { max-height: 600px; padding: 20px; border-width: 1px; overflow-y: auto; }
+        .panel-header { color: var(--accent); font-size: 14px; font-weight: 800; margin-bottom: 15px; }
+        .panel-input { width: 100%; padding: 12px; margin-bottom: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: white; border-radius: 12px; font-size: 16px; }
+
+        /* Bildirim */
+        #toast { position: fixed; left: 50%; bottom: calc(150px + env(safe-area-inset-bottom)); transform: translate(-50%, 20px); background: #1e293b; color: white; padding: 10px 18px; border-radius: 12px; font-size: 13px; font-weight: 600; border: 1px solid var(--border); opacity: 0; pointer-events: none; transition: .3s; z-index: 3000; }
+        #toast.goster { opacity: 1; transform: translate(-50%, 0); }
+        #toast.hata-toast { border-color: var(--danger); }
+
+        /* ===== KASA TEMASI: ödeme noktası görünümü ===== */
+        #app { max-width: 720px; }
+        body::before { background: radial-gradient(ellipse at 50% 0%, rgba(59,130,246,.14), transparent 60%), rgba(0,0,0,.55); }
+
+        /* Ana ekran: kasa hattı göstergesi */
+        .durum-kart { background: linear-gradient(180deg, #0e1424, #0a0f1c); border-color: rgba(255,255,255,.12); box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 8px 24px rgba(0,0,0,.35); }
+        .durum-kart .ana-grup { letter-spacing: 2px; font-size: 10px; }
+        .durum-kart .ana-sayac { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 40px; letter-spacing: 4px; }
+
+        .ozet { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+        .oz { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 6px; border-radius: 14px; background: var(--card); border: 1px solid var(--border); }
+        .oz::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
+        .oz b { font-size: 20px; color: var(--text); font-variant-numeric: tabular-nums; }
+        .oz span { font-size: 10px; font-weight: 800; letter-spacing: 1px; color: var(--muted); }
+        .oz.acik { color: var(--green); } .oz.mola { color: var(--danger); } .oz.bos { color: #64748b; }
+
+        /* Kasa hattı (zemin) */
+        #alan { grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 10px; border-radius: 22px; border: 1px solid var(--border);
+            background: linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px) 0 0 / 26px 26px, linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px) 0 0 / 26px 26px, rgba(8,12,22,.55); }
+        /* kasalar her ekranda çifter çifter alt alta dizilir */
+
+        /* Kasa */
+        .kasa-birimi { --grup: #475569; --kenar: rgba(255,255,255,.1); --durumrenk: #64748b; gap: 0; padding: 0; min-height: 0; overflow: hidden; border-radius: 16px; animation: none;
+            background: linear-gradient(180deg, #1b2540, #131b30); border: 1px solid var(--kenar) !important;
+            box-shadow: 0 6px 16px rgba(0,0,0,.35), inset 0 -3px 0 var(--grup); }
+        .kasa-birimi.g-mavi { --grup: var(--accent); } .kasa-birimi.g-turuncu { --grup: var(--orange); } .kasa-birimi.g-mor { --grup: var(--purple); }
+        .kasa-birimi.durum-acik { --durumrenk: var(--green); }
+        .kasa-birimi.durum-bos { --durumrenk: #64748b; }
+        .kasa-birimi.durum-mola, .kasa-birimi.mola-aktif { --durumrenk: var(--danger); --kenar: rgba(239,68,68,.6); animation: none; background: linear-gradient(180deg, #3a1a26, #1c1424); }
+        .kasa-birimi.durum-bos { opacity: .8; }
+
+        /* Üst tabela */
+        .tabela { display: flex; align-items: center; gap: 8px; padding: 8px; background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02)); border-bottom: 1px solid var(--border); }
+        .kasa-no { flex: 0 0 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; font-weight: 800; font-size: 16px; color: #04130d; background: var(--durumrenk); box-shadow: 0 0 12px color-mix(in srgb, var(--durumrenk) 55%, transparent); }
+        .tabela-orta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+        .kasa-birimi .kasa-baslik-input { color: #e2e8f0; font-size: 11px; padding: 0; }
+        .durum-yazi { font-size: 9px; font-weight: 800; letter-spacing: 1.2px; color: var(--durumrenk); }
+        .lamba { flex: 0 0 10px; height: 10px; border-radius: 50%; background: var(--durumrenk); box-shadow: 0 0 10px var(--durumrenk); }
+        .durum-mola .lamba { animation: lamba-yan 1s infinite; }
+        @keyframes lamba-yan { 50% { opacity: .25; } }
+
+        /* POS ekranı */
+        .pos { margin: 8px 8px 0; padding: 6px 8px; border-radius: 10px; background: linear-gradient(180deg, #07130f, #0a1c15); border: 1px solid rgba(16,185,129,.25); box-shadow: inset 0 0 12px rgba(16,185,129,.12); }
+        .pos-etiket { font-size: 8px; letter-spacing: 1.5px; color: rgba(16,185,129,.6); font-weight: 800; }
+        .pos .barkod-konteynir { background: none; border: 0; padding: 0; }
+        .kasa-birimi .barkod-input { font-family: ui-monospace, Menlo, Consolas, monospace; color: #6ee7b7; font-size: 12px; letter-spacing: 1px; padding: 2px 0; }
+        .durum-bos .pos { filter: grayscale(1) opacity(.55); }
+
+        /* Bant */
+        .bant { height: 10px; margin: 8px 8px 0; border-radius: 5px; background: repeating-linear-gradient(90deg, #0b1020 0 10px, #1f2a44 10px 20px); background-size: 20px 100%; box-shadow: inset 0 1px 2px rgba(0,0,0,.6); }
+        .durum-acik .bant { animation: bant-kay 1.2s linear infinite; }
+        @keyframes bant-kay { to { background-position: 20px 0; } }
+
+        /* Kasiyer */
+        .kasiyer { display: flex; align-items: center; gap: 6px; margin: 8px 8px 11px; padding: 3px 6px 3px 8px; border-radius: 10px; background: rgba(0,0,0,.28); border: 1px solid var(--border); }
+        .avatar { font-size: 14px; opacity: .85; }
+        .kasa-birimi .personel-input { background: transparent; border: 0; padding: 6px 0; text-align: left; font-size: 12px; color: #fff; }
+        .kasa-birimi input:not(:disabled):focus { background: rgba(59,130,246,.14); border-radius: 6px; }
+
+        /* ===== Özel durumlar (ihtiyaç molası, kasada değilim, görevlendirme, depo) ===== */
+        #app { max-width: 600px; }
+        .ozel-ihtiyac { --ozel: #06b6d4; } .ozel-disarida { --ozel: #eab308; } .ozel-gorev { --ozel: #ec4899; } .ozel-depo { --ozel: #84cc16; }
+
+        .ozet { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .oz { padding: 10px 4px; gap: 6px; }
+        .oz.ozel::before { background: conic-gradient(#06b6d4, #eab308, #ec4899, #84cc16, #06b6d4); box-shadow: 0 0 8px rgba(236,72,153,.5); }
+
+        .kasa-birimi.durum-ozel { --durumrenk: var(--ozel, #06b6d4); --kenar: color-mix(in srgb, var(--durumrenk) 70%, transparent); animation: none; opacity: 1;
+            background: linear-gradient(180deg, color-mix(in srgb, var(--durumrenk) 26%, #1b2540), #131b30); }
+        .durum-yazi { align-self: flex-start; max-width: 100%; margin-top: 2px; padding: 2px 7px; border-radius: 999px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;
+            background: color-mix(in srgb, var(--durumrenk) 18%, transparent); }
+        .durum-yazi::after { content: " ▾"; opacity: .7; }
+        .durum-ozel .durum-yazi { letter-spacing: .3px; }
+        .durum-ozel .durum-yazi::after { content: ""; }
+
+        .ozel-liste { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+        .ozel-liste[hidden] { display: none; }
+        .ozel-kalem { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 12px; font-size: 12px;
+            border: 1px solid color-mix(in srgb, var(--ozel) 55%, transparent); background: color-mix(in srgb, var(--ozel) 14%, #131b30); }
+        .ozel-kalem .k { font-weight: 800; color: var(--ozel); flex: 0 0 auto; }
+        .ozel-kalem .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .ozel-kalem .s { flex: 0 0 auto; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+
+        .ds-baslik { margin: 6px 0 8px; color: var(--orange); font-size: 11px; font-weight: 800; letter-spacing: .5px; }
+        .ds-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .ds-btn { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-height: 72px; padding: 12px; border-radius: 14px; cursor: pointer; color: #fff; font-family: inherit; font-weight: 700; font-size: 13px; text-align: left;
+            border: 1px solid color-mix(in srgb, var(--ozel) 55%, transparent); background: color-mix(in srgb, var(--ozel) 16%, #131b30); }
+        .ds-btn span { font-size: 22px; line-height: 1; }
+        .ds-btn.secili { box-shadow: 0 0 0 2px var(--ozel); }
+        .ds-temizle { width: 100%; margin-top: 10px; min-height: 48px; flex-direction: row; align-items: center; --ozel: #10b981; }
+        .ds-not { width: 100%; margin-top: 12px; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: rgba(0,0,0,.3); color: #fff; font-size: 16px; font-family: inherit; }
+
+        /* Giriş yapan personelin kendi kasası + hızlı durum düğmesi */
+        .kasa-birimi.benim { outline: 2px solid var(--accent); outline-offset: 2px; }
+        .kasa-birimi.benim .kasiyer::after { content: "SİZ"; margin-left: auto; font-size: 9px; font-weight: 800; letter-spacing: 1px; color: var(--accent); }
+        .benim-btn { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(74px + env(safe-area-inset-bottom)); z-index: 2000; height: 44px; padding: 0 20px; border: none; border-radius: 999px; cursor: pointer;
+            background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; font-family: inherit; font-weight: 800; font-size: 13px; box-shadow: 0 8px 24px rgba(37,99,235,.45); }
+        .benim-btn[hidden] { display: none; }
+
+        @media (prefers-reduced-motion: reduce) { .durum-mola .lamba, .durum-acik .bant { animation: none; } }
+    </style>
+</head>
+<body>
+
+<header class="appbar">
+    <span>KASA YÖNETİMİ</span>
+    <button class="cikis" id="cikisBtn" type="button">Çıkış</button>
+</header>
+
+<main id="login">
+    <form class="login-card" id="loginForm" autocomplete="on">
+        <div class="sayac-kutu">
+            <div class="ana-grup" data-grup>MOLA BEKLENİYOR</div>
+            <div class="ana-sayac bos" data-sayac aria-live="off">--:--</div>
+        </div>
+        <button type="button" class="ai-link" onclick="location.href='assistan.html'">🤖 KASA YAPAY ZEKA</button>
+
+        <h1>Sistem Girişi</h1>
+        <input type="text" id="kullanici" placeholder="Sicil No" class="panel-input" inputmode="numeric" autocomplete="username" aria-label="Sicil No" required>
+        <input type="password" id="sifre" placeholder="Şifre" class="panel-input" autocomplete="current-password" aria-label="Şifre" required>
+        <p class="hata" id="girisHata" role="alert"></p>
+        <button type="submit" id="girisBtn" class="btn-primary" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">GİRİŞ YAP</button>
+    </form>
+</main>
+
+<div id="app">
+    <div class="durum-kart sayac-kutu">
+        <div class="ana-grup" data-grup>MOLA BEKLENİYOR</div>
+        <div class="ana-sayac bos" data-sayac>--:--</div>
+    </div>
+
+    <button class="btn-primary btn-nav" type="button" onclick="location.href='molaa.html'">☕ MOLA DURUMU</button>
+
+    <div id="ozet" class="ozet" aria-label="Kasa durum özeti"></div>
+    <div id="ozelListe" class="ozel-liste" hidden></div>
+    <div id="alan"></div>
+
+    <section id="panel" class="panel" aria-label="Görünüm ayarları">
+        <div class="panel-header">🎨 GÖRÜNÜM AYARLARI</div>
+        <input id="bgUrl" class="panel-input" type="url" placeholder="Arka plan resim URL (https://...)">
+        <button class="btn-primary" id="arkaplanKaydet" type="button" style="background: var(--accent); height:40px;">RESMİ UYGULA</button>
+    </section>
+
+    <div class="admin-tools">
+        <button id="msjBtn" type="button" style="background:#ec4899;" title="Mesajlar" aria-label="Mesajlar">📩</button>
+        <button id="kaydetBtn" type="button" style="background:#10b981;" title="Kaydet" aria-label="Kaydet">💾</button>
+        <button id="kaydirBtn" type="button" style="background:#3b82f6;" title="Personeli kaydır" aria-label="Personeli kaydır">⬇️</button>
+        <button id="degistirBtn" type="button" style="background:#8b5cf6;" title="Çiftleri değiştir" aria-label="Çiftleri değiştir">↔️</button>
+        <button id="panelBtn" type="button" style="background:#475569;" title="Ayarlar" aria-label="Ayarlar">⚙️</button>
+    </div>
+</div>
+
+<button id="benimDurum" class="benim-btn" type="button" hidden>📍 Durumumu bildir</button>
+
+<nav class="tabbar">
+    <button type="button" onclick="location.reload()" aria-label="Ana sayfa">🏠</button>
+    <button type="button" onclick="location.href=encodeURI('kasadeğişim2.html')" aria-label="Kasa değişim">🧭</button>
+    <button type="button" onclick="location.href='molaa.html'" aria-label="Mola durumu">☕</button>
+</nav>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, onSnapshot, deleteField } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInWithCustomToken, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+// NOT: Gerçek apiKey değerinizi buraya yazın.
+const firebaseConfig = { apiKey: "AIzaSyChKcwZnw1fe_SFWy2dJA_JZOMiKghF5_o", authDomain: "ukasa1.firebaseapp.com", projectId: "ukasa1" };
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzpzZrP6m4o35Nb17ai_1gnVNF1--aifXxkojaxEBpeiduEdWw3_I75mI7QtKyACBmlRw/exec";
+
+const KASA_SAYISI = 12;
+const MOLA_TURLERI = { cay: "ÇAY", yemek: "YEMEK", son: "SON" };
+const $ = (s, r = document) => r.querySelector(s);
+const norm = v => String(v ?? "").toLowerCase().trim();
+
+/* ---------- Durum ---------- */
+let adminMi = false;
+let girisKisi = null; // { sicil, isim, admin } giriş yapan kişi
+let molaData = {};
+let listeData = {};
+let baslatildi = false;
+let bekleyenRender = false;
+let sonImza = "";
+const ekDinleyiciler = []; // giriş yapıldıktan sonra başlatılan Firestore dinleyicileri
+
+/* ---------- Bildirim ---------- */
+let toastZaman;
+function bildir(mesaj, hata = false) {
+    const t = $("#toast");
+    t.textContent = mesaj;
+    t.classList.toggle("hata-toast", hata);
+    t.classList.add("goster");
+    clearTimeout(toastZaman);
+    toastZaman = setTimeout(() => t.classList.remove("goster"), 2500);
+}
+
+/* ---------- Mola hesaplama ---------- */
+function slotlar() {
+    const liste = [];
+    for (const tur of Object.keys(MOLA_TURLERI)) {
+        const sureDk = Number(molaData[tur + "Sure"]?.sure) || 15;
+        for (let i = 1; i <= 4; i++) {
+            const m = molaData[tur + i];
+            if (!m?.saat) continue;
+            const [h, min] = String(m.saat).split(":").map(Number);
+            if (Number.isNaN(h) || Number.isNaN(min)) continue;
+            liste.push({ tur, no: i, saat: [h, min], sureSn: sureDk * 60, kisiler: (m.kisiler || []).map(norm) });
+        }
+    }
+    return liste;
+}
+
+function molaDurumu(simdi = new Date()) {
+    const aktifler = [];
+    let siradaki = null;
+    for (const s of slotlar()) {
+        const hedef = new Date(simdi);
+        hedef.setHours(s.saat[0], s.saat[1], 0, 0);
+        const fark = (hedef - simdi) / 1000;
+        if (fark <= 0 && fark > -s.sureSn) aktifler.push({ ...s, kalan: s.sureSn + fark });
+        else if (fark > 0 && (!siradaki || fark < siradaki.fark)) siradaki = { ...s, fark };
+    }
+    return { aktifler, siradaki };
+}
+
+const mmss = sn => {
+    sn = Math.max(0, Math.floor(sn));
+    return `${String(Math.floor(sn / 60)).padStart(2, "0")}:${String(sn % 60).padStart(2, "0")}`;
+};
+const slotAdi = s => `${MOLA_TURLERI[s.tur]} ${s.no}. GRUP`;
+
+function sayaciGuncelle() {
+    const { aktifler, siradaki } = molaDurumu();
+    let sure = "--:--", etiket = "BUGÜN MOLA KALMADI", sinif = "bos";
+
+    if (aktifler.length) {
+        const s = aktifler.reduce((a, b) => (a.kalan < b.kalan ? a : b));
+        sure = mmss(s.kalan); etiket = slotAdi(s) + " DEVAM EDİYOR"; sinif = "devam";
+    } else if (siradaki) {
+        sure = mmss(siradaki.fark); etiket = slotAdi(siradaki) + " BAŞLAYACAK"; sinif = "";
+    }
+    document.querySelectorAll("[data-sayac]").forEach(el => { el.textContent = sure; el.className = "ana-sayac " + sinif; });
+    document.querySelectorAll("[data-grup]").forEach(el => { el.textContent = etiket; });
+
+    // Moladaki kişiler değiştiyse kartları yeniden çiz
+    const imza = aktifler.flatMap(a => a.kisiler).sort().join("|");
+    if (imza !== sonImza) { sonImza = imza; if (baslatildi) render(); }
+}
+setInterval(sayaciGuncelle, 1000);
+
+function moladaMi(isim) {
+    const n = norm(isim);
+    return !!n && molaDurumu().aktifler.some(a => a.kisiler.includes(n));
+}
+
+function grupSinifi(isim) {
+    const n = norm(isim);
+    if (!n) return "";
+    const grup = k => (molaData[k]?.kisiler || []).map(norm).includes(n);
+    if (grup("cay1")) return "g-mavi";
+    if (grup("cay2")) return "g-turuncu";
+    if (grup("cay3") || grup("cay4")) return "g-mor";
+    return "";
+}
+
+/* ---------- Kasa kartları ---------- */
+function alanOdakta() {
+    const a = document.activeElement;
+    return a && a.closest && a.closest("#alan") && a.tagName === "INPUT";
+}
+
+function kartOlustur(i, v) {
+    const birim = document.createElement("div");
+    const mola = moladaMi(v.isim);
+    birim.className = `kasa-birimi ${grupSinifi(v.isim)} ${mola ? "mola-aktif" : ""}`.trim();
+
+    const no = Object.assign(document.createElement("div"), { className: "sabit-no", textContent: `#${i}` });
+
+    const baslik = Object.assign(document.createElement("input"), { className: "kasa-baslik-input", value: v.baslik ?? "" });
+    baslik.setAttribute("aria-label", `Kasa ${i} başlık`);
+
+    const barkodKutu = Object.assign(document.createElement("div"), { className: "barkod-konteynir" });
+    const barkod = Object.assign(document.createElement("input"), { className: "barkod-input", value: v.barkod ?? "" });
+    barkod.setAttribute("aria-label", `Kasa ${i} barkod`);
+    barkodKutu.appendChild(barkod);
+
+    const isim = Object.assign(document.createElement("input"), { className: "personel-input", value: v.isim ?? "", placeholder: "Kasiyer yok" });
+    isim.setAttribute("aria-label", `Kasa ${i} personel`);
+
+    [baslik, barkod, isim].forEach(el => { el.disabled = !adminMi; });
+    // Ödeme noktası düzeni: tabela (numara + ad + lamba) / POS ekranı / bant / kasiyer
+    const mk = (cls, txt) => { const d = document.createElement("div"); d.className = cls; if (txt !== undefined) d.textContent = txt; return d; };
+    const ozel = ozelBul(i, v.isim);
+    const durum = ozel ? "ozel" : !(v.isim || "").trim() ? "bos" : mola ? "mola" : "acik";
+    birim.classList.add("durum-" + durum);
+    if (ozel) birim.classList.add("ozel-" + ozel.tip);
+    if (girisKisi && !girisKisi.admin && esles(v.isim, girisKisi.isim)) birim.classList.add("benim");
+
+    const orta = mk("tabela-orta");
+    const yazi = ozel
+        ? `${ozel.ikon} ${ozel.ad.toLocaleUpperCase("tr")}`
+        : { acik: "AÇIK", mola: "MOLADA", bos: "KAPALI" }[durum];
+    orta.append(baslik, mk("durum-yazi", yazi));
+    const tabela = mk("tabela");
+    tabela.append(mk("kasa-no", i), orta, mk("lamba"));
+
+    const pos = mk("pos");
+    pos.append(mk("pos-etiket", "BARKOD"), barkodKutu);
+
+    const kasiyer = mk("kasiyer");
+    kasiyer.append(mk("avatar", "👤"), isim);
+
+    birim.append(tabela, pos, mk("bant"), kasiyer);
+    return birim;
+}
+
+function render() {
+    if (alanOdakta()) { bekleyenRender = true; return; } // yazarken girişi silme
+    bekleyenRender = false;
+    const alan = $("#alan");
+    const frag = document.createDocumentFragment();
+    for (let i = 1; i <= KASA_SAYISI; i++) {
+        frag.appendChild(kartOlustur(i, listeData["kasa" + i] || { isim: "", barkod: "", baslik: "KASA " + i }));
+    }
+    alan.replaceChildren(frag);
+
+    // Üstteki özet: kaç kasa açık, molada, kapalı
+    const say = { acik: 0, mola: 0, ozel: 0, bos: 0 };
+    alan.querySelectorAll(".kasa-birimi").forEach(k => {
+        const d = ["acik", "mola", "ozel", "bos"].find(x => k.classList.contains("durum-" + x));
+        if (d) say[d]++;
+    });
+    const oz = $("#ozet");
+    if (oz) oz.innerHTML = `<div class="oz acik"><b>${say.acik}</b><span>AÇIK</span></div><div class="oz mola"><b>${say.mola}</b><span>MOLADA</span></div><div class="oz ozel"><b>${say.ozel}</b><span>ÖZEL</span></div><div class="oz bos"><b>${say.bos}</b><span>KAPALI</span></div>`;
+    ozelListeCiz();
+}
+$("#alan").addEventListener("focusout", () => { if (bekleyenRender) setTimeout(render, 0); });
+
+function formdanOku() {
+    const kartlar = [...document.querySelectorAll("#alan .kasa-birimi")];
+    return kartlar.map(k => ({
+        baslik: $(".kasa-baslik-input", k).value.trim(),
+        barkod: $(".barkod-input", k).value.trim(),
+        isim: $(".personel-input", k).value.trim()
+    }));
+}
+
+async function listeyiKaydet(satirlar, mesaj) {
+    const data = {};
+    satirlar.forEach((s, i) => { data["kasa" + (i + 1)] = s; });
+    try {
+        await setDoc(doc(db, "kasa", "liste"), { data });
+        if (mesaj) bildir(mesaj);
+    } catch (e) {
+        console.error(e);
+        bildir("Kaydedilemedi, yetkinizi veya bağlantıyı kontrol edin.", true);
+    }
+}
+
+/* ---------- Firestore dinleyicileri (tek sefer) ---------- */
+function dinlemeyiBaslat() {
+    if (baslatildi) return;
+    baslatildi = true;
+    ekDinleyiciler.forEach(f => f());
+
+    onSnapshot(doc(db, "kasa", "liste"), snap => {
+        listeData = snap.exists() ? (snap.data().data || {}) : {};
+        render();
+    }, e => { console.error(e); bildir("Kasa listesi alınamadı.", true); });
+
+    onSnapshot(doc(db, "kasa", "mola"), snap => {
+        molaData = snap.exists() ? (snap.data().data || {}) : {};
+        sayaciGuncelle();
+        render();
+    }, e => console.error(e));
+}
+
+// Arka plan ve mola verisi giriş ekranındaki sayaç için de dinlenir (kurallarda herkese açık)
+onSnapshot(doc(db, "kasa", "ayarlar"), snap => {
+    const url = snap.exists() ? snap.data().arkaPlan : "";
+    document.body.style.backgroundImage = url ? `url("${encodeURI(url)}")` : "";
+    if (url) $("#bgUrl").value = url;
+}, () => {});
+onSnapshot(doc(db, "kasa", "mola"), snap => {
+    molaData = snap.exists() ? (snap.data().data || {}) : {};
+    sayaciGuncelle();
+}, () => {});
+
+/* ---------- Giriş / Çıkış ---------- */
+$("#loginForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const k = $("#kullanici").value.trim();
+    const s = $("#sifre").value.trim();
+    const btn = $("#girisBtn");
+    const hata = $("#girisHata");
+    hata.textContent = "";
+
+    if (!k || !s) { hata.textContent = "Sicil ve şifre boş bırakılamaz."; return; }
+
+    btn.textContent = "Sorgulanıyor...";
+    btn.disabled = true;
+
+    try {
+        // Doğrulama sunucuda yapılır; başlık eklenmez (CORS ön isteği oluşmaz)
+        const response = await fetch(SCRIPT_URL, {
+            method: "POST",
+            body: JSON.stringify({ islem: "giris", sicil: k, sifre: s })
+        });
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        const json = await response.json();
+
+        if (!json.ok) { hata.textContent = json.hata || "Sicil veya şifre hatalı."; return; }
+
+        await signInWithCustomToken(auth, json.token);
+
+        adminMi = json.rol === "Yönetici";
+        girisKisi = { sicil: k, isim: String(json.isim || "").trim(), admin: adminMi };
+        document.body.classList.toggle("admin", adminMi);
+        localStorage.setItem("kullanici", adminMi ? "admin" : (json.isim || k));
+        document.body.classList.add("girisYapildi");
+        $("#sifre").value = "";
+        dinlemeyiBaslat();
+        render();
+    } catch (err) {
+        console.error(err);
+        hata.textContent = "Sistemle bağlantı kurulamadı. Lütfen tekrar deneyin.";
+    } finally {
+        btn.textContent = "GİRİŞ YAP";
+        btn.disabled = false;
+    }
+});
+
+$("#cikisBtn").onclick = async () => {
+    localStorage.removeItem("kullanici");
+    try { await signOut(auth); } catch {}
+    location.reload();
+};
+
+/* ---------- Yönetici işlemleri ---------- */
+$("#panelBtn").onclick = () => $("#panel").classList.toggle("acik");
+$("#msjBtn").onclick = () => { location.href = "mesaj.html"; };
+
+$("#kaydetBtn").onclick = () => { if (adminMi) listeyiKaydet(formdanOku(), "Ayarlar kaydedildi."); };
+
+$("#kaydirBtn").onclick = () => {
+    if (!adminMi) return;
+    const satirlar = formdanOku();
+    const isimler = satirlar.map(s => s.isim);
+    isimler.unshift(...isimler.splice(-2));
+    listeyiKaydet(satirlar.map((s, i) => ({ ...s, isim: isimler[i] })), "Personel kaydırıldı.");
+};
+
+$("#degistirBtn").onclick = () => {
+    if (!adminMi) return;
+    const s = formdanOku();
+    const yeni = s.map(x => ({ ...x }));
+    for (let i = 0; i + 1 < s.length; i += 2) {
+        yeni[i].isim = s[i + 1].isim;
+        yeni[i + 1].isim = s[i].isim;
+    }
+    listeyiKaydet(yeni, "Çiftler değiştirildi.");
+};
+
+$("#arkaplanKaydet").onclick = async () => {
+    if (!adminMi) return;
+    const bg = $("#bgUrl").value.trim();
+    if (bg && !/^https:\/\//i.test(bg)) { bildir("Yalnızca https:// adresleri kabul edilir.", true); return; }
+    try {
+        await setDoc(doc(db, "kasa", "ayarlar"), { arkaPlan: bg });
+        bildir("Arka plan güncellendi.");
+    } catch (e) {
+        console.error(e);
+        bildir("Arka plan kaydedilemedi.", true);
+    }
+};
+/* ---------- Kasaya uzun basınca kişi bilgisi ---------- */
+const ESKI_SIRA = [12, 11, 10, 8, 7, 9, 6, 4, 5, 3, 2, 1]; // en yoğun -> en sakin
+const MOLA_AKISI = [
+    { donen: "cay4",   giden: "yemek3", baslik: "ÇAY 4 DÖNÜŞ ➔ YEMEK 3 ÇIKIŞ" },
+    { donen: "yemek3", giden: "yemek4", baslik: "YEMEK 3 DÖNÜŞ ➔ YEMEK 4 ÇIKIŞ" },
+    { donen: "yemek4", giden: "son1",   baslik: "YEMEK 4 DÖNÜŞ ➔ SON 1 ÇIKIŞ" },
+    { donen: "son1",   giden: "son2",   baslik: "SON 1 DÖNÜŞ ➔ SON 2 ÇIKIŞ" },
+    { donen: "son2",   giden: "son3",   baslik: "SON 2 DÖNÜŞ ➔ SON 3 ÇIKIŞ" },
+    { donen: "son3",   giden: "son4",   baslik: "SON 3 DÖNÜŞ ➔ SON 4 ÇIKIŞ" },
+    { donen: "son4",   giden: "cay4",   baslik: "SON 4 DÖNÜŞ ➔ ÇAY 4 (FİNAL)" }
+];
+const sinirla = (x, lo, hi, d) => (x !== "" && x !== null && x !== undefined && Number.isFinite(Number(x))) ? Math.min(hi, Math.max(lo, Number(x))) : d;
+
+function rotVarsayilan() {
+    const yogunluk = {};
+    ESKI_SIRA.forEach((k, i) => { yogunluk[k] = Math.round(100 - i * (90 / (KASA_SAYISI - 1))); });
+    return { yogunluk, yontem: "ort", ceza: 25, dagitim: "denge", hedef: null, gecmisKullan: true, gecmisGun: 30, gecmisAgirlik: 2 };
+}
+function rotNormalize(a) {
+    const v = rotVarsayilan(), y = {};
+    for (let k = 1; k <= KASA_SAYISI; k++) y[k] = sinirla(a?.yogunluk?.[k], 0, 100, v.yogunluk[k]);
+    return {
+        yogunluk: y,
+        yontem: ["ort", "max", "top"].includes(a?.yontem) ? a.yontem : v.yontem,
+        ceza: sinirla(a?.ceza, 0, 100, v.ceza),
+        dagitim: ["denge", "ters"].includes(a?.dagitim) ? a.dagitim : v.dagitim,
+        hedef: sinirla(a?.hedef, 0, 100, null),
+        gecmisKullan: a?.gecmisKullan !== false,
+        gecmisGun: sinirla(a?.gecmisGun, 1, 365, v.gecmisGun),
+        gecmisAgirlik: sinirla(a?.gecmisAgirlik, 0, 20, v.gecmisAgirlik)
+    };
+}
+
+let rotAyar = rotVarsayilan();
+let rotGecmis = {};
+let kilitData = null;
+ekDinleyiciler.push(() => onSnapshot(doc(db, "kasa", "ayar"), s => { rotAyar = rotNormalize(s.exists() ? s.data().data : null); }, () => {}));
+ekDinleyiciler.push(() => onSnapshot(doc(db, "kasa", "gecmis"), s => { rotGecmis = s.exists() ? (s.data().data || {}) : {}; }, () => {}));
+ekDinleyiciler.push(() => onSnapshot(doc(db, "kasa", "kilit"), s => { kilitData = s.exists() ? s.data() : null; }, () => {}));
+
+/* ---------- Özel durumlar: ihtiyaç molası, kasada değilim, görevlendirme, depo ---------- */
+const OZEL_TIPLER = {
+    ihtiyac:  { ad: "İhtiyaç molası", ikon: "🚻" },
+    disarida: { ad: "Kasada değilim", ikon: "🚶" },
+    gorev:    { ad: "Görevlendirme",  ikon: "📋" },
+    depo:     { ad: "Depo / malzeme", ikon: "📦" }
+};
+let ozelDurum = {};
+const bugunStr = () => new Date().toLocaleDateString("sv-SE");
+
+ekDinleyiciler.push(() => onSnapshot(doc(db, "kasa", "durum"), s => {
+    ozelDurum = s.exists() ? (s.data() || {}) : {};
+    if (baslatildi) render();
+}, () => {}));
+
+// Durum yalnızca aynı gün ve aynı kişi için geçerlidir (kasa değişince eski durum görünmez)
+function ozelBul(no, isim) {
+    const d = ozelDurum["kasa" + no];
+    if (!d || !OZEL_TIPLER[d.tip] || d.tarih !== bugunStr()) return null;
+    if (norm(d.isim) !== norm(isim)) return null;
+    return { ...d, ...OZEL_TIPLER[d.tip] };
+}
+
+async function ozelDurumYaz(no, tip, not) {
+    const v = listeData["kasa" + no] || {};
+    const veri = {};
+    veri["kasa" + no] = tip
+        ? { tip, not: not || "", isim: (v.isim || "").trim(), zaman: Date.now(), tarih: bugunStr(), kim: girisKisi?.isim || girisKisi?.sicil || "", sicil: girisKisi?.sicil || "" }
+        : deleteField();
+    try {
+        await setDoc(doc(db, "kasa", "durum"), veri, { merge: true });
+        bildir(tip ? `Kasa ${no}: ${OZEL_TIPLER[tip].ad}` : `Kasa ${no} tekrar aktif`);
+    } catch (e) {
+        console.error(e);
+        bildir("Durum kaydedilemedi, yetkinizi veya bağlantıyı kontrol edin.", true);
+    }
+}
+
+// Üstteki "özel durumlar" listesi (ayrı kalem)
+function ozelListeCiz() {
+    const kutu = $("#ozelListe");
+    if (!kutu) return;
+    const kalemler = [];
+    for (let k = 1; k <= KASA_SAYISI; k++) {
+        const v = listeData["kasa" + k] || {};
+        const o = ozelBul(k, v.isim);
+        if (o) kalemler.push({ k, isim: (v.isim || "").trim(), o });
+    }
+    kalemler.sort((a, b) => a.o.zaman - b.o.zaman);
+
+    const mk = (cls, txt) => { const d = document.createElement("span"); d.className = cls; d.textContent = txt; return d; };
+    kutu.replaceChildren(...kalemler.map(({ k, isim, o }) => {
+        const dk = Math.max(0, Math.floor((Date.now() - o.zaman) / 60000));
+        const el = document.createElement("div");
+        el.className = "ozel-kalem ozel-" + o.tip;
+        el.append(
+            mk("k", `${o.ikon} KASA ${k}`),
+            mk("t", `${isim || "—"} · ${o.ad}${o.not ? " · " + o.not : ""}`),
+            mk("s", dk < 1 ? "şimdi" : dk + " dk")
+        );
+        return el;
+    }));
+    kutu.hidden = !kalemler.length;
+    benimDugmeGuncelle();
+}
+setInterval(ozelListeCiz, 30000);
+
+// Giriş yapan personelin kendi kasasını bulma (ad tam eşleşir ya da biri diğerini içerir)
+function esles(a, b) {
+    const x = norm(a), y = norm(b);
+    return !!x && !!y && (x === y || (x.length >= 3 && y.length >= 3 && (x.includes(y) || y.includes(x))));
+}
+function benimKasaNo() {
+    if (!girisKisi) return 0;
+    for (let k = 1; k <= KASA_SAYISI; k++) if (esles(listeData["kasa" + k]?.isim, girisKisi.isim)) return k;
+    return 0;
+}
+function benimDugmeGuncelle() {
+    const bd = $("#benimDurum");
+    if (bd) bd.hidden = !(girisKisi && !girisKisi.admin && benimKasaNo());
+}
+
+/* Rotasyon sayfasındaki hesaplamanın aynısı: yönetici henüz onaylamadıysa tahmini rotasyon üretir */
+function rotasyonHesapla() {
+    const kP = k => rotAyar.yogunluk[k] ?? 50;
+    const ort = a => a.reduce((x, y) => x + y, 0) / a.length;
+    const bugun = new Date().toLocaleDateString("sv-SE");
+
+    const acc = {};
+    Object.keys(rotGecmis).filter(t => t !== bugun).sort().slice(-rotAyar.gecmisGun).forEach(t =>
+        Object.values(rotGecmis[t].kisiler || {}).forEach(k => {
+            if (Number.isFinite(Number(k.skor))) (acc[k.isim] ||= []).push(Number(k.skor));
+        }));
+    const gOrt = {};
+    Object.entries(acc).forEach(([i, a]) => { gOrt[i] = { ort: ort(a), gun: a.length }; });
+
+    const skorOf = (isim, g) => {
+        const n = g.length, toplam = g.reduce((a, k) => a + kP(k), 0), on = gOrt[isim];
+        if (rotAyar.gecmisKullan && on) { const W = rotAyar.gecmisAgirlik; return (on.ort * W + toplam) / (W + n || 1); }
+        return n ? toplam / n : 0;
+    };
+    const yukSkoru = (isim, g) => {
+        if (rotAyar.dagitim === "denge" || rotAyar.yontem === "ort") return skorOf(isim, g);
+        if (!g.length) return 0;
+        const p = g.map(kP);
+        if (rotAyar.yontem === "max") return Math.max(...p);
+        return p.reduce((a, b) => a + b, 0); // "top"
+    };
+
+    const tersAtama = (donenler, bosalan) => {
+        const havuz = bosalan.map((b, i) => ({ ...b, i }));
+        return donenler.map(d => {
+            if (!havuz.length) return -1;
+            let en = 0, enPuan = Infinity;
+            havuz.forEach((h, idx) => {
+                const puan = kP(h.kasaNo) + (d.gecmis.includes(h.kasaNo) ? rotAyar.ceza : 0);
+                if (puan < enPuan) { enPuan = puan; en = idx; }
+            });
+            return havuz.splice(en, 1)[0].i;
+        });
+    };
+
+    const dengeliAtama = (donenler, bosalan, hedef) => {
+        const n = donenler.length, m = bosalan.length, ATLA = 1e6;
+        if (m > 14) return tersAtama(donenler, bosalan);
+        const maliyet = (d, h) => {
+            const sap = skorOf(d.isim, [...d.gecmis, h.kasaNo]) - hedef;
+            return sap * sap + (d.gecmis.includes(h.kasaNo) ? rotAyar.ceza * rotAyar.ceza : 0);
+        };
+        const memo = {};
+        const f = (i, mask) => {
+            if (i === n) return 0;
+            const key = i + "_" + mask;
+            if (memo[key]) return memo[key].c;
+            let best = { c: ATLA + f(i + 1, mask), j: -1 };
+            for (let j = 0; j < m; j++) {
+                if (mask & (1 << j)) continue;
+                const c = maliyet(donenler[i], bosalan[j]) + f(i + 1, mask | (1 << j));
+                if (c < best.c) best = { c, j };
+            }
+            memo[key] = best;
+            return best.c;
+        };
+        f(0, 0);
+        const sonuc = []; let mask = 0;
+        for (let i = 0; i < n; i++) {
+            const j = memo[i + "_" + mask].j;
+            sonuc.push(j);
+            if (j >= 0) mask |= 1 << j;
+        }
+        return sonuc;
+    };
+
+    const hesaplaTek = sabitHedef => {
+        const gecmis = {};
+        for (let k = 1; k <= KASA_SAYISI; k++) {
+            const isim = listeData["kasa" + k]?.isim?.trim();
+            if (isim) (gecmis[isim] ||= []).push(k);
+        }
+        const kisiOrt = () => {
+            const s = Object.entries(gecmis).filter(([, g]) => g.length).map(([isim, g]) => skorOf(isim, g));
+            return s.length ? ort(s) : 50;
+        };
+        const bloklar = [];
+        for (const akis of MOLA_AKISI) {
+            const temiz = arr => (arr || []).filter(n => n && n.trim()).map(n => n.trim());
+            const donenIsimler = temiz(molaData[akis.donen]?.kisiler);
+            const gidenIsimler = temiz(molaData[akis.giden]?.kisiler);
+            if (!donenIsimler.length || !gidenIsimler.length) continue;
+
+            const bosalan = gidenIsimler
+                .map(isim => ({ isim, kasaNo: (gecmis[isim] || []).slice(-1)[0] }))
+                .filter(x => x.kasaNo);
+
+            const donenler = donenIsimler
+                .map(isim => ({ isim, gecmis: [...(gecmis[isim] || [])], skor: yukSkoru(isim, gecmis[isim] || []) }))
+                .sort((a, b) => b.skor - a.skor || a.isim.localeCompare(b.isim, "tr"));
+
+            const eslesmeler = [], bekleyen = [];
+            const hedefB = sabitHedef ?? (rotAyar.hedef !== null ? rotAyar.hedef : kisiOrt());
+            const atama = rotAyar.dagitim === "denge" ? dengeliAtama(donenler, bosalan, hedefB) : tersAtama(donenler, bosalan);
+
+            donenler.forEach((d, i) => {
+                const j = atama[i];
+                if (j < 0) { bekleyen.push(d.isim); return; }
+                const secilen = bosalan[j];
+                eslesmeler.push({ giden: secilen.isim, kasaNo: secilen.kasaNo, donen: d.isim });
+                (gecmis[d.isim] ||= []).push(secilen.kasaNo);
+            });
+            bloklar.push({ baslik: akis.baslik, eslesmeler, bekleyen });
+        }
+        return { bloklar, gecmis, hedef: rotAyar.hedef !== null ? rotAyar.hedef : kisiOrt() };
+    };
+
+    if (rotAyar.dagitim !== "denge" || rotAyar.hedef !== null) return hesaplaTek(null);
+    let h = hesaplaTek(null).hedef, r;
+    for (let tur = 0; tur < 15; tur++) {
+        r = hesaplaTek(h);
+        const s = Object.entries(r.gecmis).filter(([, g]) => g.length).map(([i, g]) => skorOf(i, g));
+        if (!s.length) break;
+        const m = s.reduce((a, b) => a + b, 0) / s.length;
+        const bitti = Math.abs(m - h) < 0.01;
+        h = m;
+        if (bitti) break;
+    }
+    r.hedef = h;
+    return r;
+}
+
+(() => {
+    const st = document.createElement("style");
+    st.textContent = `
+        .kasa-birimi{cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;transition:transform .15s,box-shadow .15s}
+        .kasa-birimi input{user-select:text;-webkit-user-select:text}
+        .kasa-birimi input:disabled{pointer-events:none}
+        .kasa-birimi.basili{transform:scale(.96);box-shadow:0 0 0 2px var(--accent)}
+        .ki-ov{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:flex-end;justify-content:center;z-index:4000}
+        .ki-ov.acik{display:flex}
+        .ki-sheet{background:#161e31;border:1px solid var(--border);width:100%;max-width:560px;max-height:85vh;overflow:auto;border-radius:20px 20px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom))}
+        @media(min-width:600px){.ki-ov{align-items:center}.ki-sheet{border-radius:20px}}
+        .ki-ust{margin-bottom:12px}
+        .ki-ust small{color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.5px}
+        .ki-ust h3{margin:4px 0 0;font-size:20px}
+        .ki-baslik{margin:14px 0 2px;color:var(--orange);font-size:11px;font-weight:800;letter-spacing:.5px}
+        .ki-satir small{color:var(--muted);font-weight:600}
+        .ki-satir{display:flex;justify-content:space-between;gap:14px;padding:10px 0;border-top:1px solid var(--border);font-size:13px}
+        .ki-satir span{color:var(--muted);font-weight:600;flex:0 0 auto}
+        .ki-satir b{text-align:right}
+        .ki-kapat{width:100%;margin-top:14px;height:44px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-weight:800;font-size:13px}`;
+    document.head.appendChild(st);
+
+    const ov = document.createElement("div");
+    ov.className = "ki-ov";
+    ov.innerHTML = `<div class="ki-sheet" id="kiSheet" role="dialog" aria-modal="true"></div>`;
+    document.body.appendChild(ov);
+    const kapat = () => ov.classList.remove("acik");
+    ov.addEventListener("click", e => { if (e.target === ov || e.target.id === "kiKapat") kapat(); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") kapat(); });
+
+    const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const pad = n => String(n).padStart(2, "0");
+    const saatYaz = s => `${pad(s.saat[0])}:${pad(s.saat[1])}`;
+    const satir = (et, v) => `<div class="ki-satir"><span>${et}</span><b>${v}</b></div>`;
+    const renkYog = p => p >= 70 ? "var(--danger)" : p >= 40 ? "var(--orange)" : "var(--green)";
+
+    function bilgiAc(k) {
+        const v = listeData["kasa" + k] || {};
+        const isim = (v.isim || "").trim();
+        const p = rotAyar.yogunluk[k];
+
+        let h = `<div class="ki-ust"><small>KASA ${k} · ${esc(v.baslik || "KASA " + k)}</small><h3>${isim ? esc(isim) : "Bu kasa boş"}</h3></div>`;
+        if (p !== undefined) h += satir("Kasa yoğunluğu", `<span style="color:${renkYog(p)}">%${esc(p)}</span>`);
+        if (v.barkod) h += satir("Barkod", esc(v.barkod));
+        const oz = ozelBul(k, isim);
+        if (oz) h += satir("Özel durum", `${oz.ikon} ${esc(oz.ad)}${oz.not ? " · " + esc(oz.not) : ""}`);
+
+        if (isim) {
+            const n = norm(isim);
+            const simdi = new Date();
+            const benim = slotlar().filter(s => s.kisiler.includes(n));
+
+            let aktif = null, siradaki = null;
+            benim.forEach(s => {
+                const hedef = new Date(simdi);
+                hedef.setHours(s.saat[0], s.saat[1], 0, 0);
+                const fark = (hedef - simdi) / 1000;
+                if (fark <= 0 && fark > -s.sureSn) aktif = { ...s, kalan: s.sureSn + fark };
+                else if (fark > 0 && (!siradaki || fark < siradaki.fark)) siradaki = { ...s, fark };
+            });
+
+            const molaYazi = aktif
+                ? `<span style="color:var(--danger)">Şu an molada · ${mmss(aktif.kalan)} kaldı</span>`
+                : siradaki ? `Sıradaki: ${slotAdi(siradaki)} · ${saatYaz(siradaki)}`
+                : benim.length ? "Bugünkü molaları bitti" : "—";
+            h += satir("Mola durumu", molaYazi);
+            h += satir("Mola grubu", benim.length ? benim.map(s => `${slotAdi(s)} (${saatYaz(s)})`).join("<br>") : "—");
+
+            // Gün içi rotasyon: yönetici onayladıysa kayıtlı liste, onaylamadıysa güncel veriden hesaplanan tahmin
+            let sonuc = null, onayli = false;
+            if (kilitData?.sonuc && kilitData.tarih === new Date().toLocaleDateString("sv-SE")) {
+                sonuc = kilitData.sonuc; onayli = true;
+            } else {
+                try { sonuc = rotasyonHesapla(); } catch (err) { console.error(err); }
+            }
+
+            if (sonuc) {
+                const gec = sonuc.gecmis?.[isim];
+                if (gec?.length) h += satir("Gün içi kasa sırası", gec.join(" ➜ "));
+
+                const dk = key => {
+                    const m = molaData[key];
+                    if (!m?.saat) return null;
+                    const [hh, mm] = String(m.saat).split(":").map(Number);
+                    return Number.isNaN(hh) || Number.isNaN(mm) ? null : hh * 60 + mm;
+                };
+                const sureDk = key => Number(molaData[key.replace(/\d/g, "") + "Sure"]?.sure) || 15;
+                const olaylar = [];
+                MOLA_AKISI.forEach(a => {
+                    const b = (sonuc.bloklar || []).find(x => x.baslik === a.baslik);
+                    if (!b) return;
+                    (b.eslesmeler || []).forEach(e => {
+                        if (e.donen === isim) {
+                            const t = dk(a.donen);
+                            olaylar.push({ t: t === null ? null : t + sureDk(a.donen), yazi: `Dönüş ➜ KASA ${esc(e.kasaNo)} <small>(${esc(e.giden)} yerine)</small>` });
+                        }
+                        if (e.giden === isim) {
+                            olaylar.push({ t: dk(a.giden), yazi: `Çıkış · KASA ${esc(e.kasaNo)} boşalır <small>(${esc(e.donen)} geçecek)</small>` });
+                        }
+                    });
+                });
+                olaylar.sort((a, b) => (a.t ?? 1e9) - (b.t ?? 1e9));
+
+                h += `<div class="ki-baslik">GÜN İÇİ ROTASYON · ${onayli ? "✅ ONAYLI" : "⏳ TAHMİNİ (HENÜZ ONAYLANMADI)"}</div>`;
+                h += olaylar.length
+                    ? olaylar.map(o => satir(o.t === null ? "—" : `${pad(Math.floor(o.t / 60) % 24)}:${pad(o.t % 60)}`, o.yazi)).join("")
+                    : satir("Rotasyon", "Bu kişi için rotasyon yok");
+            }
+        } else {
+            h += `<div class="ki-satir"><span>Durum</span><b>Bu kasada şu an kimse görünmüyor</b></div>`;
+        }
+
+        h += `<button class="ki-kapat" id="kiKapat" type="button">Kapat</button>`;
+        $("#kiSheet").innerHTML = h;
+        document.activeElement?.blur?.();
+        ov.classList.add("acik");
+    }
+
+    /* Kasaya dokununca durum seçimi (ihtiyaç molası, kasada değilim, görevlendirme ...) */
+    const dov = document.createElement("div");
+    dov.className = "ki-ov";
+    dov.innerHTML = `<div class="ki-sheet" id="dsSheet" role="dialog" aria-modal="true"></div>`;
+    document.body.appendChild(dov);
+    const dKapat = () => dov.classList.remove("acik");
+    document.addEventListener("keydown", e => { if (e.key === "Escape") dKapat(); });
+    dov.addEventListener("click", e => {
+        if (e.target === dov || e.target.id === "dsIptal") return dKapat();
+        const b = e.target.closest("[data-tip]");
+        if (!b) return;
+        const no = Number(dov.dataset.no);
+        const not = ($("#dsNot")?.value || "").trim().slice(0, 40);
+        dKapat();
+        ozelDurumYaz(no, b.dataset.tip === "temizle" ? null : b.dataset.tip, not);
+    });
+
+    function durumAc(no) {
+        const v = listeData["kasa" + no] || {};
+        const isim = (v.isim || "").trim();
+        if (!girisKisi) return;
+        // Personel yalnızca kendi kasası için durum seçebilir; yönetici tüm kasalar için seçebilir
+        if (!girisKisi.admin && !esles(isim, girisKisi.isim)) {
+            bildir(girisKisi.isim ? "Yalnızca kendi kasanız için durum seçebilirsiniz." : "Hesabınızda isim tanımlı değil, yöneticiye bildirin.", true);
+            return;
+        }
+        const mevcut = ozelBul(no, isim);
+        dov.dataset.no = no;
+
+        let h = `<div class="ki-ust"><small>KASA ${no}</small><h3>${isim ? esc(isim) : "Kasa durumu"}</h3></div>`;
+        h += `<div class="ds-baslik">NEREYE GİDİYORSUNUZ?</div><div class="ds-grid">`;
+        Object.entries(OZEL_TIPLER).forEach(([tip, t]) => {
+            h += `<button type="button" class="ds-btn ozel-${tip}${mevcut?.tip === tip ? " secili" : ""}" data-tip="${tip}"><span>${t.ikon}</span>${esc(t.ad)}</button>`;
+        });
+        h += `</div><input id="dsNot" class="ds-not" maxlength="40" placeholder="Not (isteğe bağlı), örn. depoya gittim" value="${esc(mevcut?.not || "")}">`;
+        if (mevcut) h += `<button type="button" class="ds-btn ds-temizle" data-tip="temizle"><span>✅</span>Kasaya döndüm (durumu kaldır)</button>`;
+        h += `<button class="ki-kapat" id="dsIptal" type="button">Vazgeç</button>`;
+        $("#dsSheet").innerHTML = h;
+        document.activeElement?.blur?.();
+        dov.classList.add("acik");
+    }
+
+    $("#benimDurum")?.addEventListener("click", () => { const n = benimKasaNo(); if (n) durumAc(n); });
+
+    /* Uzun basma algılama (dokunmatik + fare) */
+    const alan = $("#alan");
+    const SURE = 500, TOLERANS = 10;
+    let zaman = null, aktifKart = null, x0 = 0, y0 = 0;
+
+    const iptal = () => {
+        clearTimeout(zaman); zaman = null;
+        aktifKart?.classList.remove("basili"); aktifKart = null;
+    };
+
+    alan.addEventListener("pointerdown", e => {
+        const kart = e.target.closest(".kasa-birimi");
+        if (!kart) return;
+        iptal();
+        aktifKart = kart; x0 = e.clientX; y0 = e.clientY;
+        kart.classList.add("basili");
+        const no = [...alan.children].indexOf(kart) + 1; // kartlar her zaman Kasa 1..12 sırasıyla çizilir
+        zaman = setTimeout(() => {
+            zaman = null;
+            aktifKart?.classList.remove("basili"); aktifKart = null;
+            navigator.vibrate?.(15);
+            bilgiAc(no);
+        }, SURE);
+    });
+    alan.addEventListener("pointermove", e => {
+        if (zaman && Math.hypot(e.clientX - x0, e.clientY - y0) > TOLERANS) iptal();
+    });
+    ["pointercancel", "pointerleave"].forEach(ev => alan.addEventListener(ev, iptal));
+    // Kısa dokunuş: durum seçimi (yöneticinin yazı kutularına dokunuşu hariç, orada düzenleme yapılır)
+    alan.addEventListener("pointerup", e => {
+        const kart = e.target.closest(".kasa-birimi");
+        const tikla = zaman !== null && aktifKart && kart === aktifKart && !e.target.closest("input");
+        const no = tikla ? [...alan.children].indexOf(kart) + 1 : 0;
+        iptal();
+        if (no) durumAc(no);
+    });
+    alan.addEventListener("contextmenu", e => e.preventDefault());
+})();
+</script>
+</body>
+</html>
