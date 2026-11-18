@@ -648,6 +648,17 @@ ekDinleyiciler.push(() => onSnapshot(doc(db, "kasa", "ayar"), s => { rotAyar = r
 ekDinleyiciler.push(() => onSnapshot(doc(db, "kasa", "gecmis"), s => { rotGecmis = s.exists() ? (s.data().data || {}) : {}; }, () => {}));
 ekDinleyiciler.push(() => onSnapshot(doc(db, "kasa", "kilit"), s => { kilitData = s.exists() ? s.data() : null; }, () => {}));
 
+/* Satış bilgileri: kasa/satis belgesi
+   { tarih: "2026-11-19" (isteğe bağlı), kur: 38.5 (isteğe bağlı, Euro→TL),
+     data: { kasa1: { fis: 120, tl: 15000, euro: 300, ciro: 26550 (isteğe bağlı) }, kasa2: {...} } } */
+let satisData = {}, satisKur = null;
+ekDinleyiciler.push(() => onSnapshot(doc(db, "kasa", "satis"), s => {
+    const d = s.exists() ? s.data() : {};
+    const eski = d.tarih && d.tarih !== new Date().toLocaleDateString("sv-SE"); // başka güne ait veri gösterilmez
+    satisData = eski ? {} : (d.data || {});
+    satisKur = Number(d.kur) > 0 ? Number(d.kur) : null;
+}, () => {}));
+
 /* ---------- Özel durumlar: ihtiyaç molası, kasada değilim, görevlendirme, depo ---------- */
 const OZEL_TIPLER = {
     ihtiyac:  { ad: "İhtiyaç molası", ikon: "🚻" },
@@ -728,6 +739,13 @@ function benimKasaNo() {
 function benimDugmeGuncelle() {
     const bd = $("#benimDurum");
     if (bd) bd.hidden = !(girisKisi && !girisKisi.admin && benimKasaNo());
+}
+
+// Uzun basma bilgisini yalnızca kasanın sahibi (veya yönetici) görebilir
+function bilgiyiGorebilir(no) {
+    if (!girisKisi) return false;
+    if (girisKisi.admin) return true;
+    return esles(listeData["kasa" + no]?.isim, girisKisi.isim);
 }
 
 /* Rotasyon sayfasındaki hesaplamanın aynısı: yönetici henüz onaylamadıysa tahmini rotasyon üretir */
@@ -894,6 +912,7 @@ function rotasyonHesapla() {
     const renkYog = p => p >= 70 ? "var(--danger)" : p >= 40 ? "var(--orange)" : "var(--green)";
 
     function bilgiAc(k) {
+        if (!bilgiyiGorebilir(k)) return; // başkasının bilgisi açılmaz
         const v = listeData["kasa" + k] || {};
         const isim = (v.isim || "").trim();
         const p = rotAyar.yogunluk[k];
@@ -903,6 +922,22 @@ function rotasyonHesapla() {
         if (v.barkod) h += satir("Barkod", esc(v.barkod));
         const oz = ozelBul(k, isim);
         if (oz) h += satir("Özel durum", `${oz.ikon} ${esc(oz.ad)}${oz.not ? " · " + esc(oz.not) : ""}`);
+
+        // Satış bilgileri: fiş, TL satış, Euro satış, toplam ciro
+        h += `<div class="ki-baslik">SATIŞ BİLGİLERİ</div>`;
+        const sat = satisData["kasa" + k];
+        if (sat) {
+            const para = (n, cur) => Number(n).toLocaleString("tr-TR", { style: "currency", currency: cur });
+            const fis = Number(sat.fis) || 0, tl = Number(sat.tl) || 0, euro = Number(sat.euro) || 0;
+            let ciro = Number.isFinite(Number(sat.ciro)) && sat.ciro !== "" && sat.ciro != null ? Number(sat.ciro)
+                : satisKur ? tl + euro * satisKur : null;
+            h += satir("Toplam fiş", esc(fis.toLocaleString("tr-TR")));
+            h += satir("TL satış", esc(para(tl, "TRY")));
+            h += satir("Euro satış", esc(para(euro, "EUR")));
+            h += satir("Toplam ciro", ciro === null ? "—" : esc(para(ciro, "TRY")));
+        } else {
+            h += satir("Satış", "Bu kasa için veri yok");
+        }
 
         if (isim) {
             const n = norm(isim);
@@ -1039,6 +1074,7 @@ function rotasyonHesapla() {
         zaman = setTimeout(() => {
             zaman = null;
             aktifKart?.classList.remove("basili"); aktifKart = null;
+            if (!bilgiyiGorebilir(no)) return; // başkasının kasasında hiçbir şey açılmaz
             navigator.vibrate?.(15);
             bilgiAc(no);
         }, SURE);
