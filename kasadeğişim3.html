@@ -737,6 +737,7 @@ onSnapshot(doc(db, "kasa", "ayar"),  s => {
   const auth = getAuth(app);
   setPersistence(auth, browserSessionPersistence).catch(() => {});
   const REF_YON = doc(db, "kasa", "yonetici"), REF_KILIT = doc(db, "kasa", "kilit");
+  const OYLAMA_URL = "kasa-oylama.html"; // oylama sayfasının adresi (farklı bir yerdeyse burayı değiştirin)
   let admin = false, sheetsUrl = "", unsubYon = null;
 
   ["btnKaydetGun", "btnKopyala", "btnAyar"].forEach(id => $(id).classList.add("adm"));
@@ -747,10 +748,11 @@ onSnapshot(doc(db, "kasa", "ayar"),  s => {
   document.querySelector(".actions").prepend(kilitBtn);
   const nav = document.createElement("nav");
   nav.className = "bnav";
-  nav.innerHTML = `<button data-go="top"><span>🏠</span>Ana sayfa</button><button data-go="analiz"><span>📊</span>Analiz</button>`;
+  nav.innerHTML = `<button data-go="top"><span>🏠</span>Ana sayfa</button><button data-go="analiz"><span>📊</span>Analiz</button><button data-href="oyla"><span>🗳️</span>Oylama</button>`;
   nav.appendChild(yonBtn);
   document.body.appendChild(nav);
   nav.addEventListener("click", e => {
+    if (e.target.closest("[data-href]")) { location.href = OYLAMA_URL; return; }
     const g = e.target.closest("[data-go]")?.dataset.go;
     if (g === "top") window.scrollTo({ top: 0, behavior: "smooth" });
     if (g === "analiz") $("btnGecmis").click();
