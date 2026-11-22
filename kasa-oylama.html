@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kasa Yoğunluk Oylaması</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#0b0f1a; --card:#161e31; --card2:#1c2640; --accent:#3b82f6; --text:#fff; --muted:#94a3b8;
+          --green:#10b981; --orange:#f59e0b; --red:#ef4444; --line:rgba(255,255,255,.08); }
+  * { box-sizing:border-box; }
+  [hidden] { display:none!important; }
+  body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:var(--text); margin:0; padding:15px 15px 70px; }
+  .wrap { max-width:640px; margin:0 auto; }
+  .header { border-bottom:2px solid var(--accent); padding-bottom:12px; margin-bottom:14px; }
+  .header h1 { font-size:17px; margin:0; }
+  .header p { font-size:11px; color:var(--muted); margin:4px 0 0; }
+
+  .tabs { display:flex; gap:6px; margin-bottom:16px; }
+  .tab { flex:1; background:var(--card); border:1px solid var(--line); color:var(--muted); padding:10px 6px; border-radius:10px; font:800 12px 'Plus Jakarta Sans',sans-serif; cursor:pointer; }
+  .tab.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .page { display:none; } .page.on { display:block; }
+
+  .box { background:var(--card); border-radius:12px; padding:14px; margin-bottom:12px; }
+  label.t { display:block; font-size:10px; font-weight:800; color:var(--muted); text-transform:uppercase; margin-bottom:6px; letter-spacing:.5px; }
+  input[type=text], input[type=email], input[type=password], input[type=number], select {
+    width:100%; background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:11px; font:600 14px 'Plus Jakarta Sans',sans-serif; outline:none; margin-bottom:8px; }
+  input:focus, select:focus { border-color:var(--accent); }
+  .hint { font-size:10px; color:var(--muted); margin-top:6px; line-height:1.5; }
+
+  .btn { background:var(--card2); color:#fff; border:1px solid var(--line); border-radius:10px; padding:12px 14px; font:800 13px 'Plus Jakarta Sans',sans-serif; cursor:pointer; }
+  .btn.primary { background:var(--accent); border-color:var(--accent); width:100%; padding:14px; font-size:14px; }
+  .btn.danger { background:rgba(239,68,68,.15); border-color:var(--red); color:#fecaca; }
+  .btn.ok { background:rgba(16,185,129,.15); border-color:var(--green); color:#a7f3d0; }
+  .btn:disabled { opacity:.4; cursor:not-allowed; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; }
+  .row .btn { flex:1; }
+
+  .v-row { background:var(--card); border-radius:12px; padding:12px 14px; margin-bottom:8px; }
+  .v-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .v-top b { font-size:13px; }
+  .v-val { font-weight:800; font-size:13px; min-width:56px; text-align:right; }
+  .v-clr { background:transparent; border:0; color:var(--muted); font-size:14px; cursor:pointer; padding:0 0 0 10px; }
+  .v-row input[type=range] { width:100%; accent-color:var(--accent); }
+  .v-row input.unset { opacity:.35; }
+  .v-lab { display:flex; justify-content:space-between; font-size:9px; color:var(--muted); margin-top:2px; }
+
+  .r-row { display:grid; grid-template-columns:62px 1fr 74px; gap:10px; align-items:center; background:var(--card); border-radius:10px; padding:10px 12px; margin-bottom:6px; font-size:12px; }
+  .r-row b { font-size:12px; }
+  .bar { height:8px; background:rgba(255,255,255,.08); border-radius:4px; position:relative; overflow:hidden; }
+  .bar i { display:block; height:100%; border-radius:4px; }
+  .r-val { text-align:right; font-weight:800; }
+  .r-val small { display:block; font-size:9px; color:var(--muted); font-weight:600; }
+
+  .stat { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
+  .stat div { background:var(--card); border-radius:10px; padding:10px 6px; text-align:center; }
+  .stat span { display:block; font-size:9px; color:var(--muted); font-weight:800; }
+  .stat b { font-size:18px; }
+
+  .pill { display:inline-block; font-size:10px; font-weight:800; padding:3px 8px; border-radius:20px; }
+  .pill.on { background:rgba(16,185,129,.2); color:#6ee7b7; } .pill.off { background:rgba(239,68,68,.2); color:#fca5a5; }
+
+  table { width:100%; border-collapse:collapse; font-size:12px; }
+  th { text-align:left; font-size:9px; color:var(--muted); text-transform:uppercase; padding:6px 4px; }
+  td { padding:7px 4px; border-top:1px solid var(--line); }
+  .voter { display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-top:1px solid var(--line); font-size:12px; }
+  .voter button { background:transparent; border:0; color:var(--red); cursor:pointer; font-size:12px; }
+
+  .foot { text-align:center; margin-top:24px; }
+  .lnk { background:transparent; border:0; color:var(--muted); font:600 11px 'Plus Jakarta Sans',sans-serif; cursor:pointer; padding:8px; }
+
+  .overlay { position:fixed; inset:0; background:rgba(0,0,0,.65); display:none; align-items:center; justify-content:center; z-index:50; padding:15px; }
+  .overlay.open { display:flex; }
+  .modal { background:var(--card); width:100%; max-width:380px; border-radius:16px; padding:18px; }
+  .modal h3 { margin:0 0 4px; font-size:16px; }
+  .modal .sub { font-size:11px; color:var(--muted); margin-bottom:14px; }
+  @media (max-width:600px){ input, select { font-size:16px!important; } }
+
+  .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(90px); background:#0f172a; border:1px solid var(--accent); padding:10px 16px; border-radius:10px; font-size:12px; transition:.25s; z-index:99; max-width:90vw; text-align:center; }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+  .kapali { background:rgba(239,68,68,.12); border-left:4px solid var(--red); padding:10px 14px; border-radius:10px; font-size:12px; margin-bottom:12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <h1>🗳️ Kasa Yoğunluk Oylaması</h1>
+    <p>Kasalarda çalışanlar her kasanın ne kadar yoğun olduğunu puanlar; sonuçlar rotasyon sistemine aktarılır.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" data-p="oy">Oy Ver</button>
+    <button class="tab" data-p="sonuc">Sonuçlar</button>
+    <button class="tab" data-p="admin" id="tabAdmin" hidden>Yönetici</button>
+  </div>
+
+  <!-- OY VER -->
+  <div class="page on" id="p-oy">
+    <div class="kapali" id="kapaliUyari" hidden>🔒 Oylama şu anda kapalı.</div>
+    <div class="kapali" id="authUyari" hidden>⚠️ Oy verme şu anda kullanılamıyor. Lütfen yöneticiye haber verin.</div>
+    <div class="box">
+      <label class="t">Adınız</label>
+      <input type="text" id="isim" list="isimler" placeholder="İsminizi seçin veya yazın" autocomplete="off">
+      <datalist id="isimler"></datalist>
+      <div class="hint">Aynı isimle tekrar oy verirseniz önceki oyunuz güncellenir; her isim için yalnızca son oy sayılır.</div>
+    </div>
+    <div class="hint" style="margin:0 2px 10px">Kaydırıcıyı <b>sakin ↔ yoğun</b> arasında ayarlayın. Hakkında fikriniz olmayan kasaya dokunmayın, boş kalsın (soluk görünür).</div>
+    <div id="oyListesi"></div>
+    <button class="btn primary" id="btnGonder" disabled>Oyumu Gönder</button>
+  </div>
+
+  <!-- SONUÇLAR -->
+  <div class="page" id="p-sonuc">
+    <div class="stat">
+      <div><span>OY VEREN</span><b id="sKisi">0</b></div>
+      <div><span>EN YOĞUN</span><b id="sYogun">—</b></div>
+      <div><span>EN SAKİN</span><b id="sSakin">—</b></div>
+    </div>
+    <div id="sonucListesi"></div>
+    <div class="hint" id="hesapOzet" style="margin-top:8px"></div>
+  </div>
+
+  <!-- YÖNETİCİ (yalnızca yönetici yetkili hesap görür) -->
+  <div class="page" id="p-admin">
+    <div class="box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <b style="font-size:13px">Oylama durumu</b><span class="pill on" id="durumPill">AÇIK</span>
+      </div>
+      <div class="hint" id="adminMail" style="margin:0 0 10px"></div>
+      <div class="row">
+        <button class="btn" id="btnAcKapat">Oylamayı Kapat</button>
+        <button class="btn danger" id="btnSifirla">Tüm Oyları Sıfırla</button>
+      </div>
+    </div>
+
+    <div class="box">
+      <label class="t">Sonuç hesaplama yöntemi</label>
+      <select id="hYontem">
+        <option value="medyan">Medyan (uç oylara dayanıklı) — önerilen</option>
+        <option value="kirp">Kırpılmış ortalama (en düşük ve en yüksek oy atılır)</option>
+        <option value="ort">Düz ortalama</option>
+      </select>
+      <label class="t" style="margin-top:6px">Kişi bazlı normalleştirme</label>
+      <select id="hNorm">
+        <option value="1">Açık (herkesin puanı kendi aralığına göre ölçeklenir)</option>
+        <option value="0">Kapalı (puanlar olduğu gibi)</option>
+      </select>
+      <div class="hint">Bazı kişiler hep yüksek, bazıları hep düşük puan verir. Normalleştirme bu farkı giderir. En az 3 kasa puanlayan kişilere uygulanır.</div>
+      <label class="t" style="margin-top:12px">Bir kasanın sayılması için minimum oy</label>
+      <input type="number" id="hMin" min="1" max="50">
+      <div class="hint">Bu sayıdan az oy alan kasanın yüzdesi sisteme aktarılmaz, mevcut değeri korunur.</div>
+      <button class="btn" id="btnHesapKaydet" style="margin-top:12px;width:100%">Hesap Ayarlarını Kaydet</button>
+    </div>
+
+    <div class="box">
+      <b style="font-size:13px">Rotasyon sistemine aktar</b>
+      <table style="margin-top:8px">
+        <thead><tr><th>Kasa</th><th>Şu an</th><th>Oylama</th><th>Oy</th></tr></thead>
+        <tbody id="onizleme"></tbody>
+      </table>
+      <button class="btn primary ok" id="btnUygula" style="margin-top:12px">✅ Sonuçları Sisteme Uygula</button>
+      <div class="hint">Uygulanınca rotasyon sayfasındaki kasa yoğunluk yüzdeleri güncellenir. Rotasyon sayfasında ayrıca elle de değiştirilebilir.</div>
+    </div>
+
+    <div class="box">
+      <b style="font-size:13px">Oy verenler</b>
+      <div id="oyVerenler" style="margin-top:6px"></div>
+    </div>
+  </div>
+
+  <div class="foot"><button class="lnk" id="btnGiris">🔒 Yönetici girişi</button></div>
+</div>
+
+<!-- Yönetici giriş penceresi -->
+<div class="overlay" id="lOv">
+  <div class="modal">
+    <h3>🔒 Yönetici girişi</h3>
+    <div class="sub">Yalnızca yönetici yetkisi olan hesaplar yönetim ekranını görür.</div>
+    <input id="lE" type="email" placeholder="E-posta" autocomplete="username">
+    <input id="lP" type="password" placeholder="Şifre" autocomplete="current-password">
+    <div class="row"><button class="btn" id="lIptal">Vazgeç</button><button class="btn" id="lGir" style="background:var(--accent);border-color:var(--accent)">Giriş</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, collection, onSnapshot, setDoc, deleteDoc, getDocs, getDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInAnonymously, signInWithEmailAndPassword, signOut, onAuthStateChanged, getIdTokenResult, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyChKcwZnw1fe_SFWy2dJA_JZOMiKghF5_o",
+  authDomain: "ukasa1.firebaseapp.com",
+  projectId: "ukasa1",
+  storageBucket: "ukasa1.firebasestorage.app",
+  messagingSenderId: "929741424159",
+  appId: "1:929741424159:web:733f958e2fe7c13984f72a"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+setPersistence(auth, browserSessionPersistence).catch(() => {});
+
+const KASA = 12;
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const renk = p => p >= 70 ? "var(--red)" : p >= 40 ? "var(--orange)" : "var(--green)";
+const anahtar = n => String(n).trim().toLocaleLowerCase("tr").replace(/[.\/\[\]*~`\s]+/g, "_");
+const COL_OY = collection(db, "oylar");
+const REF_OYAYAR = doc(db, "kasa", "oylarAyar"), REF_AYAR = doc(db, "kasa", "ayar");
+
+let kasalar = {}, oylar = {}, acik = true, mevcut = {};
+let admin = false, benUid = null, authHata = false;
+let hesap = { yontem: "medyan", normalize: true, minOy: 3 };
+let secim = {}; for (let k = 1; k <= KASA; k++) secim[k] = null;
+
+function toast(m) { const t = $("toast"); t.textContent = m; t.classList.add("show"); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("show"), 2600); }
+
+/* ---------- Sekmeler ---------- */
+function sekme(p) {
+  document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x.dataset.p === p));
+  document.querySelectorAll(".page").forEach(x => x.classList.toggle("on", x.id === "p-" + p));
+}
+document.querySelectorAll(".tab").forEach(b => b.onclick = () => { if (b.dataset.p === "admin" && !admin) return; sekme(b.dataset.p); });
+
+/* ---------- Oy formu ---------- */
+function oyCiz() {
+  $("oyListesi").innerHTML = Array.from({ length: KASA }, (_, i) => i + 1).map(k => {
+    const v = secim[k];
+    return `<div class="v-row" data-k="${k}">
+      <div class="v-top"><b>KASA ${k}</b>
+        <span><span class="v-val" style="color:${v === null ? 'var(--muted)' : renk(v)}">${v === null ? "—" : "%" + v}</span>
+        <button class="v-clr" title="Boş bırak">✕</button></span></div>
+      <input type="range" min="0" max="100" step="5" value="${v ?? 50}" class="${v === null ? "unset" : ""}">
+      <div class="v-lab"><span>Sakin</span><span>Yoğun</span></div></div>`;
+  }).join("");
+}
+$("oyListesi").addEventListener("input", e => {
+  if (e.target.type !== "range") return;
+  const row = e.target.closest(".v-row"), k = row.dataset.k, v = Number(e.target.value);
+  secim[k] = v; e.target.classList.remove("unset");
+  const val = row.querySelector(".v-val"); val.textContent = "%" + v; val.style.color = renk(v);
+});
+$("oyListesi").addEventListener("click", e => {
+  if (!e.target.classList.contains("v-clr")) return;
+  const row = e.target.closest(".v-row"), k = row.dataset.k;
+  secim[k] = null; row.querySelector("input").classList.add("unset");
+  const val = row.querySelector(".v-val"); val.textContent = "—"; val.style.color = "var(--muted)";
+});
+
+// Her isim için en son oy (farklı cihazlardan gelen oylar tek sayılır)
+function sonOylar() {
+  const m = {};
+  Object.entries(oylar).forEach(([uid, o]) => {
+    const k = anahtar(o.isim || uid);
+    const g = (m[k] ||= { o, uids: [] });
+    g.uids.push(uid);
+    if ((o.zaman || 0) > (g.o.zaman || 0)) g.o = o;
+  });
+  return m;
+}
+
+$("isim").addEventListener("change", () => {
+  const g = sonOylar()[anahtar($("isim").value || "")];
+  if (!g) return;
+  for (let k = 1; k <= KASA; k++) { const v = g.o.puanlar?.[k]; secim[k] = (v === null || v === undefined) ? null : Number(v); }
+  oyCiz(); toast("Önceki oylarınız yüklendi, değiştirip tekrar gönderebilirsiniz");
+});
+
+$("btnGonder").onclick = async () => {
+  const isim = $("isim").value.trim().slice(0, 40);
+  if (!acik) return toast("Oylama kapalı");
+  if (!benUid) return toast("Bağlantı kuruluyor, birkaç saniye sonra tekrar deneyin");
+  if (!isim) return toast("Lütfen adınızı girin");
+  const rated = Object.values(secim).filter(v => v !== null).length;
+  if (!rated) return toast("En az bir kasayı puanlayın");
+  const puanlar = {}; for (let k = 1; k <= KASA; k++) puanlar[k] = secim[k];
+  try {
+    await setDoc(doc(db, "oylar", benUid), { isim, puanlar, zaman: Date.now() });
+    toast(`✅ Teşekkürler ${isim}, oyunuz kaydedildi (${rated} kasa)`);
+  } catch (e) { console.error(e); toast("⚠️ Kaydedilemedi, oylama kapalı olabilir veya bağlantı sorunu var"); }
+};
+
+/* ---------- Hesaplama ---------- */
+function topla() {
+  const sutun = {}; for (let k = 1; k <= KASA; k++) sutun[k] = [];
+  Object.values(sonOylar()).map(g => g.o).forEach(o => {
+    const v = Object.entries(o.puanlar || {}).filter(([, x]) => x !== null && x !== undefined && Number.isFinite(Number(x)));
+    if (!v.length) return;
+    const nums = v.map(([, x]) => Number(x)), mn = Math.min(...nums), mx = Math.max(...nums);
+    v.forEach(([k, x]) => {
+      let d = Number(x);
+      if (hesap.normalize && v.length >= 3 && mx > mn) d = (d - mn) / (mx - mn) * 100;
+      sutun[k]?.push(d);
+    });
+  });
+  const sonuc = {};
+  for (let k = 1; k <= KASA; k++) {
+    const a = sutun[k].slice().sort((x, y) => x - y), n = a.length;
+    let deger = null;
+    if (n) {
+      if (hesap.yontem === "medyan") deger = n % 2 ? a[(n - 1) / 2] : (a[n / 2 - 1] + a[n / 2]) / 2;
+      else {
+        const b = (hesap.yontem === "kirp" && n >= 5) ? a.slice(1, -1) : a;
+        deger = b.reduce((s, x) => s + x, 0) / b.length;
+      }
+    }
+    sonuc[k] = { n, deger, yeterli: n >= hesap.minOy };
+  }
+  return sonuc;
+}
+
+/* ---------- Çizim ---------- */
+function sonucCiz() {
+  const s = topla();
+  $("sKisi").textContent = Object.keys(sonOylar()).length;
+  const dolu = Object.entries(s).filter(([, x]) => x.deger !== null).sort((a, b) => b[1].deger - a[1].deger);
+  $("sYogun").textContent = dolu.length ? "K" + dolu[0][0] : "—";
+  $("sSakin").textContent = dolu.length ? "K" + dolu[dolu.length - 1][0] : "—";
+  $("sonucListesi").innerHTML = Array.from({ length: KASA }, (_, i) => i + 1).map(k => {
+    const x = s[k];
+    if (x.deger === null) return `<div class="r-row"><b>KASA ${k}</b><div class="bar"></div><div class="r-val" style="color:var(--muted)">—<small>oy yok</small></div></div>`;
+    const p = Math.round(x.deger);
+    return `<div class="r-row"><b>KASA ${k}</b>
+      <div class="bar"><i style="width:${p}%;background:${renk(p)}"></i></div>
+      <div class="r-val">%${p}<small>${x.n} oy${x.yeterli ? "" : " · yetersiz"}</small></div></div>`;
+  }).join("");
+  const ad = { medyan: "medyan", kirp: "kırpılmış ortalama", ort: "düz ortalama" }[hesap.yontem];
+  $("hesapOzet").textContent = `Hesap: ${ad}${hesap.normalize ? " + normalleştirme" : ""} · minimum ${hesap.minOy} oy`;
+}
+
+function adminCiz() {
+  $("durumPill").textContent = acik ? "AÇIK" : "KAPALI";
+  $("durumPill").className = "pill " + (acik ? "on" : "off");
+  $("btnAcKapat").textContent = acik ? "Oylamayı Kapat" : "Oylamayı Aç";
+  $("adminMail").textContent = (auth.currentUser?.email || "") + " olarak giriş yapıldı";
+  $("hYontem").value = hesap.yontem; $("hNorm").value = hesap.normalize ? "1" : "0"; $("hMin").value = hesap.minOy;
+
+  const s = topla();
+  $("onizleme").innerHTML = Array.from({ length: KASA }, (_, i) => i + 1).map(k => {
+    const x = s[k], m = mevcut[k];
+    const o = x.deger === null ? "—" : "%" + Math.round(x.deger);
+    return `<tr><td><b>${k}</b></td><td>${m !== undefined ? "%" + m : "—"}</td>
+      <td style="font-weight:800;color:${x.yeterli ? "var(--green)" : "var(--muted)"}">${o}</td><td>${x.n}${x.yeterli ? "" : " ⚠️"}</td></tr>`;
+  }).join("");
+
+  const liste = Object.entries(sonOylar()).sort((a, b) => (b[1].o.zaman || 0) - (a[1].o.zaman || 0));
+  $("oyVerenler").innerHTML = liste.length ? liste.map(([key, g]) => {
+    const n = Object.values(g.o.puanlar || {}).filter(v => v !== null && v !== undefined).length;
+    return `<div class="voter"><span>${esc(g.o.isim || key)} <span style="color:var(--muted)">· ${n} kasa</span></span><button data-sil="${esc(key)}">Sil</button></div>`;
+  }).join("") : `<div class="hint">Henüz oy yok.</div>`;
+}
+
+function hepsiniCiz() {
+  $("kapaliUyari").hidden = acik;
+  $("authUyari").hidden = !authHata;
+  $("btnGonder").disabled = !acik || !benUid;
+  $("tabAdmin").hidden = !admin;
+  $("btnGiris").textContent = admin ? "🔓 Yönetici çıkışı" : "🔒 Yönetici girişi";
+  if (!admin && $("p-admin").classList.contains("on")) sekme("oy");
+  sonucCiz(); if (admin) adminCiz();
+}
+
+/* ---------- Oturum: oy verenler anonim, yönetici e-posta + yetki ---------- */
+onAuthStateChanged(auth, async u => {
+  if (!u) {
+    admin = false; benUid = null; hepsiniCiz();
+    try { await signInAnonymously(auth); authHata = false; } catch (e) { console.warn(e); authHata = true; hepsiniCiz(); }
+    return;
+  }
+  if (u.isAnonymous) { admin = false; benUid = u.uid; authHata = false; hepsiniCiz(); return; }
+  let ok = false;
+  try { ok = (await getIdTokenResult(u, true)).claims.admin === true; } catch {}
+  if (!ok) { try { ok = (await getDoc(doc(db, "yoneticiler", u.uid))).exists(); } catch {} }
+  if (!ok) { toast("⛔ Bu hesapta yönetici yetkisi yok"); await signOut(auth); return; }
+  admin = true; benUid = u.uid; authHata = false; hepsiniCiz(); sekme("admin");
+});
+
+$("btnGiris").onclick = async () => { if (admin) { await signOut(auth); toast("Çıkış yapıldı"); } else $("lOv").classList.add("open"); };
+$("lIptal").onclick = () => $("lOv").classList.remove("open");
+$("lOv").addEventListener("click", e => { if (e.target.id === "lOv") $("lOv").classList.remove("open"); });
+$("lP").addEventListener("keydown", e => { if (e.key === "Enter") $("lGir").click(); });
+$("lGir").onclick = async () => {
+  try { await signInWithEmailAndPassword(auth, $("lE").value.trim(), $("lP").value); $("lOv").classList.remove("open"); $("lP").value = ""; }
+  catch { toast("❌ E-posta veya şifre yanlış"); }
+};
+
+/* ---------- Yönetici işlemleri (sunucu kuralları da yetkiyi ayrıca denetler) ---------- */
+$("btnAcKapat").onclick = async () => {
+  try { await setDoc(REF_OYAYAR, { acik: !acik }, { merge: true }); toast(acik ? "🔒 Oylama kapatıldı" : "🔓 Oylama açıldı"); }
+  catch { toast("⚠️ İşlem yapılamadı (yönetici izni gerekli)"); }
+};
+$("btnSifirla").onclick = async () => {
+  if (!confirm("Tüm oylar silinecek. Emin misiniz?")) return;
+  try {
+    const docs = (await getDocs(COL_OY)).docs;
+    for (let i = 0; i < docs.length; i += 400) { const b = writeBatch(db); docs.slice(i, i + 400).forEach(d => b.delete(d.ref)); await b.commit(); }
+    toast("Tüm oylar sıfırlandı");
+  } catch { toast("⚠️ İşlem yapılamadı (yönetici izni gerekli)"); }
+};
+$("btnHesapKaydet").onclick = async () => {
+  const h = { yontem: $("hYontem").value, normalize: $("hNorm").value === "1", minOy: Math.max(1, Number($("hMin").value) || 1) };
+  try { await setDoc(REF_OYAYAR, { hesap: h }, { merge: true }); toast("Hesap ayarları kaydedildi"); }
+  catch { toast("⚠️ Kaydedilemedi (yönetici izni gerekli)"); }
+};
+$("oyVerenler").addEventListener("click", async e => {
+  const key = e.target.dataset.sil; if (!key) return;
+  if (!confirm("Bu kişinin oyu silinsin mi?")) return;
+  try { for (const uid of (sonOylar()[key]?.uids || [])) await deleteDoc(doc(db, "oylar", uid)); toast("Oy silindi"); }
+  catch { toast("⚠️ Silinemedi (yönetici izni gerekli)"); }
+});
+$("btnUygula").onclick = async () => {
+  const s = topla(), y = {};
+  for (let k = 1; k <= KASA; k++) if (s[k].deger !== null && s[k].yeterli) y[k] = Math.round(s[k].deger);
+  if (!Object.keys(y).length) return toast("Uygulanacak yeterli oy yok");
+  if (!confirm(`${Object.keys(y).length} kasanın yoğunluğu rotasyon sistemine uygulanacak. Devam?`)) return;
+  try { await setDoc(REF_AYAR, { data: { yogunluk: y } }, { merge: true }); toast(`✅ ${Object.keys(y).length} kasa güncellendi`); }
+  catch (e) { console.error(e); toast("⚠️ Uygulanamadı (yönetici izni gerekli)"); }
+};
+
+/* ---------- Canlı veri ---------- */
+onSnapshot(doc(db, "kasa", "liste"), s => {
+  kasalar = s.exists() ? (s.data().data || {}) : {};
+  const isimler = [...new Set(Object.values(kasalar).map(x => x?.isim?.trim()).filter(Boolean))];
+  $("isimler").innerHTML = isimler.map(n => `<option value="${esc(n)}">`).join("");
+}, console.error);
+
+onSnapshot(COL_OY, s => { oylar = {}; s.forEach(d => { oylar[d.id] = d.data(); }); hepsiniCiz(); }, console.error);
+
+onSnapshot(REF_OYAYAR, s => {
+  const d = s.exists() ? s.data() : {};
+  acik = d.acik !== false;
+  if (d.hesap) hesap = { yontem: d.hesap.yontem || "medyan", normalize: d.hesap.normalize !== false, minOy: d.hesap.minOy || 3 };
+  hepsiniCiz();
+}, console.error);
+
+onSnapshot(REF_AYAR, s => {
+  mevcut = s.exists() ? (s.data().data?.yogunluk || {}) : {};
+  if (admin) adminCiz();
+}, () => {});
+
+oyCiz(); hepsiniCiz();
+</script>
+</body>
+</html>
