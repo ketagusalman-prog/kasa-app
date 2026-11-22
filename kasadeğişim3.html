@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Kasa Rotasyon Sistemi</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0b0f1a; --card:#161e31; --card2:#1c2640; --accent:#3b82f6; --text:#fff; --muted:#94a3b8;
+    --green:#10b981; --orange:#f59e0b; --red:#ef4444; --line:rgba(255,255,255,.08);
+  }
+  * { box-sizing:border-box; }
+  body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:var(--text); margin:0; padding:15px; padding-bottom:60px; }
+  .wrap { max-width:760px; margin:0 auto; }
+
+  .header { display:flex; align-items:center; justify-content:space-between; gap:10px; border-bottom:2px solid var(--accent); padding-bottom:14px; margin-bottom:16px; }
+  .header h1 { font-size:17px; margin:0; }
+  .header p { font-size:10px; opacity:.7; margin:4px 0 0; }
+  .actions { display:flex; gap:8px; }
+  .btn { background:var(--card2); color:var(--text); border:1px solid var(--line); border-radius:10px; padding:9px 12px; font:600 12px 'Plus Jakarta Sans',sans-serif; cursor:pointer; transition:.15s; }
+  .btn:hover { border-color:var(--accent); }
+  .btn.primary { background:var(--accent); border-color:var(--accent); }
+  .btn.ghost { background:transparent; }
+
+  .section-title { font-size:11px; text-transform:uppercase; color:var(--orange); margin:26px 0 10px; letter-spacing:1px; border-bottom:1px solid rgba(255,165,0,.2); padding-bottom:5px; display:flex; justify-content:space-between; align-items:center; }
+  .section-title small { color:var(--muted); text-transform:none; letter-spacing:0; font-size:10px; }
+
+  /* Kasa durum ızgarası */
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:8px; }
+  .kasa-box { background:var(--card); border-radius:10px; padding:9px 10px; border-top:3px solid var(--accent); }
+  .kasa-box .no { font-size:10px; color:var(--muted); font-weight:800; display:flex; justify-content:space-between; }
+  .kasa-box .name { font-size:12px; font-weight:600; margin:4px 0 6px; min-height:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .bar { height:5px; background:rgba(255,255,255,.08); border-radius:3px; overflow:hidden; }
+  .bar > i { display:block; height:100%; border-radius:3px; }
+
+  /* Eşleşme kartları */
+  .match-card { display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,.03); padding:14px; border-radius:12px; margin-bottom:10px; border-left:4px solid var(--accent); position:relative; gap:6px; }
+  .badge { position:absolute; top:0; right:18px; font-size:8px; font-weight:800; padding:2px 8px; border-radius:0 0 8px 8px; color:#000; }
+  .person { flex:1; display:flex; flex-direction:column; min-width:0; }
+  .person.right { text-align:right; align-items:flex-end; }
+  .person span.lbl { font-size:9px; color:var(--muted); font-weight:800; text-transform:uppercase; }
+  .person strong { font-size:14px; margin-top:3px; overflow:hidden; text-overflow:ellipsis; }
+  .arrow { flex:0 0 36px; text-align:center; font-size:18px; color:var(--accent); }
+  .kasa-tag { background:#334155; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; margin-right:4px; }
+  .meta { font-size:9px; color:#64748b; margin-top:3px; font-style:italic; }
+  .chip { display:inline-block; font-size:9px; font-weight:800; padding:2px 6px; border-radius:6px; color:#000; margin-top:4px; }
+  .warn { background:rgba(245,158,11,.1); border-left:4px solid var(--orange); padding:10px 14px; border-radius:10px; font-size:12px; margin-bottom:10px; }
+  .empty { text-align:center; color:var(--muted); font-size:12px; padding:30px 10px; background:var(--card); border-radius:12px; }
+
+  /* Yük tablosu */
+  .load-row { display:flex; align-items:center; gap:10px; background:var(--card); padding:8px 12px; border-radius:10px; margin-bottom:6px; font-size:12px; }
+  .load-row .n { flex:0 0 110px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .load-row .bar { flex:1; }
+  .load-row .v { flex:0 0 48px; text-align:right; font-weight:800; font-size:11px; }
+
+  .ozet { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-bottom:10px; }
+  .ozet:empty { display:none; }
+  .ozet-kutu { background:var(--card); border-radius:10px; padding:8px 6px; text-align:center; }
+  .ozet-kutu span { display:block; font-size:8px; color:var(--muted); font-weight:800; letter-spacing:.5px; }
+  .ozet-kutu b { font-size:16px; }
+
+  .row-btns { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+  .row-btns .btn { flex:1; }
+  .gtab { width:100%; border-collapse:collapse; font-size:11px; margin-bottom:12px; }
+  .gtab th { text-align:left; font-size:9px; color:var(--muted); text-transform:uppercase; padding:6px 4px; }
+  .gtab td { padding:7px 4px; border-top:1px solid var(--line); vertical-align:middle; }
+  .gtab .bar { min-width:60px; }
+  .gtab button { background:transparent; border:0; color:var(--red); cursor:pointer; font-size:11px; }
+
+  /* Modal */
+  .overlay { position:fixed; inset:0; background:rgba(0,0,0,.65); display:none; align-items:flex-end; justify-content:center; z-index:50; }
+  .overlay.open { display:flex; }
+  .modal { background:var(--card); width:100%; max-width:560px; max-height:92vh; overflow:auto; border-radius:18px 18px 0 0; padding:18px; }
+  @media (min-width:600px){ .overlay{align-items:center;} .modal{border-radius:18px;} }
+  .modal h3 { margin:0 0 4px; font-size:16px; }
+  .modal .sub { font-size:11px; color:var(--muted); margin-bottom:14px; }
+  .set-row { display:grid; grid-template-columns:62px 1fr 64px; gap:10px; align-items:center; margin-bottom:9px; }
+  .set-row label { font-size:12px; font-weight:800; }
+  .set-row input[type=range] { width:100%; accent-color:var(--accent); }
+  .pct { display:flex; align-items:center; background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:0 6px; }
+  .pct input { width:100%; background:transparent; border:0; color:var(--text); font:800 13px 'Plus Jakarta Sans',sans-serif; padding:7px 0; text-align:right; outline:none; }
+  .pct b { font-size:11px; color:var(--muted); margin-left:2px; }
+  .opt { margin:16px 0 6px; padding-top:14px; border-top:1px solid var(--line); }
+  .opt label { display:block; font-size:11px; font-weight:800; color:var(--muted); margin-bottom:6px; text-transform:uppercase; }
+  .opt select, .opt input[type=number] { width:100%; background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:9px; font:600 13px 'Plus Jakarta Sans',sans-serif; }
+  .opt .hint { font-size:10px; color:var(--muted); margin-top:5px; }
+  .modal-actions { display:flex; gap:8px; margin-top:18px; flex-wrap:wrap; }
+  .modal-actions .btn { flex:1; }
+
+  .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(80px); background:#0f172a; border:1px solid var(--accent); padding:10px 16px; border-radius:10px; font-size:12px; transition:.25s; z-index:99; }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div>
+      <h1>⚖️ Kasa Rotasyon Sistemi</h1>
+      <p>Kasa yoğunluk yüzdelerine ve kişinin gün içindeki geçmişine göre adaletli dağıtım</p>
+    </div>
+    <div class="actions">
+      <button class="btn" id="btnKaydetGun" title="Günü kaydet">💾</button>
+      <button class="btn" id="btnGecmis" title="Geçmiş ve analiz">📊</button>
+      <button class="btn" id="btnKopyala" title="Listeyi kopyala">📋</button>
+      <button class="btn primary" id="btnAyar">⚙️ Ayarlar</button>
+    </div>
+  </div>
+
+  <div class="section-title">Kasa Durumu <small id="syncDurum">bağlanıyor…</small></div>
+  <div class="grid" id="kasaGrid"></div>
+
+  <div id="rotasyonListesi"></div>
+
+  <div class="section-title">Kişi Başı Yük Skoru <small id="yontemYazi"></small></div>
+  <div class="ozet" id="ozet"></div>
+  <div id="yukListesi"></div>
+</div>
+
+<!-- Ayarlar -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3>⚙️ Kasa Yoğunluk Ayarları</h3>
+    <div class="sub">Her kasanın yoğunluğunu yüzde olarak belirleyin. %100 en yoğun, %0 en sakin kasadır. Sistem, gün içinde en çok yük almış kişiyi en sakin boşalan kasaya yerleştirir.</div>
+    <div id="ayarSatirlari"></div>
+
+    <div class="opt">
+      <label>Dağıtım modu</label>
+      <select id="optDagitim">
+        <option value="denge">Ortalamaya dengele (herkesin ortalaması hedefe en yakın)</option>
+        <option value="ters">Ters yoğunluk (en yüklü kişi en sakin kasaya)</option>
+      </select>
+      <div class="hint">Dengeli modda sistem tüm olası eşleşmeleri dener ve kişilerin yeni yük ortalamasının hedeften toplam sapmasını en aza indirir.</div>
+    </div>
+    <div class="opt" style="border:0;margin-top:8px;padding-top:0">
+      <label>Hedef ortalama yoğunluk (%)</label>
+      <input type="number" id="optHedef" min="0" max="100" step="1" placeholder="Otomatik (tüm kişilerin ortalama skoru)">
+      <div class="hint">Boş bırakırsanız hedef, her mola grubunda tüm kişilerin o anki ortalama skorudur ve herkesi birbirine yaklaştırır. Sabit bir değer yazarsanız herkes o değere çekilmeye çalışılır.</div>
+    </div>
+
+    <div class="opt">
+      <label>Yük hesaplama yöntemi (ters yoğunluk modu ve tablo)</label>
+      <select id="optYontem">
+        <option value="ort">Ortalama (gün içindeki tüm kasaların ortalaması)</option>
+        <option value="max">En yoğun kasa (en yüksek yüzde baz alınır)</option>
+        <option value="top">Toplam (çok kasa gezen daha yüklü sayılır)</option>
+      </select>
+    </div>
+    <div class="opt" style="border:0;margin-top:8px;padding-top:0">
+      <label>Aynı kasaya tekrar düşme cezası (puan)</label>
+      <input type="number" id="optCeza" min="0" max="100" step="1">
+      <div class="hint">Kişi daha önce çalıştığı kasaya tekrar atanmasın diye, o kasanın yoğunluğuna eklenen ceza. 0 = kapalı.</div>
+    </div>
+
+    <div class="opt">
+      <label>Geçmiş günleri dikkate al</label>
+      <select id="optGecKullan"><option value="1">Açık</option><option value="0">Kapalı</option></select>
+      <div class="hint">Kayıtlı günlerdeki kişi başı skor ortalaması, rotasyonda başlangıç yükü olarak kullanılır. "Ortalamaya dengele" modu ve "Ortalama" yöntemiyle çalışır.</div>
+      <label style="margin-top:10px">Kaç günlük kayıt ortalaması alınsın</label>
+      <input type="number" id="optGecGun" min="1" max="365">
+      <label style="margin-top:10px">Geçmişin ağırlığı (kaç kasa değerinde)</label>
+      <input type="number" id="optGecAgirlik" min="0" max="20" step="0.5">
+      <div class="hint">Örnek: 2 yazarsanız geçmiş ortalama, bugün oturulan 2 kasa kadar etki eder. Yükselttikçe geçmiş daha baskın olur.</div>
+      <label style="margin-top:10px">Kayıt saklama süresi (gün)</label>
+      <input type="number" id="optSaklama" min="7" max="365">
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn ghost" id="btnVarsayilan">Varsayılan</button>
+      <button class="btn ghost" id="btnEsitle">Hepsi %50</button>
+      <button class="btn" id="btnIptal">Vazgeç</button>
+      <button class="btn primary" id="btnKaydet">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- Geçmiş & Analiz -->
+<div class="overlay" id="gOverlay">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <h3 style="margin:0">📊 Geçmiş ve Analiz</h3>
+      <button class="btn" id="gKapat">Kapat</button>
+    </div>
+    <div class="row-btns">
+      <button class="btn" id="btnCsvGun">⬇️ Günlük kayıtlar (CSV)</button>
+      <button class="btn" id="btnCsvKisi">⬇️ Kişi özeti (CSV)</button>
+    </div>
+    <div id="gIcerik"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, onSnapshot, setDoc, updateDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, setPersistence, browserSessionPersistence, getIdTokenResult } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyChKcwZnw1fe_SFWy2dJA_JZOMiKghF5_o",
+  authDomain: "ukasa1.firebaseapp.com",
+  projectId: "ukasa1",
+  storageBucket: "ukasa1.firebasestorage.app",
+  messagingSenderId: "929741424159",
+  appId: "1:929741424159:web:733f958e2fe7c13984f72a"
+};
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+/* ---------- Sabitler ---------- */
+const KASA_SAYISI = 12;
+const eskiSira = [12, 11, 10, 8, 7, 9, 6, 4, 5, 3, 2, 1]; // en yoğun -> en sakin (varsayılan yüzdeler buradan türer)
+
+const molaAkisi = [
+  { donen: "cay4",   giden: "yemek3", baslik: "ÇAY 4 DÖNÜŞ ➔ YEMEK 3 ÇIKIŞ" },
+  { donen: "yemek3", giden: "yemek4", baslik: "YEMEK 3 DÖNÜŞ ➔ YEMEK 4 ÇIKIŞ" },
+  { donen: "yemek4", giden: "son1",   baslik: "YEMEK 4 DÖNÜŞ ➔ SON 1 ÇIKIŞ" },
+  { donen: "son1",   giden: "son2",   baslik: "SON 1 DÖNÜŞ ➔ SON 2 ÇIKIŞ" },
+  { donen: "son2",   giden: "son3",   baslik: "SON 2 DÖNÜŞ ➔ SON 3 ÇIKIŞ" },
+  { donen: "son3",   giden: "son4",   baslik: "SON 3 DÖNÜŞ ➔ SON 4 ÇIKIŞ" },
+  { donen: "son4",   giden: "cay4",   baslik: "SON 4 DÖNÜŞ ➔ ÇAY 4 (FİNAL)" }
+];
+
+const yontemAdi = { ort: "ortalama", max: "en yoğun kasa", top: "toplam" };
+const kisitla = (x, lo, hi, d) => Number.isFinite(Number(x)) && x !== "" && x !== null ? Math.min(hi, Math.max(lo, Number(x))) : d;
+
+function varsayilanAyar() {
+  const yogunluk = {};
+  eskiSira.forEach((k, i) => { yogunluk[k] = Math.round(100 - i * (90 / (KASA_SAYISI - 1))); });
+  return { yogunluk, yontem: "ort", ceza: 25, dagitim: "denge", hedef: null,
+           gecmisKullan: true, gecmisGun: 30, gecmisAgirlik: 2, saklamaGun: 31 };
+}
+
+/* ---------- Durum ---------- */
+let kasalar = {}, molalar = {};
+let gecmisKayit = {}, gecmisOrt = {}; // gecmisKayit: {tarih:{kisiler}}, gecmisOrt: {isim:{ort,gun}}
+let ayar = yukleYerel() || varsayilanAyar();
+let taslak = null;
+let sonSonuc = null, kilit = null;
+
+function yukleYerel() {
+  try { const s = localStorage.getItem("kasaAyar"); return s ? normalize(JSON.parse(s)) : null; } catch { return null; }
+}
+function normalize(a) {
+  const v = varsayilanAyar();
+  const y = {};
+  for (let k = 1; k <= KASA_SAYISI; k++) {
+    const n = Number(a?.yogunluk?.[k]);
+    y[k] = Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : v.yogunluk[k];
+  }
+  return {
+    yogunluk: y,
+    yontem: ["ort", "max", "top"].includes(a?.yontem) ? a.yontem : v.yontem,
+    ceza: Number.isFinite(Number(a?.ceza)) ? Math.min(100, Math.max(0, Number(a.ceza))) : v.ceza,
+    dagitim: ["denge", "ters"].includes(a?.dagitim) ? a.dagitim : v.dagitim,
+    hedef: (a?.hedef !== null && a?.hedef !== "" && a?.hedef !== undefined && Number.isFinite(Number(a.hedef)))
+      ? Math.min(100, Math.max(0, Number(a.hedef))) : null,
+    gecmisKullan: a?.gecmisKullan !== false,
+    gecmisGun: kisitla(a?.gecmisGun, 1, 365, v.gecmisGun),
+    gecmisAgirlik: kisitla(a?.gecmisAgirlik, 0, 20, v.gecmisAgirlik),
+    saklamaGun: kisitla(a?.saklamaGun, 7, 365, v.saklamaGun)
+  };
+}
+
+/* ---------- Yardımcılar ---------- */
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const renk = p => p >= 70 ? "var(--red)" : p >= 40 ? "var(--orange)" : "var(--green)";
+const $ = id => document.getElementById(id);
+
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("show"), 2400);
+}
+
+/* ---------- Hesaplama ---------- */
+function yukSkoru(isim, gecmis) {
+  if (ayar.dagitim === "denge" || ayar.yontem === "ort") return skorOf(isim, gecmis);
+  if (!gecmis.length) return 0;
+  const p = gecmis.map(k => ayar.yogunluk[k] ?? 50);
+  if (ayar.yontem === "max") return Math.max(...p);
+  if (ayar.yontem === "top") return p.reduce((a, b) => a + b, 0);
+  return p.reduce((a, b) => a + b, 0) / p.length;
+}
+
+const kasaP = k => ayar.yogunluk[k] ?? 50;
+const ortP = g => g.reduce((a, k) => a + kasaP(k), 0) / g.length;
+const gunOrt = g => g.length ? ortP(g) : 0;
+
+// Kişinin etkin yükü: geçmiş günlerin ortalaması (ağırlıklı) + bugün oturduğu kasalar
+function skorOf(isim, g) {
+  const n = g.length, toplam = g.reduce((a, k) => a + kasaP(k), 0);
+  const on = gecmisOrt[isim];
+  if (ayar.gecmisKullan && on) {
+    const W = ayar.gecmisAgirlik;
+    return (on.ort * W + toplam) / (W + n || 1);
+  }
+  return n ? toplam / n : 0;
+}
+
+// Eski mantık: en yüklü kişi en sakin kasayı alır (açgözlü)
+function tersAtama(donenler, bosalan) {
+  const havuz = bosalan.map((b, i) => ({ ...b, i }));
+  return donenler.map(d => {
+    if (!havuz.length) return -1;
+    let en = 0, enPuan = Infinity;
+    havuz.forEach((h, idx) => {
+      const puan = kasaP(h.kasaNo) + (d.gecmis.includes(h.kasaNo) ? ayar.ceza : 0);
+      if (puan < enPuan) { enPuan = puan; en = idx; }
+    });
+    return havuz.splice(en, 1)[0].i;
+  });
+}
+
+// Yeni mantık: herkesin yeni ortalaması hedefe en yakın olacak şekilde en iyi toplu eşleşme
+function dengeliAtama(donenler, bosalan, hedef) {
+  const n = donenler.length, m = bosalan.length, ATLA = 1e6;
+  if (m > 14) return tersAtama(donenler, bosalan); // çok büyükse hızlı yönteme dön
+  const maliyet = (d, h) => {
+    const yeni = skorOf(d.isim, [...d.gecmis, h.kasaNo]);
+    const sapma = yeni - hedef;
+    return sapma * sapma + (d.gecmis.includes(h.kasaNo) ? ayar.ceza * ayar.ceza : 0);
+  };
+  const memo = {};
+  const f = (i, mask) => {
+    if (i === n) return 0;
+    const key = i + "_" + mask;
+    if (memo[key]) return memo[key].c;
+    let best = { c: ATLA + f(i + 1, mask), j: -1 };
+    for (let j = 0; j < m; j++) {
+      if (mask & (1 << j)) continue;
+      const c = maliyet(donenler[i], bosalan[j]) + f(i + 1, mask | (1 << j));
+      if (c < best.c) best = { c, j };
+    }
+    memo[key] = best;
+    return best.c;
+  };
+  f(0, 0);
+  const sonuc = []; let mask = 0;
+  for (let i = 0; i < n; i++) {
+    const j = memo[i + "_" + mask].j;
+    sonuc.push(j);
+    if (j >= 0) mask |= 1 << j;
+  }
+  return sonuc;
+}
+
+function hesaplaTek(sabitHedef) {
+  // Gün içi kasa geçmişi
+  const gecmis = {};
+  for (let k = 1; k <= KASA_SAYISI; k++) {
+    const isim = kasalar["kasa" + k]?.isim?.trim();
+    if (isim) (gecmis[isim] ||= []).push(k);
+  }
+
+  const ort = a => a.reduce((x, y) => x + y, 0) / a.length;
+  // Hedef: elle girilmişse o; değilse tüm kişilerin o anki ortalama skoru (her blokta güncellenir)
+  const kisiOrt = (ekle = {}) => {
+    const s = Object.entries(gecmis).filter(([, g]) => g.length)
+      .map(([isim, g]) => skorOf(isim, ekle[isim] !== undefined ? [...g, ekle[isim]] : g));
+    return s.length ? ort(s) : 50;
+  };
+
+  const bloklar = [];
+  for (const akis of molaAkisi) {
+    const temiz = arr => (arr || []).filter(n => n && n.trim()).map(n => n.trim());
+    const donenIsimler = temiz(molalar[akis.donen]?.kisiler);
+    const gidenIsimler = temiz(molalar[akis.giden]?.kisiler);
+    if (!donenIsimler.length || !gidenIsimler.length) continue;
+
+    // Boşalan kasalar (çıkanların güncel kasası = geçmişteki son kasa)
+    const bosalan = gidenIsimler
+      .map(isim => ({ isim, kasaNo: (gecmis[isim] || []).slice(-1)[0] }))
+      .filter(x => x.kasaNo);
+
+    // Dönenler: yükü en yüksek olan önce seçer
+    const donenler = donenIsimler
+      .map(isim => ({ isim, gecmis: [...(gecmis[isim] || [])], skor: yukSkoru(isim, gecmis[isim] || []) }))
+      .sort((a, b) => b.skor - a.skor || a.isim.localeCompare(b.isim, "tr"));
+
+    const eslesmeler = [], bekleyen = [];
+    const hedefB = sabitHedef ?? (ayar.hedef !== null ? ayar.hedef : kisiOrt());
+    const atama = ayar.dagitim === "denge"
+      ? dengeliAtama(donenler, bosalan, hedefB)
+      : tersAtama(donenler, bosalan);
+
+    donenler.forEach((d, i) => {
+      const j = atama[i];
+      if (j < 0) { bekleyen.push(d.isim); return; }
+      const secilen = bosalan[j];
+      eslesmeler.push({
+        giden: secilen.isim, kasaNo: secilen.kasaNo,
+        donen: d.isim, oncekiler: d.gecmis, skor: d.skor,
+        yeni: skorOf(d.isim, [...d.gecmis, secilen.kasaNo]), hedef: hedefB,
+        tekrar: d.gecmis.includes(secilen.kasaNo)
+      });
+      (gecmis[d.isim] ||= []).push(secilen.kasaNo); // geçmişi güncelle
+    });
+    bloklar.push({ baslik: akis.baslik, eslesmeler, bekleyen });
+  }
+  return { bloklar, gecmis, hedef: ayar.hedef !== null ? ayar.hedef : kisiOrt() };
+}
+
+/* Gün sonu ortalamasını hedef alan global çözüm:
+   1) Tüm günü bir hedefle simüle et  2) Gün sonu gerçek ortalamayı bul
+   3) Hedefi bu ortalamaya çek ve tekrarla (sabit noktaya kadar).
+   Sonuçta her grup, tüm günün sonunda oluşacak ortalamaya göre karar verir. */
+function hesapla() {
+  if (ayar.dagitim !== "denge" || ayar.hedef !== null) return hesaplaTek(null);
+  let h = hesaplaTek(null).hedef, r;
+  for (let tur = 0; tur < 15; tur++) {
+    r = hesaplaTek(h);
+    const s = Object.entries(r.gecmis).filter(([, g]) => g.length).map(([i, g]) => skorOf(i, g));
+    if (!s.length) break;
+    const m = s.reduce((a, b) => a + b, 0) / s.length;
+    const bitti = Math.abs(m - h) < 0.01;
+    h = m;
+    if (bitti) break;
+  }
+  r.hedef = h;
+  return r;
+}
+
+/* ---------- Çizim ---------- */
+function render() {
+  gecmisHesapla();
+  // Kasa ızgarası
+  let g = "";
+  for (let k = 1; k <= KASA_SAYISI; k++) {
+    const p = ayar.yogunluk[k], isim = kasalar["kasa" + k]?.isim?.trim();
+    g += `<div class="kasa-box" style="border-top-color:${renk(p)}">
+      <div class="no"><span>KASA ${k}</span><span>%${p}</span></div>
+      <div class="name">${isim ? esc(isim) : '<span style="color:#475569">boş</span>'}</div>
+      <div class="bar"><i style="width:${p}%;background:${renk(p)}"></i></div></div>`;
+  }
+  $("kasaGrid").innerHTML = g;
+
+  // Rotasyon
+  const sonuc = (kilit && kilit.sonuc && kilit.tarih === bugunKey() && kilit.sonuc) || hesapla(); sonSonuc = sonuc;
+  const liste = $("rotasyonListesi");
+  if (!sonuc.bloklar.length) {
+    liste.innerHTML = `<div class="section-title">Rotasyon</div><div class="empty">Henüz eşleşecek mola verisi yok.<br>Dönen ve çıkan kişiler girildiğinde burada görünecek.</div>`;
+  } else {
+    liste.innerHTML = sonuc.bloklar.map(b => {
+      const kartlar = b.eslesmeler.map(e => {
+        const p = ayar.yogunluk[e.kasaNo] ?? 50;
+        return `<div class="match-card">
+          <div class="badge" style="background:${e.tekrar ? 'var(--orange)' : 'var(--green)'}">${e.tekrar ? 'TEKRAR KASA' : 'ADALETLİ'}</div>
+          <div class="person">
+            <span class="lbl"><span class="kasa-tag">KASA ${e.kasaNo}</span> ÇIKIŞ</span>
+            <strong>${esc(e.giden)}</strong>
+            <span class="chip" style="background:${renk(p)}">Yoğunluk %${p}</span>
+          </div>
+          <div class="arrow">➜</div>
+          <div class="person right">
+            <span class="lbl">YENİ GEÇEN</span>
+            <strong>${esc(e.donen)}</strong>
+            <div class="meta">Geçmiş: ${e.oncekiler.length ? e.oncekiler.join(", ") : "—"} ➔ Yeni: ${e.kasaNo} · Yeni ort. %${Math.round(e.yeni)} (hedef %${Math.round(e.hedef)})</div>
+          </div>
+        </div>`;
+      }).join("");
+      const uyari = b.bekleyen.length ? `<div class="warn">⚠️ Kasa bulunamayan: <b>${b.bekleyen.map(esc).join(", ")}</b> (dönen sayısı boşalan kasadan fazla)</div>` : "";
+      return `<div class="section-title">${esc(b.baslik)}</div>${kartlar}${uyari}`;
+    }).join("");
+  }
+
+  // Yük tablosu
+  const gecmisGun = Math.max(0, ...Object.values(gecmisOrt).map(x => x.gun));
+  $("yontemYazi").textContent = (ayar.dagitim === "denge" ? "dengeli dağıtım · hedef %" + Math.round(sonuc.hedef) : "yöntem: " + yontemAdi[ayar.yontem])
+    + (ayar.gecmisKullan && gecmisGun ? " · geçmiş: " + gecmisGun + " gün" : "");
+  const satirlar = Object.entries(sonuc.gecmis)
+    .map(([isim, gc]) => ({ isim, gc, skor: yukSkoru(isim, gc) }))
+    .sort((a, b) => b.skor - a.skor);
+  const maks = Math.max(100, ...satirlar.map(s => s.skor));
+
+  // Gün sonu denge özeti
+  if (satirlar.length > 1) {
+    const sk = satirlar.map(s => s.skor);
+    const mn = Math.min(...sk), mx = Math.max(...sk), av = sk.reduce((a, b) => a + b, 0) / sk.length;
+    const sd = Math.sqrt(sk.reduce((a, b) => a + (b - av) ** 2, 0) / sk.length);
+    const fr = mx - mn;
+    const fRenk = fr <= 10 ? "var(--green)" : fr <= 20 ? "var(--orange)" : "var(--red)";
+    $("ozet").innerHTML = `
+      <div class="ozet-kutu"><span>EN DÜŞÜK</span><b>${Math.round(mn)}</b></div>
+      <div class="ozet-kutu"><span>ORTALAMA</span><b>${Math.round(av)}</b></div>
+      <div class="ozet-kutu"><span>EN YÜKSEK</span><b>${Math.round(mx)}</b></div>
+      <div class="ozet-kutu"><span>FARK</span><b style="color:${fRenk}">${Math.round(fr)}</b></div>
+      <div class="ozet-kutu"><span>SAPMA</span><b>${sd.toFixed(1)}</b></div>`;
+  } else { $("ozet").innerHTML = ""; }
+  $("yukListesi").innerHTML = satirlar.length ? satirlar.map(s => {
+    const w = Math.min(100, s.skor / maks * 100);
+    return `<div class="load-row"><div class="n">${esc(s.isim)}</div>
+      <div class="bar"><i style="width:${w}%;background:${renk(ayar.yontem === 'top' ? w : s.skor)}"></i></div>
+      <div class="v">${Math.round(s.skor)}</div></div>`;
+  }).join("") : `<div class="empty">Kasada kimse yok.</div>`;
+}
+
+/* ---------- Ayar paneli ---------- */
+function ayarCiz() {
+  let h = "";
+  for (let k = 1; k <= KASA_SAYISI; k++) {
+    h += `<div class="set-row">
+      <label>KASA ${k}</label>
+      <input type="range" min="0" max="100" step="5" value="${taslak.yogunluk[k]}" data-k="${k}">
+      <div class="pct"><input type="number" min="0" max="100" value="${taslak.yogunluk[k]}" data-n="${k}"><b>%</b></div>
+    </div>`;
+  }
+  $("ayarSatirlari").innerHTML = h;
+  $("optYontem").value = taslak.yontem;
+  $("optCeza").value = taslak.ceza;
+  $("optDagitim").value = taslak.dagitim;
+  $("optHedef").value = taslak.hedef ?? "";
+  $("optGecKullan").value = taslak.gecmisKullan ? "1" : "0";
+  $("optGecGun").value = taslak.gecmisGun;
+  $("optGecAgirlik").value = taslak.gecmisAgirlik;
+  $("optSaklama").value = taslak.saklamaGun;
+}
+function ayarAc() { taslak = JSON.parse(JSON.stringify(ayar)); ayarCiz(); $("overlay").classList.add("open"); }
+function ayarKapat() { $("overlay").classList.remove("open"); }
+
+$("ayarSatirlari").addEventListener("input", e => {
+  const k = e.target.dataset.k || e.target.dataset.n;
+  if (!k) return;
+  let v = Math.min(100, Math.max(0, Number(e.target.value) || 0));
+  taslak.yogunluk[k] = v;
+  const r = document.querySelector(`[data-k="${k}"]`), n = document.querySelector(`[data-n="${k}"]`);
+  if (r !== e.target) r.value = v;
+  if (n !== e.target) n.value = v;
+});
+$("optYontem").onchange = e => taslak.yontem = e.target.value;
+$("optDagitim").onchange = e => taslak.dagitim = e.target.value;
+$("optGecKullan").onchange = e => taslak.gecmisKullan = e.target.value === "1";
+$("optGecGun").oninput = e => taslak.gecmisGun = kisitla(e.target.value, 1, 365, 30);
+$("optGecAgirlik").oninput = e => taslak.gecmisAgirlik = kisitla(e.target.value, 0, 20, 2);
+$("optSaklama").oninput = e => taslak.saklamaGun = kisitla(e.target.value, 7, 365, 31);
+$("optHedef").oninput = e => taslak.hedef = e.target.value === "" ? null : Math.min(100, Math.max(0, Number(e.target.value) || 0));
+$("optCeza").oninput = e => taslak.ceza = Math.min(100, Math.max(0, Number(e.target.value) || 0));
+
+$("btnAyar").onclick = ayarAc;
+$("btnIptal").onclick = ayarKapat;
+$("overlay").addEventListener("click", e => { if (e.target.id === "overlay") ayarKapat(); });
+$("btnVarsayilan").onclick = () => { taslak = varsayilanAyar(); ayarCiz(); };
+$("btnEsitle").onclick = () => { for (let k = 1; k <= KASA_SAYISI; k++) taslak.yogunluk[k] = 50; ayarCiz(); };
+
+$("btnKaydet").onclick = async () => {
+  ayar = normalize(taslak);
+  try { localStorage.setItem("kasaAyar", JSON.stringify(ayar)); } catch {}
+  ayarKapat(); render();
+  try {
+    await setDoc(doc(db, "kasa", "ayar"), { data: ayar });
+    toast("✅ Ayarlar kaydedildi ve herkesle senkronlandı");
+  } catch (err) {
+    console.warn(err);
+    toast("⚠️ Sadece bu cihaza kaydedildi (sunucu izni yok)");
+  }
+};
+
+/* ---------- Kopyala ---------- */
+$("btnKopyala").onclick = async () => {
+  if (!sonSonuc?.bloklar.length) return toast("Kopyalanacak liste yok");
+  const txt = sonSonuc.bloklar.map(b =>
+    b.baslik + "\n" + b.eslesmeler.map(e => `  ${e.donen} → KASA ${e.kasaNo} (${e.giden} çıkıyor)`).join("\n")
+  ).join("\n\n");
+  try { await navigator.clipboard.writeText(txt); toast("📋 Liste kopyalandı"); }
+  catch { toast("Kopyalama izni verilmedi"); }
+};
+
+/* ---------- Geçmiş kayıtları, analiz ve e-tablo (CSV) ---------- */
+const REF_GECMIS = doc(db, "kasa", "gecmis");
+const anahtar = n => n.trim().toLocaleLowerCase("tr").replace(/[.\/\[\]*~`\s]+/g, "_");
+const bugunKey = () => new Date().toLocaleDateString("sv-SE"); // YYYY-MM-DD (yerel saat)
+const f1 = x => Math.round(x * 10) / 10;
+const trSayi = x => String(f1(x)).replace(".", ",");
+const ortalama = a => a.reduce((s, x) => s + x, 0) / a.length;
+const sapma = a => { const m = ortalama(a); return Math.sqrt(a.reduce((s, x) => s + (x - m) ** 2, 0) / a.length); };
+
+// Son N kayıtlı günün (bugün hariç) kişi başı ortalaması -> rotasyonun başlangıç yükü
+function gecmisHesapla() {
+  const bugun = bugunKey();
+  const gunler = Object.keys(gecmisKayit).filter(t => t !== bugun).sort().slice(-ayar.gecmisGun);
+  const acc = {};
+  gunler.forEach(t => Object.values(gecmisKayit[t].kisiler || {}).forEach(k => {
+    if (Number.isFinite(Number(k.skor))) (acc[k.isim] ||= []).push(Number(k.skor));
+  }));
+  gecmisOrt = {};
+  Object.entries(acc).forEach(([isim, a]) => { gecmisOrt[isim] = { ort: ortalama(a), gun: a.length }; });
+}
+
+async function gunuKaydet() {
+  const gecmis = sonSonuc?.gecmis || {};
+  const kisiler = {};
+  Object.entries(gecmis).forEach(([isim, g]) => {
+    if (!g.length) return;
+    kisiler[anahtar(isim)] = { isim, kasalar: g, yog: g.map(kasaP), skor: f1(gunOrt(g)) };
+  });
+  if (!Object.keys(kisiler).length) return toast("Kaydedilecek veri yok");
+  const tarih = bugunKey();
+  const mesaj = gecmisKayit[tarih]
+    ? `${tarih} için kayıt zaten var. Üzerine yazılsın mı?`
+    : `${tarih} günü kaydedilsin mi? Kişi skorları geçmişe eklenir ve sonraki günlerin rotasyonunda kullanılır.`;
+  if (!confirm(mesaj)) return;
+
+  const sinir = new Date(Date.now() - ayar.saklamaGun * 864e5).toLocaleDateString("sv-SE");
+  const yeniKayit = { zaman: Date.now(), kisiler };
+  const upd = { ["data." + tarih]: yeniKayit };
+  Object.keys(gecmisKayit).filter(t => t < sinir).forEach(t => { upd["data." + t] = deleteField(); }); // eski kayıtları temizle
+  try {
+    try { await updateDoc(REF_GECMIS, upd); }
+    catch { await setDoc(REF_GECMIS, { data: { [tarih]: yeniKayit } }, { merge: true }); }
+    toast(`💾 ${tarih} kaydedildi (${Object.keys(kisiler).length} kişi)`);
+  } catch (e) { console.error(e); toast("⚠️ Kaydedilemedi, Firestore iznini kontrol edin"); }
+}
+
+function gunStat(t) {
+  const s = Object.values(gecmisKayit[t].kisiler || {}).map(k => Number(k.skor)).filter(Number.isFinite);
+  return s.length ? { n: s.length, ort: ortalama(s), fark: Math.max(...s) - Math.min(...s) } : { n: 0, ort: 0, fark: 0 };
+}
+function kisiStat() {
+  const acc = {};
+  Object.values(gecmisKayit).forEach(g => Object.values(g.kisiler || {}).forEach(k => {
+    if (Number.isFinite(Number(k.skor))) (acc[k.isim] ||= []).push(Number(k.skor));
+  }));
+  return Object.entries(acc).map(([isim, a]) => ({ isim, gun: a.length, ort: ortalama(a), min: Math.min(...a), max: Math.max(...a), sd: sapma(a) }));
+}
+
+function gecmisCiz() {
+  const tarihler = Object.keys(gecmisKayit).sort();
+  if (!tarihler.length) {
+    $("gIcerik").innerHTML = `<div class="empty">Henüz kayıtlı gün yok.<br>Kayıtlar yönetici tarafından gün sonunda eklenir.</div>`;
+    return;
+  }
+  const gs = tarihler.map(t => ({ t, ...gunStat(t) }));
+  const kisiler = kisiStat().sort((a, b) => b.ort - a.ort);
+  const ortFark = ortalama(gs.map(g => g.fark));
+  const maksFark = Math.max(10, ...gs.map(g => g.fark));
+  const kisiOrtFark = kisiler.length ? kisiler[0].ort - kisiler[kisiler.length - 1].ort : 0;
+
+  $("gIcerik").innerHTML = `
+    <div class="ozet" style="grid-template-columns:repeat(4,1fr)">
+      <div class="ozet-kutu"><span>KAYITLI GÜN</span><b>${tarihler.length}</b></div>
+      <div class="ozet-kutu"><span>İLK</span><b style="font-size:11px">${tarihler[0].slice(5)}</b></div>
+      <div class="ozet-kutu"><span>SON</span><b style="font-size:11px">${tarihler[tarihler.length - 1].slice(5)}</b></div>
+      <div class="ozet-kutu"><span>KİŞİLER ARASI FARK</span><b>${Math.round(kisiOrtFark)}</b></div>
+    </div>
+    <div class="section-title">Kişi başı ortalama yük <small>tüm kayıtlı günler</small></div>
+    <table class="gtab"><thead><tr><th>Kişi</th><th>Gün</th><th style="width:34%">Ortalama</th><th>Min–Maks</th><th>Sapma</th></tr></thead><tbody>
+    ${kisiler.map(k => `<tr><td><b>${esc(k.isim)}</b></td><td>${k.gun}</td>
+      <td><div style="display:flex;align-items:center;gap:6px"><div class="bar" style="flex:1"><i style="width:${Math.min(100, k.ort)}%;background:${renk(k.ort)}"></i></div><b>${Math.round(k.ort)}</b></div></td>
+      <td>${Math.round(k.min)}–${Math.round(k.max)}</td><td>${f1(k.sd)}</td></tr>`).join("")}
+    </tbody></table>
+    <div class="section-title">Günlük denge <small>fark = en yüksek − en düşük skor (ort. ${f1(ortFark)})</small></div>
+    <table class="gtab"><thead><tr><th>Tarih</th><th>Kişi</th><th>Ort.</th><th style="width:36%">Fark</th><th></th></tr></thead><tbody>
+    ${gs.slice().reverse().map(g => `<tr><td>${g.t}</td><td>${g.n}</td><td>${Math.round(g.ort)}</td>
+      <td><div style="display:flex;align-items:center;gap:6px"><div class="bar" style="flex:1"><i style="width:${g.fark / maksFark * 100}%;background:${g.fark <= 10 ? 'var(--green)' : g.fark <= 20 ? 'var(--orange)' : 'var(--red)'}"></i></div><b>${Math.round(g.fark)}</b></div></td>
+      <td><button data-sil-gun="${g.t}">Sil</button></td></tr>`).join("")}
+    </tbody></table>`;
+}
+
+function csvIndir(ad, satirlar) {
+  const hucre = h => { const s = String(h ?? ""); return /[;"\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const csv = "\uFEFF" + satirlar.map(r => r.map(hucre).join(";")).join("\r\n"); // BOM + ; : Türkçe Excel uyumlu
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  a.download = ad; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+}
+
+$("btnKaydetGun").onclick = gunuKaydet;
+$("btnGecmis").onclick = () => { gecmisCiz(); $("gOverlay").classList.add("open"); };
+$("gKapat").onclick = () => $("gOverlay").classList.remove("open");
+$("gOverlay").addEventListener("click", e => { if (e.target.id === "gOverlay") $("gOverlay").classList.remove("open"); });
+
+$("btnCsvGun").onclick = () => {
+  const satirlar = [["Tarih", "Kişi", "Kasalar", "Kasa yoğunlukları (%)", "Günlük skor"]];
+  Object.keys(gecmisKayit).sort().forEach(t => {
+    Object.values(gecmisKayit[t].kisiler || {}).sort((a, b) => a.isim.localeCompare(b.isim, "tr"))
+      .forEach(k => satirlar.push([t, k.isim, (k.kasalar || []).join("-"), (k.yog || []).join("-"), trSayi(k.skor)]));
+  });
+  if (satirlar.length === 1) return toast("Kayıt yok");
+  csvIndir(`kasa-gunluk-${bugunKey()}.csv`, satirlar);
+};
+$("btnCsvKisi").onclick = () => {
+  const k = kisiStat().sort((a, b) => b.ort - a.ort);
+  if (!k.length) return toast("Kayıt yok");
+  csvIndir(`kasa-kisi-ozet-${bugunKey()}.csv`, [["Kişi", "Gün sayısı", "Ortalama skor", "En düşük", "En yüksek", "Standart sapma"],
+    ...k.map(x => [x.isim, x.gun, trSayi(x.ort), trSayi(x.min), trSayi(x.max), trSayi(x.sd)])]);
+};
+
+$("gIcerik").addEventListener("click", async e => {
+  const t = e.target.dataset.silGun; if (!t) return;
+  if (!confirm(`${t} kaydı silinsin mi?`)) return;
+  try { await updateDoc(REF_GECMIS, { ["data." + t]: deleteField() }); toast("Kayıt silindi"); }
+  catch { toast("⚠️ Silinemedi"); }
+});
+
+onSnapshot(REF_GECMIS, s => {
+  gecmisKayit = s.exists() ? (s.data().data || {}) : {};
+  render();
+  if ($("gOverlay").classList.contains("open")) gecmisCiz();
+}, () => {});
+
+/* ---------- Canlı veri (tek seferlik dinleyiciler) ---------- */
+const durum = (t, ok = true) => { $("syncDurum").textContent = t; $("syncDurum").style.color = ok ? "var(--green)" : "var(--red)"; };
+const hata = e => { console.error(e); durum("bağlantı hatası", false); };
+
+onSnapshot(doc(db, "kasa", "liste"), s => { kasalar = s.exists() ? (s.data().data || {}) : {}; durum("● canlı"); render(); }, hata);
+onSnapshot(doc(db, "kasa", "mola"),  s => { molalar = s.exists() ? (s.data().data || {}) : {}; render(); }, hata);
+onSnapshot(doc(db, "kasa", "ayar"),  s => {
+  if (s.exists() && s.data().data) {
+    ayar = normalize(s.data().data);
+    try { localStorage.setItem("kasaAyar", JSON.stringify(ayar)); } catch {}
+    render();
+  }
+}, () => {});
+
+/* ===== YÖNETİCİ (Firebase Auth) + ONAY/KİLİT + GRAFİK + KASA ANALİZİ + CANLI E-TABLO + KİŞİ ARAMA ===== */
+(() => {
+  const st = document.createElement("style");
+  st.textContent = `
+    body:not(.admin) .adm,body:not(.admin) #gOverlay .row-btns,body:not(.admin) [data-sil-gun]{display:none!important}
+    .actions{flex-wrap:wrap;justify-content:flex-end}
+    .finder{background:var(--card);border-radius:12px;padding:12px;margin-bottom:6px}
+    .finder input,.pw{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:10px;font:600 13px 'Plus Jakarta Sans',sans-serif}
+    .pw{margin-bottom:8px}
+    .finder .res{margin-top:10px;font-size:13px;line-height:1.7}
+    .finder .res b{color:var(--accent)}
+    .chart{background:var(--card);border-radius:12px;padding:10px;margin-bottom:12px}
+    .chart select{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px;font:600 12px 'Plus Jakarta Sans',sans-serif;margin-bottom:6px}
+    .leg{display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:var(--muted);margin-top:4px}
+    .leg i{display:inline-block;width:10px;height:3px;border-radius:2px;margin-right:4px;vertical-align:middle}
+    .hm{overflow-x:auto;margin-bottom:12px}
+    .hm td,.hm th{text-align:center;min-width:26px}
+    .hm td:first-child,.hm th:first-child{text-align:left;position:sticky;left:0;background:var(--card);min-width:70px}`;
+  document.head.appendChild(st);
+
+  /* ---------- Yönetici (Firebase Authentication) ---------- */
+  const auth = getAuth(app);
+  setPersistence(auth, browserSessionPersistence).catch(() => {});
+  const REF_YON = doc(db, "kasa", "yonetici"), REF_KILIT = doc(db, "kasa", "kilit");
+  let admin = false, sheetsUrl = "", unsubYon = null;
+
+  ["btnKaydetGun", "btnKopyala", "btnAyar"].forEach(id => $(id).classList.add("adm"));
+  const kilitBtn = document.createElement("button");
+  kilitBtn.className = "btn adm"; kilitBtn.id = "btnKilit"; kilitBtn.textContent = "✅ Onayla";
+  const yonBtn = document.createElement("button");
+  yonBtn.id = "btnYon"; yonBtn.innerHTML = "<span>🔒</span>Yönetici";
+  document.querySelector(".actions").prepend(kilitBtn);
+  const nav = document.createElement("nav");
+  nav.className = "bnav";
+  nav.innerHTML = `<button data-go="top"><span>🏠</span>Ana sayfa</button><button data-go="analiz"><span>📊</span>Analiz</button>`;
+  nav.appendChild(yonBtn);
+  document.body.appendChild(nav);
+  nav.addEventListener("click", e => {
+    const g = e.target.closest("[data-go]")?.dataset.go;
+    if (g === "top") window.scrollTo({ top: 0, behavior: "smooth" });
+    if (g === "analiz") $("btnGecmis").click();
+  });
+
+  const yOv = document.createElement("div");
+  yOv.className = "overlay"; yOv.id = "yOverlay";
+  yOv.innerHTML = `<div class="modal" id="yModal"></div>`;
+  document.body.appendChild(yOv);
+  const yKapat = () => yOv.classList.remove("open");
+  yOv.addEventListener("click", e => { if (e.target === yOv) yKapat(); });
+
+  async function setAdmin(u) {
+    if (u) {
+      let ok = false;
+      try { ok = (await getIdTokenResult(u, true)).claims.admin === true; } catch {}
+      if (!ok) { toast("⛔ Bu hesapta yönetici yetkisi yok"); signOut(auth); return; }
+    }
+    admin = !!u;
+    document.body.classList.toggle("admin", admin);
+    yonBtn.innerHTML = admin ? "<span>🛠️</span>Yönetim" : "<span>🔒</span>Yönetici";
+    if (unsubYon) { unsubYon(); unsubYon = null; }
+    if (admin) unsubYon = onSnapshot(REF_YON, s => { sheetsUrl = s.exists() ? (s.data().sheetsUrl || "") : ""; gonder(true, false); }, () => {});
+    else sheetsUrl = "";
+    if (yOv.classList.contains("open")) yonCiz();
+  }
+
+  function yonCiz() {
+    const m = $("yModal");
+    if (!admin) {
+      m.innerHTML = `<h3>🔒 Yönetici girişi</h3><div class="sub">Ayarlar, gün kaydı, rotasyon onayı ve e-tablo yalnızca yöneticiye açıktır.</div>
+        <input class="pw" id="yE" type="email" placeholder="E-posta" autocomplete="username">
+        <input class="pw" id="yP" type="password" placeholder="Şifre" autocomplete="current-password">
+        <div class="modal-actions"><button class="btn" id="yIptal">Vazgeç</button><button class="btn primary" id="yGir">Giriş</button></div>`;
+    } else {
+      const k = kilitli();
+      m.innerHTML = `<div class="grab"></div><h3>🛠️ Yönetim</h3><div class="sub">${esc(auth.currentUser?.email || "")} olarak giriş yapıldı</div>
+        <div class="tiles">
+          <button class="tile" data-go="kilit"><span>${k ? "🔓" : "✅"}</span>${k ? "Kilidi aç" : "Rotasyonu onayla"}</button>
+          <button class="tile" data-go="gun"><span>💾</span>Günü kaydet</button>
+          <button class="tile" data-go="gecmis"><span>📊</span>Geçmiş ve analiz</button>
+          <button class="tile" data-go="ayar"><span>⚙️</span>Ayarlar</button>
+          <button class="tile" data-go="kopya"><span>📋</span>Listeyi kopyala</button>
+          <button class="tile" data-go="sheet"><span>📤</span>E-tabloya gönder</button>
+        </div>
+        <div class="opt"><label>Google E-Tablolar bağlantısı (Apps Script URL'si)</label>
+          <input class="pw" id="ySheets" type="url" placeholder="https://script.google.com/macros/s/.../exec" value="${esc(sheetsUrl)}">
+          <div class="hint">Doluysa, yönetici girişiyle sayfa açıkken veriler e-tabloya otomatik yazılır.</div>
+          <button class="btn" id="ySheetKaydet" style="width:100%;margin-top:8px">URL'yi kaydet</button></div>
+        <div class="modal-actions"><button class="btn" id="yReset">Şifre sıfırlama e-postası</button><button class="btn" id="yCikis">Çıkış yap</button></div>
+        <div class="modal-actions"><button class="btn primary" id="yIptal">Kapat</button></div>`;
+    }
+  }
+  yonBtn.onclick = () => { yonCiz(); yOv.classList.add("open"); };
+
+  $("yModal").addEventListener("click", async e => {
+    const id = e.target.id, v = i => ($(i)?.value || "");
+    const go = e.target.closest("[data-go]")?.dataset.go;
+    if (go) {
+      if (go === "gecmis" || go === "ayar") yKapat();
+      ({ kilit: () => kilitBtn.click(), gun: () => $("btnKaydetGun").click(), gecmis: () => $("btnGecmis").click(),
+         ayar: () => $("btnAyar").click(), kopya: () => $("btnKopyala").click(), sheet: () => gonder(true, true) })[go]?.();
+      return;
+    }
+    if (id === "yIptal") return yKapat();
+    if (id === "yGir") {
+      try { await signInWithEmailAndPassword(auth, v("yE").trim(), v("yP")); toast("✅ Giriş yapıldı"); }
+      catch { toast("❌ E-posta veya şifre yanlış"); }
+    }
+    if (id === "yCikis") { await signOut(auth); yKapat(); }
+    if (id === "yReset") {
+      try { await sendPasswordResetEmail(auth, auth.currentUser.email); toast("📧 Sıfırlama e-postası gönderildi"); }
+      catch { toast("⚠️ E-posta gönderilemedi"); }
+    }
+    if (id === "ySheetKaydet") {
+      const url = v("ySheets").trim();
+      if (url && !/^https:\/\/script\.google\.com\//.test(url)) return toast("Geçerli bir Apps Script URL'si girin");
+      try { await setDoc(REF_YON, { sheetsUrl: url }, { merge: true }); toast("✅ E-tablo bağlantısı kaydedildi"); }
+      catch { toast("⚠️ Kaydedilemedi (yönetici izni gerekli)"); }
+    }
+    if (id === "ySheetTest") gonder(true, true);
+  });
+  onAuthStateChanged(auth, setAdmin);
+
+  /* ---------- Rotasyon onayı ve kilit ---------- */
+  const kb = document.createElement("div");
+  kb.id = "kilitBanner";
+  kb.style.cssText = "display:none;background:rgba(16,185,129,.1);border-left:4px solid var(--green);padding:10px 14px;border-radius:10px;font-size:12px;margin:10px 0";
+  $("rotasyonListesi").before(kb);
+  const kilitli = () => !!(kilit && kilit.sonuc && kilit.tarih === bugunKey());
+  let sonK = null;
+  function kilitCiz() {
+    const k = kilitli();
+    kb.style.display = k ? "block" : "none";
+    if (k) kb.innerHTML = `🔒 Rotasyon <b>${new Date(kilit.zaman).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}</b> itibarıyla yönetici tarafından onaylandı ve kilitlendi. Bugün bu liste geçerlidir.`;
+    kilitBtn.textContent = k ? "🔓 Kilidi aç" : "✅ Onayla";
+    if (k !== sonK) { sonK = k; if (admin && yOv.classList.contains("open")) yonCiz(); }
+  }
+  kilitBtn.onclick = async () => {
+    try {
+      if (kilitli()) {
+        if (!confirm("Kilit açılsın mı? Rotasyon yeniden otomatik hesaplanır.")) return;
+        await setDoc(REF_KILIT, { tarih: "", sonuc: null });
+        toast("🔓 Kilit açıldı");
+      } else {
+        if (!sonSonuc?.bloklar.length) return toast("Onaylanacak rotasyon yok");
+        if (!confirm("Güncel rotasyon onaylansın ve kilitlensin mi? Bugün boyunca herkes bu listeyi görür.")) return;
+        await setDoc(REF_KILIT, { tarih: bugunKey(), zaman: Date.now(), sonuc: JSON.parse(JSON.stringify(sonSonuc)) });
+        toast("✅ Rotasyon onaylandı ve kilitlendi");
+      }
+    } catch (err) { console.warn(err); toast("⚠️ Kaydedilemedi (yönetici izni gerekli)"); }
+  };
+  onSnapshot(REF_KILIT, s => { kilit = s.exists() ? s.data() : null; render(); }, () => {});
+
+  /* ---------- Canlı e-tablo ---------- */
+  let sonGonder = "", zm = null;
+  function paket() {
+    return {
+      tarih: bugunKey(),
+      kasalar: Array.from({ length: KASA_SAYISI }, (_, i) => ({ no: i + 1, yog: ayar.yogunluk[i + 1], isim: kasalar["kasa" + (i + 1)]?.isim?.trim() || "" })),
+      rotasyon: sonSonuc.bloklar.flatMap(b => b.eslesmeler.map(e => ({ blok: b.baslik, giden: e.giden, kasa: e.kasaNo, donen: e.donen, yeni: Math.round(e.yeni) }))),
+      yuk: Object.entries(sonSonuc.gecmis).filter(([, g]) => g.length).map(([isim, g]) => ({ isim, kasalar: g.join("-"), skor: f1(yukSkoru(isim, g)) }))
+    };
+  }
+  async function gonder(zorla, bildir) {
+    if (!admin || !sheetsUrl || !sonSonuc) return;
+    const s = JSON.stringify(paket());
+    if (!zorla && s === sonGonder) return;
+    sonGonder = s;
+    try {
+      await fetch(sheetsUrl, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: s });
+      if (bildir) toast("📤 E-tabloya gönderildi");
+    } catch { sonGonder = ""; toast("⚠️ E-tabloya gönderilemedi"); }
+  }
+
+  /* ---------- Herkese açık: kişi arama ---------- */
+  const fd = document.createElement("div");
+  fd.className = "finder";
+  fd.innerHTML = `<input id="bulIn" list="bulList" placeholder="🔍 Adınızı yazın, kasanızı görün" autocomplete="off"><datalist id="bulList"></datalist><div class="res" id="bulRes"></div>`;
+  document.querySelector(".section-title").before(fd);
+  try { $("bulIn").value = localStorage.getItem("kasaBul") || ""; } catch {}
+  $("bulIn").addEventListener("input", () => { try { localStorage.setItem("kasaBul", $("bulIn").value); } catch {} bulCiz(); });
+
+  function bulCiz() {
+    if (!sonSonuc) return;
+    const isimler = Object.keys(sonSonuc.gecmis);
+    $("bulList").innerHTML = isimler.map(n => `<option value="${esc(n)}">`).join("");
+    const q = $("bulIn").value.trim().toLocaleLowerCase("tr");
+    if (!q) { $("bulRes").innerHTML = ""; return; }
+    const isim = isimler.find(n => n.toLocaleLowerCase("tr") === q) || isimler.find(n => n.toLocaleLowerCase("tr").includes(q));
+    if (!isim) { $("bulRes").innerHTML = `<span style="color:var(--muted)">Bu isimde biri bulunamadı.</span>`; return; }
+    const g = sonSonuc.gecmis[isim] || [];
+    const satir = [`<b>${esc(isim)}</b>`];
+    satir.push(g.length ? `Şu anki kasa: <b>KASA ${g[g.length - 1]}</b> · Gün içi sırası: ${g.join(" ➜ ")}` : "Henüz kasada değil.");
+    sonSonuc.bloklar.forEach(b => b.eslesmeler.forEach(e => {
+      if (e.donen === isim) satir.push(`↩️ ${esc(b.baslik)}: dönüşte <b>KASA ${e.kasaNo}</b>'ya geçecek`);
+      if (e.giden === isim) satir.push(`🚪 ${esc(b.baslik)}: çıkışta, KASA ${e.kasaNo} boşalacak`);
+    }));
+    satir.push(`Yük skoru: <b>${Math.round(yukSkoru(isim, g))}</b>`);
+    $("bulRes").innerHTML = satir.join("<br>");
+  }
+
+  /* ---------- Grafikler (bağımlılıksız SVG) ---------- */
+  function cizgi(et, seriler) {
+    const W = 520, H = 170, L = 30, R = 10, T = 10, B = 22, n = et.length;
+    const tum = seriler.flatMap(s => s.v).filter(Number.isFinite);
+    if (!tum.length) return `<div class="empty">Bu görünüm için veri yok.</div>`;
+    let mn = Math.min(...tum), mx = Math.max(...tum);
+    if (mn === mx) { mn -= 5; mx += 5; }
+    const pd = (mx - mn) * .1; mn = Math.max(0, Math.floor(mn - pd)); mx = Math.ceil(mx + pd);
+    const X = i => L + (n === 1 ? (W - L - R) / 2 : i * (W - L - R) / (n - 1));
+    const Y = v => T + (H - T - B) * (1 - (v - mn) / (mx - mn));
+    let g = "";
+    for (let i = 0; i <= 3; i++) {
+      const v = mn + (mx - mn) * i / 3, y = Y(v).toFixed(1);
+      g += `<line x1="${L}" x2="${W - R}" y1="${y}" y2="${y}" style="stroke:var(--line)"/><text x="${L - 4}" y="${+y + 3}" text-anchor="end" font-size="9" style="fill:var(--muted)">${Math.round(v)}</text>`;
+    }
+    [...new Set([0, Math.floor((n - 1) / 2), n - 1])].forEach(i => g += `<text x="${X(i).toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="9" style="fill:var(--muted)">${et[i].slice(5)}</text>`);
+    seriler.forEach(s => {
+      let d = "", acik = false;
+      s.v.forEach((v, i) => { if (Number.isFinite(v)) { d += (acik ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1); acik = true; } else acik = false; });
+      g += `<path d="${d}" fill="none" stroke-width="2" stroke-linejoin="round" style="stroke:${s.renk}"/>`;
+      s.v.forEach((v, i) => { if (Number.isFinite(v)) g += `<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="2.5" style="fill:${s.renk}"/>`; });
+    });
+    return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">${g}</svg><div class="leg">${seriler.map(s => `<span><i style="background:${s.renk}"></i>${esc(s.ad)}</span>`).join("")}</div>`;
+  }
+  const gunler = () => Object.keys(gecmisKayit).sort().slice(-30);
+  const gunSkor = t => Object.values(gecmisKayit[t].kisiler || {}).map(k => Number(k.skor)).filter(Number.isFinite);
+  let secKisi = "";
+  function kisiGrafik(et) {
+    const ek = et.map(t => { const s = gunSkor(t); return s.length ? ortalama(s) : null; });
+    const kv = et.map(t => { const k = Object.values(gecmisKayit[t].kisiler || {}).find(x => x.isim === secKisi); return k && Number.isFinite(Number(k.skor)) ? Number(k.skor) : null; });
+    return cizgi(et, [{ ad: secKisi, renk: "var(--orange)", v: kv }, { ad: "Ekip ortalaması", renk: "var(--accent)", v: ek }]);
+  }
+  function grafikHtml() {
+    const et = gunler(); if (!et.length) return "";
+    const mm = et.map(t => { const s = gunSkor(t); return s.length ? [Math.min(...s), ortalama(s), Math.max(...s)] : [null, null, null]; });
+    const isimler = [...new Set(et.flatMap(t => Object.values(gecmisKayit[t].kisiler || {}).map(k => k.isim)))].sort((a, b) => a.localeCompare(b, "tr"));
+    if (!isimler.includes(secKisi)) secKisi = isimler[0] || "";
+    return `<div class="section-title">Ekip dengesi <small>son ${et.length} gün · en düşük / ortalama / en yüksek skor</small></div>
+      <div class="chart">${cizgi(et, [{ ad: "En yüksek", renk: "var(--red)", v: mm.map(x => x[2]) }, { ad: "Ortalama", renk: "var(--accent)", v: mm.map(x => x[1]) }, { ad: "En düşük", renk: "var(--green)", v: mm.map(x => x[0]) }])}</div>
+      <div class="section-title">Kişi trendi <small>kişi skoru ve ekip ortalaması</small></div>
+      <div class="chart"><select id="gKisiSec">${isimler.map(n => `<option${n === secKisi ? " selected" : ""}>${esc(n)}</option>`).join("")}</select><div id="gKisiGrafik">${kisiGrafik(et)}</div></div>`;
+  }
+  $("gIcerik").addEventListener("change", e => {
+    if (e.target.id !== "gKisiSec") return;
+    secKisi = e.target.value; $("gKisiGrafik").innerHTML = kisiGrafik(gunler());
+  });
+
+  /* ---------- Kasa bazlı analiz ---------- */
+  function kasaAnaliz() {
+    const say = {}, km = {};
+    Object.values(gecmisKayit).forEach(g => Object.values(g.kisiler || {}).forEach(k => (k.kasalar || []).forEach(no => {
+      say[no] = (say[no] || 0) + 1;
+      const o = (km[k.isim] ||= {}); o[no] = (o[no] || 0) + 1;
+    })));
+    const isimler = Object.keys(km).sort((a, b) => a.localeCompare(b, "tr"));
+    if (!isimler.length) return "";
+    const mxT = Math.max(1, ...Object.values(say)), mxC = Math.max(1, ...isimler.flatMap(i => Object.values(km[i])));
+    let satir = "";
+    for (let k = 1; k <= KASA_SAYISI; k++) {
+      const kim = isimler.filter(i => km[i][k]).sort((a, b) => km[b][k] - km[a][k]);
+      const p = kasaP(k), t = say[k] || 0;
+      satir += `<tr><td><b>${k}</b></td><td>%${p}</td>
+        <td><div style="display:flex;align-items:center;gap:6px"><div class="bar" style="flex:1"><i style="width:${t / mxT * 100}%;background:${renk(p)}"></i></div><b>${t}</b></div></td>
+        <td>${kim.length}</td><td>${kim.length ? esc(kim[0]) + " ×" + km[kim[0]][k] : "—"}</td></tr>`;
+    }
+    const kolon = Array.from({ length: KASA_SAYISI }, (_, i) => i + 1);
+    const hm = `<tr><th>Kişi</th>${kolon.map(k => `<th>${k}</th>`).join("")}</tr>` + isimler.map(i =>
+      `<tr><td><b>${esc(i)}</b></td>${kolon.map(k => { const n = km[i][k] || 0; return `<td style="${n ? `background:rgba(59,130,246,${(.15 + .85 * n / mxC).toFixed(2)})` : ""}">${n || ""}</td>`; }).join("")}</tr>`).join("");
+    return `<div class="section-title">Kasa bazlı dağılım <small>tüm kayıtlı günler</small></div>
+      <table class="gtab"><thead><tr><th>Kasa</th><th>Yoğ.</th><th style="width:34%">Oturma</th><th>Kişi</th><th>En çok oturan</th></tr></thead><tbody>${satir}</tbody></table>
+      <div class="section-title">Kişi × kasa <small>kaç kez oturdu</small></div>
+      <div class="hm"><table class="gtab"><tbody>${hm}</tbody></table></div>`;
+  }
+
+  const _gc = gecmisCiz;
+  gecmisCiz = function () {
+    _gc();
+    if (!Object.keys(gecmisKayit).length) return;
+    $("gIcerik").querySelector(".ozet")?.insertAdjacentHTML("afterend", grafikHtml());
+    $("gIcerik").insertAdjacentHTML("beforeend", kasaAnaliz());
+  };
+
+  /* ---------- Görünüm (mobil öncelikli) ---------- */
+  const st2 = document.createElement("style");
+  st2.textContent = `
+    body{padding:0;padding-bottom:calc(88px + env(safe-area-inset-bottom));-webkit-tap-highlight-color:transparent;font-variant-numeric:tabular-nums}
+    .wrap{padding:0 14px}
+    .header{position:sticky;top:0;z-index:30;margin:0 -14px 14px;padding:calc(12px + env(safe-area-inset-top)) 14px 12px;background:rgba(11,15,26,.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+    .header .actions{display:none}
+    .header h1{font-size:18px;font-weight:800;letter-spacing:-.2px}
+    .header p{opacity:1;color:var(--muted);font-size:11px;margin-top:3px}
+    .section-title{border-bottom:0;font-weight:800}
+    .kasa-box,.load-row,.ozet-kutu,.finder,.chart,.empty{border:1px solid var(--line);box-shadow:0 1px 2px rgba(0,0,0,.25)}
+    .finder,.chart,.empty{border-radius:14px}
+    .match-card{border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:14px;padding:14px 12px}
+    .match-card .meta{font-size:10.5px;line-height:1.4;font-style:normal}
+    .person strong{font-size:15px}
+    .grid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}
+    .btn{min-height:40px;border-radius:12px}
+    .modal{max-height:92vh;max-height:90dvh;padding-bottom:calc(18px + env(safe-area-inset-bottom))}
+    .grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:-6px auto 14px}
+    @media(min-width:600px){.grab{display:none}}
+    @media(max-width:600px){.btn{min-height:44px}input,select,.pw,.finder input,.pct input{font-size:16px!important}.load-row .n{flex-basis:96px}}
+    .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 6px}
+    .tile{display:flex;flex-direction:column;align-items:flex-start;gap:8px;min-height:76px;background:var(--card2);color:var(--text);border:1px solid var(--line);border-radius:14px;padding:14px;font:700 13px 'Plus Jakarta Sans',sans-serif;text-align:left;cursor:pointer}
+    .tile span{font-size:22px;line-height:1}
+    .tile:active{border-color:var(--accent)}
+    .bnav{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;justify-content:space-around;background:rgba(22,30,49,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom))}
+    .bnav button{flex:1;max-width:170px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;background:transparent;border:0;border-radius:12px;color:var(--muted);font:700 10px 'Plus Jakarta Sans',sans-serif;cursor:pointer}
+    .bnav button span{font-size:20px;line-height:1}
+    .bnav button:active{background:var(--card2);color:var(--text)}
+    .toast{bottom:calc(88px + env(safe-area-inset-bottom));opacity:0;pointer-events:none}
+    .toast.show{opacity:1}
+    body:not(.admin) .bnav [data-go="analiz"],body:not(.admin) #btnGecmis,body:not(.admin) #gOverlay{display:none!important}`;
+  document.head.appendChild(st2);
+  const tm = document.createElement("meta"); tm.name = "theme-color"; tm.content = "#0b0f1a"; document.head.appendChild(tm);
+  const tarihYaz = () => { document.querySelector(".header p").textContent = new Date().toLocaleDateString("tr-TR", { weekday: "long", day: "numeric", month: "long" }); };
+
+  /* ---------- render'a bağla ---------- */
+  const _render = render;
+  render = function () {
+    _render(); bulCiz(); kilitCiz(); tarihYaz();
+    clearTimeout(zm); zm = setTimeout(() => gonder(false, false), 3000);
+  };
+})();
+
+render();
+</script>
+</body>
+</html>
