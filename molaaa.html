@@ -52,12 +52,19 @@
         .toast { position: fixed; top: 112px; left: 50%; transform: translateX(-50%); max-width: 92%; width: max-content; padding: 10px 14px; border-radius: 12px; font-size: 11px; font-weight: 600; line-height: 1.4; z-index: 2000; background: rgba(16, 185, 129, 0.95); color: white; display: none; text-align: center; }
         .toast.err { background: rgba(239, 68, 68, 0.95); }
         .toast.warn { background: rgba(245, 158, 11, 0.95); color: #1a1100; }
+        .yon-btn { position: absolute; right: 10px; top: 9px; background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 4px 9px; font-size: 14px; cursor: pointer; }
+        .y-ov { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1500; padding: 15px; }
+        .y-modal { background: #161e31; border: 1px solid var(--border); border-radius: 16px; padding: 18px; width: 100%; max-width: 340px; }
+        .y-modal h3 { font-size: 15px; margin-bottom: 4px; }
+        .y-modal p { font-size: 11px; color: #94a3b8; margin-bottom: 12px; }
+        .y-modal input { font-size: 16px; padding: 10px; margin-bottom: 8px; text-align: left; border-radius: 8px; }
+        .y-modal .row-btns button { padding: 11px; font-size: 12px; }
     </style>
 </head>
 
 <body>
 
-<div class="appbar">MOLA YÖNETİM MERKEZİ <span id="degisti">● kaydedilmedi</span></div>
+<div class="appbar">MOLA YÖNETİM MERKEZİ <span id="degisti">● kaydedilmedi</span><button id="yonBtn" class="yon-btn" title="Yönetici girişi">🔒</button></div>
 <div id="buyukSayac" class="buyukSayac" style="display:none;">--:--</div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
@@ -79,6 +86,19 @@
     </div>
 </div>
 
+<div id="yOv" class="y-ov">
+    <div class="y-modal">
+        <h3>🔒 Yönetici girişi</h3>
+        <p>Mola düzenlemek için yönetici hesabıyla giriş yapın.</p>
+        <input id="yE" type="email" placeholder="E-posta" autocomplete="username">
+        <input id="yP" type="password" placeholder="Şifre" autocomplete="current-password">
+        <div class="row-btns">
+            <button id="yIptal" class="btn-main" style="background:#334155">Vazgeç</button>
+            <button id="yGir" class="btn-main" style="background:var(--accent)">Giriş</button>
+        </div>
+    </div>
+</div>
+
 <div class="tabbar">
     <button class="tab-btn" onclick="location.href='index.html'" title="Kasalar">🏠</button>
     <button class="tab-btn" onclick="location.href='kisiselppp.html'" title="Profil ve Ayarlar">👤</button>
@@ -86,14 +106,21 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, getIdTokenResult, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-// NOT: apiKey'i kendi gerçek anahtarınla değiştir (burada kısaltılmış).
-const firebaseConfig = { apiKey: "AIzaSy...", authDomain: "ukasa1.firebaseapp.com", projectId: "ukasa1" };
+const firebaseConfig = {
+    apiKey: "AIzaSyChKcwZnw1fe_SFWy2dJA_JZOMiKghF5_o",
+    authDomain: "ukasa1.firebaseapp.com",
+    projectId: "ukasa1",
+    storageBucket: "ukasa1.firebasestorage.app",
+    messagingSenderId: "929741424159",
+    appId: "1:929741424159:web:733f958e2fe7c13984f72a"
+};
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const auth = getAuth(app);   // index.html'deki admin girişi aynı origin'de burada da geçerli olur
+const auth = getAuth(app);
+setPersistence(auth, browserSessionPersistence).catch(() => {});
 const molaRef = doc(db, "kasa", "mola");
 
 const KISI_SAYISI = 6;
@@ -103,13 +130,7 @@ const GRUPLAR = [
     { prefix: "son",   baslik: "🕓 Son Mola",      sureKey: "sonSure" }
 ];
 
-let kullanici = (localStorage.getItem("kullanici") || "").toLowerCase().trim();
-let adminMi = (kullanici === "admin");
-
-if (adminMi) {
-    ["akilliKaydetBtn", "ozelKaydetBtn", "kaydirBtn", "yemekDagitBtn", "yemekTakasBtn"]
-        .forEach(id => document.getElementById(id).style.display = "block");
-}
+let adminMi = false;   // yalnızca Firebase girişi doğrulanınca true olur (aşağıdaki "Yönetici girişi" bölümü)
 
 const alan = document.getElementById("alan");
 const buyukSayac = document.getElementById("buyukSayac");
@@ -168,7 +189,7 @@ function hataGoster(e) {
     console.error(e);
     const code = e?.code || "";
     if (code === "permission-denied") {
-        toast("Kayıt izni yok. Admin hesabıyla giriş yapılmamış olabilir veya Firestore kuralları kasa/mola yazmasına izin vermiyor. Ana sayfadan çıkış yapıp admin ile tekrar giriş yapın.", "err");
+        toast("Kayıt izni yok. Sağ üstteki 🔒 ile yönetici hesabıyla giriş yapın. Giriş yaptıysanız hesabınızın yönetici olarak tanımlı olduğunu ve Firestore kurallarını kontrol edin.", "err");
     } else if (code === "unavailable" || code === "failed-precondition") {
         toast("Bağlantı sorunu. İnternetinizi kontrol edip tekrar deneyin.", "err");
     } else {
@@ -205,6 +226,47 @@ async function kaydet() {
     await setDoc(molaRef, { data: state });
     temizleDegisti();
 }
+
+/* ---------- Yönetici girişi (Firebase Authentication) ---------- */
+// Yönetici durumu artık tarayıcıdaki bir bayraktan değil, gerçek Firebase girişinden gelir.
+// Yönetici = 'admin' yetkisi olan hesap VEYA Firestore'da yoneticiler/{uid} belgesi olan hesap.
+const ADMIN_BTNS = ["akilliKaydetBtn", "ozelKaydetBtn", "kaydirBtn", "yemekDagitBtn", "yemekTakasBtn"];
+const yonBtn = document.getElementById("yonBtn"), yOv = document.getElementById("yOv");
+
+function adminAyarla(v) {
+    if (adminMi === v) return;
+    adminMi = v;
+    ADMIN_BTNS.forEach(id => document.getElementById(id).style.display = v ? "block" : "none");
+    yonBtn.textContent = v ? "🛠️" : "🔒";
+    if (!v) temizleDegisti();
+    render();
+}
+
+onAuthStateChanged(auth, async (u) => {
+    if (!u || u.isAnonymous) { adminAyarla(false); return; }   // oy verenler anonim oturum açar, yönetici değildir
+    let ok = false;
+    try { ok = (await getIdTokenResult(u, true)).claims.admin === true; } catch {}
+    if (!ok) { try { ok = (await getDoc(doc(db, "yoneticiler", u.uid))).exists(); } catch {} }
+    if (!ok) { toast("⛔ Bu hesapta yönetici yetkisi yok", "err"); signOut(auth); return; }
+    adminAyarla(true);
+    toast("✅ Yönetici girişi yapıldı");
+});
+
+yonBtn.onclick = async () => {
+    if (adminMi) {
+        if (dirty && !confirm("Kaydedilmemiş değişiklikler var. Yine de çıkış yapılsın mı?")) return;
+        await signOut(auth); toast("Çıkış yapıldı");
+    } else yOv.style.display = "flex";
+};
+document.getElementById("yIptal").onclick = () => { yOv.style.display = "none"; };
+yOv.addEventListener("click", (e) => { if (e.target === yOv) yOv.style.display = "none"; });
+document.getElementById("yP").addEventListener("keydown", (e) => { if (e.key === "Enter") document.getElementById("yGir").click(); });
+document.getElementById("yGir").onclick = async () => {
+    try {
+        await signInWithEmailAndPassword(auth, document.getElementById("yE").value.trim(), document.getElementById("yP").value);
+        yOv.style.display = "none"; document.getElementById("yP").value = "";
+    } catch { toast("❌ E-posta veya şifre yanlış", "err"); }
+};
 
 /* ---------- Veri dinleme ---------- */
 
