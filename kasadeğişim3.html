@@ -194,7 +194,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot, setDoc, updateDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, onSnapshot, setDoc, updateDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, setPersistence, browserSessionPersistence, getIdTokenResult } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -767,6 +767,7 @@ onSnapshot(doc(db, "kasa", "ayar"),  s => {
     if (u) {
       let ok = false;
       try { ok = (await getIdTokenResult(u, true)).claims.admin === true; } catch {}
+      if (!ok) { try { ok = (await getDoc(doc(db, "yoneticiler", u.uid))).exists(); } catch {} }
       if (!ok) { toast("⛔ Bu hesapta yönetici yetkisi yok"); signOut(auth); return; }
     }
     admin = !!u;
