@@ -163,6 +163,7 @@ details p{margin-top:8px}
 
   <div id="notKutusu" class="fb"><b>💬 Yönetici notu</b><span id="pNot"></span></div>
 
+  <button class="btn-nav" id="urunBtn">💰 Kasa önü ürünleri &amp; hakedişim</button>
   <button class="btn-nav" id="takvimBtn">📅 Çalışma takvimini gör</button>
   <button class="btn-ghost" id="sifreAcBtn">Şifremi değiştir</button>
   <div id="sifre-paneli">
@@ -212,6 +213,8 @@ async function sistemeGiris(){
     const data=dataRes.value,user=data.find(x=>key(x.sicil)===sicil&&key(x.sifre)===sifre);
     if(!user){err.textContent="Sicil no veya şifre hatalı.";resetLogin();return}
     aktifSicil=sicil;
+    // Kasa önü / hakediş sayfası için kimlik bilgisi
+    try{sessionStorage.setItem("m4sicil",sicil);sessionStorage.setItem("m4isim",user.isim||"");sessionStorage.setItem("m4sifre",sifre)}catch(e){}
     $("login-screen").style.display="none";
     $("personel-screen").classList.add("show");
     analiz(user,data,guncelKur);
@@ -326,8 +329,9 @@ $("loginBtn").onclick=sistemeGiris;
 $("sifreAcBtn").onclick=()=>{$("sifre-paneli").style.display="block";$("sifreAcBtn").style.display="none";$("yeniSifre").focus()};
 $("sifreKaydetBtn").onclick=sifreGuncelle;
 $("yeniSifre").addEventListener("keydown",e=>{if(e.key==="Enter")sifreGuncelle()});
+$("urunBtn").onclick=()=>{location.href="./yonetici.html"};
 $("takvimBtn").onclick=()=>{location.href="./takvim.html"};
-$("cikisBtn").onclick=()=>location.reload();
+$("cikisBtn").onclick=()=>{try{sessionStorage.clear()}catch(e){}location.reload()};
 
 if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js").catch(e=>console.log("PWA hatası:",e)))}
 </script>
